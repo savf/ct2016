@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>ch.uzh.csg.p2p</groupId>
+	<artifactId>groupID</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<repositories>
+		<repository>
+			<id>tomp2p.net</id>
+			<url>http://tomp2p.net/dev/mvn/</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>net.tomp2p</groupId>
+			<artifactId>tomp2p-all</artifactId>
+			<version>5.0-Beta8</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.19</version>
+		</dependency>
+	</dependencies>
+	<build>
+ 		<plugins>
+			<plugin>
+				<!-- Build an executable JAR -->
+			  	<artifactId>maven-jar-plugin</artifactId>
+			  	<version>2.4</version>
+			  	<configuration>
+				    <archive>
+				     	<manifest>
+				        	<mainClass>ch.uzh.csg.p2p.Main</mainClass>
+				      	</manifest>
+				    </archive>
+			  	</configuration>
+			 </plugin>
+			<!-- Includes the runtime dependencies -->
+			<plugin>
+				<groupId>org.dstovall</groupId>
+				<artifactId>onejar-maven-plugin</artifactId>
+				<version>1.4.4</version>
+				<executions>
+		  			<execution>
+						<goals>
+							<goal>one-jar</goal>
+						</goals>
+		  			</execution>
+				</executions>
+			</plugin>
+		</plugins>
+  </build>
+
+  <!-- One-Jar is in the googlecode repository -->
+  <pluginRepositories>
+      <pluginRepository>
+          <id>onejar-maven-plugin.googlecode.com</id>
+		  <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+	  </pluginRepository>
+  </pluginRepositories>
+  
+</project>
