@@ -1,8 +1,8 @@
-package ch.uzh.csg.p2p;
+package main.java.ch.uzh.csg.p2p;
 
 import java.io.IOException;
 
-import ch.uzh.csg.p2p.screens.LoginScreen;
+import main.java.ch.uzh.csg.p2p.screens.LoginScreen;
 
 public class Main {
 

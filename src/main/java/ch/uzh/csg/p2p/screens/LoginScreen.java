@@ -1,4 +1,4 @@
-package ch.uzh.csg.p2p.screens;
+package main.java.ch.uzh.csg.p2p.screens;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -16,7 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import ch.uzh.csg.p2p.Node;
+import main.java.ch.uzh.csg.p2p.Node;
 
 public class LoginScreen extends JFrame{
 	
@@ -26,6 +26,7 @@ public class LoginScreen extends JFrame{
 	private static final long serialVersionUID = 1L;
 
 	private final static String FRAMETITLE = "Login Screen";
+	private final int DEFAULTPORT = 4000;
 	
 	private JLabel idLabel;
 	private JTextField idTextField;
@@ -90,10 +91,11 @@ public class LoginScreen extends JFrame{
 						node = new Node(id, localport, null, 0);
 					}
 					else {
-						JFrame frame = (JFrame) SwingUtilities.getRoot((Component) e.getSource());
-						JOptionPane.showMessageDialog(frame, "Local port cannot be empty.");
+						node = new Node(id, DEFAULTPORT, null, 0);
+						//JFrame frame = (JFrame) SwingUtilities.getRoot((Component) e.getSource());
+						//JOptionPane.showMessageDialog(frame, "Local port cannot be empty.");
 					}
-				} catch (IOException e1) {}
+				} catch (Exception e1) {}
 			}
 		});
 		
@@ -112,7 +114,7 @@ public class LoginScreen extends JFrame{
 						JFrame frame = (JFrame) SwingUtilities.getRoot((Component) e.getSource());
 						JOptionPane.showMessageDialog(frame, "Remote IP, remote port and local port cannot be empty.");
 					}
-				} catch (IOException e1) {}
+				} catch (Exception e1) {}
 			}
 		});
 		
