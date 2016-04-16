@@ -1,4 +1,4 @@
-package main.java.ch.uzh.csg.p2p;
+package ch.uzh.csg.p2p;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.EmptyByteBuf;
@@ -17,7 +17,7 @@ import javax.sound.sampled.LineUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import main.java.ch.uzh.csg.p2p.multimedia.VideoApplication;
+import ch.uzh.csg.p2p.multimedia.VideoApplication;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
@@ -33,23 +33,23 @@ import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
 
 public class Node {
-	
+
 	private final String KEY = "test";
-	
+
 	private Logger log;
-	
+
 	private PeerDHT peer;
 	private VideoApplication va;
-	
-	
-	public Node(int nodeId, int localPort, String knownIP, int knownPort) throws IOException, LineUnavailableException{
-		
-		log = LoggerFactory.getLogger("Node with id: "+nodeId);
-		
+
+	public Node(int nodeId, int localPort, String knownIP, int knownPort) throws IOException, LineUnavailableException {
+
+		log = LoggerFactory.getLogger("Node with id: " + nodeId);
+
 		createPeer(nodeId, localPort);
-		
-		//if knownIP == null; this is first node in network and cannot connect to others
-		if(knownIP != null){
+
+		// if knownIP == null; this is first node in network and cannot connect
+		// to others
+		if (knownIP != null) {
 			connectToNode(knownIP, knownPort);
 			FutureGet futureGet = peer.get(Number160.createHash(KEY)).start();
 			futureGet.addListener(new BaseFutureListener<FutureGet>() {
@@ -59,84 +59,83 @@ public class Node {
 				}
 
 				public void operationComplete(FutureGet future) throws Exception {
-					if(future.isSuccess() && future.data() != null) {
+					if (future.isSuccess() && future.data() != null) {
 						PeerAddress peerAddress = (PeerAddress) future.data().object();
 						log.info(peerAddress.toString());
 						peer.peer().sendDirect(peerAddress).object("start video").start();
 					} else {
 						log.error("FutureGet was unsuccessful: " + future.failedReason());
 					}
-					
+
 				}
 			});
-		}else{
+		} else {
 			log.info("I'm First Node");
 			peer.put(Number160.createHash(KEY)).data(new Data(peer.peerAddress())).start();
-			log.info("Put my IP with key: "+KEY);
+			log.info("Put my IP with key: " + KEY);
 			va = new VideoApplication();
 			va.initialize();
 		}
 	}
-	
-	private void createPeer(int nodeId, int localPort) throws IOException{
+
+	private void createPeer(int nodeId, int localPort) throws IOException {
 		Bindings b = new Bindings().listenAny();
-    	peer = new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(localPort).bindings(b).start()).start();
-    	peer.peer().objectDataReply(new ObjectDataReply() {
-			
+		peer = new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(localPort).bindings(b).start()).start();
+		peer.peer().objectDataReply(new ObjectDataReply() {
+
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
 				return handleMessage(peerAddress, object);
 			}
 		});
 	}
-	
-	private Object handleMessage(PeerAddress peerAddress, Object object) throws IOException{
-		log.info("received message: "+object.toString()+" from: "+peerAddress.toString());
-		if(object instanceof String){
-			if(object.toString().equals("start video")){
-				if(va != null){
+
+	private Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
+		if (object instanceof String) {
+			if (object.toString().equals("start video")) {
+				if (va != null) {
 					List<BufferedImage> list = va.getVideoData().subList(0, 10);
-					
-					
+
 					ByteBuf byteBuf = new EmptyByteBuf(null);
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				    ObjectOutputStream oos = new ObjectOutputStream(bos);
-				    oos.writeObject(list);
-				    byte[] bytes = bos.toByteArray();
-				    byteBuf.writeBytes(bytes);
-				    Buffer buffer = new Buffer(byteBuf);
-				    peer.peer().sendDirect(peerAddress).buffer(buffer).start();
-				    
+					ObjectOutputStream oos = new ObjectOutputStream(bos);
+					oos.writeObject(list);
+					byte[] bytes = bos.toByteArray();
+					byteBuf.writeBytes(bytes);
+					Buffer buffer = new Buffer(byteBuf);
+					peer.peer().sendDirect(peerAddress).buffer(buffer).start();
+
 					peer.peer().sendDirect(peerAddress).object(list).start();
-				}else{
+				} else {
 					peer.peer().sendDirect(peerAddress).object("No Video Data available!").start();
 				}
 			}
-		}else if(object instanceof List){
+		} else if (object instanceof List) {
 			System.out.println("hiere");
-			showReceivedVideoData((List)object);
-		}else{
+			showReceivedVideoData((List) object);
+		} else {
 			System.out.println("else");
 		}
 		return 0;
 	}
-	
-	private void showReceivedVideoData(List<BufferedImage> dataList){
-		System.out.println("received VideoData, datalength: "+dataList.size());
+
+	private void showReceivedVideoData(List<BufferedImage> dataList) {
+		System.out.println("received VideoData, datalength: " + dataList.size());
 	}
 
-	private void connectToNode(String knownIP, int knownPort) throws UnknownHostException{
+	private void connectToNode(String knownIP, int knownPort) throws UnknownHostException {
 		InetAddress address = Inet4Address.getByName(knownIP);
 		FutureDiscover futureDiscover = peer.peer().discover().inetAddress(address).ports(knownPort).start();
 		futureDiscover.awaitUninterruptibly();
 		FutureBootstrap futureBootstrap = peer.peer().bootstrap().inetAddress(address).ports(knownPort).start();
 		futureBootstrap.awaitUninterruptibly();
 	}
-	
-	public void shutdown(){
+
+	public void shutdown() {
 		log.info("Shutting down gracefully.");
-		if(peer != null) {
+		if (peer != null) {
 			peer.shutdown();
 		}
 	}
-	
+
 }
