@@ -2,18 +2,12 @@ package ch.uzh.csg.p2p.multimedia;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageFilter;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.sound.sampled.LineUnavailableException;
 
 import net.tomp2p.audiovideowrapper.H264Wrapper;
-import net.tomp2p.audiovideowrapper.OpusWrapper;
 import net.tomp2p.audiovideowrapper.VideoData;
 
 import com.github.sarxos.webcam.Webcam;

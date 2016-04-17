@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="400.0" prefWidth="400.0" styleClass="root" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ch.uzh.csg.p2p.controller.LoginWindowController">
+   <children>
+      <VBox alignment="CENTER" layoutX="50.0" layoutY="14.0" spacing="25.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="20.0">
+         <children>
+            <HBox alignment="CENTER" layoutX="186.0" layoutY="14.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Label id="title" fx:id="title" contentDisplay="CENTER" layoutX="186.0" layoutY="14.0" text="Login">
+                     <font>
+                        <Font size="22.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="76.0" layoutY="62.0" spacing="40.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Label id="usernameLabel" fx:id="idLabel" layoutX="76.0" layoutY="66.0" prefWidth="120.0" text="Username" />
+                  <TextField id="usernameText" fx:id="usernameText" layoutX="164.0" layoutY="62.0" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="76.0" layoutY="108.0" spacing="40.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Label id="localPortLabel" fx:id="localPortLabel" layoutX="76.0" layoutY="112.0" prefWidth="120.0" text="Port for local peer:" />
+                  <TextField id="localPortText" fx:id="localPortText" layoutX="164.0" layoutY="108.0" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="76.0" layoutY="157.0" spacing="40.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Label id="remoteIPLabel" fx:id="remoteIPLabel" layoutX="76.0" layoutY="161.0" prefWidth="120.0" text="IP of remote peer" />
+                  <TextField id="remoteIPText" fx:id="remoteIPText" layoutX="164.0" layoutY="157.0" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="76.0" layoutY="210.0" spacing="40.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Label id="remotePortLabel" fx:id="remotePortLabel" layoutX="76.0" layoutY="214.0" prefWidth="120.0" text="Port for remote peer:" />
+                  <TextField id="remotePortText" fx:id="remotePortText" layoutX="164.0" layoutY="210.0" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="78.0" layoutY="314.0" spacing="80.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+               <children>
+                  <Button id="newNetworkBtn" fx:id="newNetworkBtn" layoutX="78.0" layoutY="314.0" mnemonicParsing="false" onAction="#handleNewNetwork" styleClass="btn" text="New Network" />
+                  <Button id="joinNetworkBtn" fx:id="joinNetworkBtn" layoutX="287.0" layoutY="314.0" mnemonicParsing="false" onAction="#handleJoinNetwork" styleClass="btn" text="Join Network" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

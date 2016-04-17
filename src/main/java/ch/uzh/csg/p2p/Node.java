@@ -1,22 +1,15 @@
 package ch.uzh.csg.p2p;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.EmptyByteBuf;
-
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.uzh.csg.p2p.controller.MainWindowController;
 import ch.uzh.csg.p2p.multimedia.VideoApplication;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
@@ -25,7 +18,6 @@ import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDiscover;
-import net.tomp2p.message.Buffer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -34,53 +26,64 @@ import net.tomp2p.storage.Data;
 
 public class Node {
 
-	private final String KEY = "test";
+	protected final String BOOTSTRAPNODE = "Bootstrapnode";
 
 	private Logger log;
 
-	private PeerDHT peer;
+	private MainWindowController mainWindowController;
+	protected PeerDHT peer;
 	private VideoApplication va;
 
-	public Node(int nodeId, int localPort, String knownIP, int knownPort) throws IOException, LineUnavailableException {
+	public Node(int nodeId, int localPort, String knownIP, int knownPort, String username,
+			MainWindowController mainWindowController)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 
-		log = LoggerFactory.getLogger("Node with id: " + nodeId);
+		log = LoggerFactory.getLogger("Node form user: " + username);
 
-		createPeer(nodeId, localPort);
+		this.mainWindowController = mainWindowController;
 
-		// if knownIP == null; this is first node in network and cannot connect
-		// to others
+		// if not a BootstrapNode
 		if (knownIP != null) {
+			createPeer(nodeId, localPort, username, false);
 			connectToNode(knownIP, knownPort);
-			FutureGet futureGet = peer.get(Number160.createHash(KEY)).start();
-			futureGet.addListener(new BaseFutureListener<FutureGet>() {
-
-				public void exceptionCaught(Throwable arg0) throws Exception {
-					// TODO Auto-generated method stub
-				}
-
-				public void operationComplete(FutureGet future) throws Exception {
-					if (future.isSuccess() && future.data() != null) {
-						PeerAddress peerAddress = (PeerAddress) future.data().object();
-						log.info(peerAddress.toString());
-						peer.peer().sendDirect(peerAddress).object("start video").start();
-					} else {
-						log.error("FutureGet was unsuccessful: " + future.failedReason());
-					}
-
-				}
-			});
-		} else {
-			log.info("I'm First Node");
-			peer.put(Number160.createHash(KEY)).data(new Data(peer.peerAddress())).start();
-			log.info("Put my IP with key: " + KEY);
-			va = new VideoApplication();
-			va.initialize();
 		}
+		;
+
 	}
 
-	private void createPeer(int nodeId, int localPort) throws IOException {
+	public void sendMessageToAddress(String username, String message) {
+		final String msg = message;
+		FutureGet futureGet = peer.get(Number160.createHash(username)).start();
+		futureGet.addListener(new BaseFutureListener<FutureGet>() {
+
+			public void exceptionCaught(Throwable arg0) throws Exception {
+			}
+
+			public void operationComplete(FutureGet future) throws Exception {
+				if (future.isSuccess() && future.data() != null) {
+					PeerAddress peerAddress = (PeerAddress) future.data().object();
+					log.info(peerAddress.toString());
+					peer.peer().sendDirect(peerAddress).object(msg).start();
+				} else {
+					if (!future.isSuccess()) {
+						log.error("FutureGet was unsuccessful: " + future.failedReason());
+					} else {
+						log.error("FutureGet was successful, but data is null!");
+					}
+				}
+
+			}
+		});
+	}
+
+	protected void createPeer(int nodeId, int localPort, String username, Boolean isBootstrapNode) throws IOException {
 		Bindings b = new Bindings().listenAny();
 		peer = new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(localPort).bindings(b).start()).start();
+		peer.put(Number160.createHash(username)).data(new Data(peer.peerAddress())).start();
+		peer.put(Number160.createHash(peer.peerAddress().toString())).data(new Data(username)).start();
+		if (isBootstrapNode) {
+			peer.put(Number160.createHash(BOOTSTRAPNODE)).data(new Data(peer.peerAddress())).start();
+		}
 		peer.peer().objectDataReply(new ObjectDataReply() {
 
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
@@ -89,46 +92,66 @@ public class Node {
 		});
 	}
 
-	private Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
 		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
+		final Object obj = object;
 		if (object instanceof String) {
 			if (object.toString().equals("start video")) {
-				if (va != null) {
-					List<BufferedImage> list = va.getVideoData().subList(0, 10);
-
-					ByteBuf byteBuf = new EmptyByteBuf(null);
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					ObjectOutputStream oos = new ObjectOutputStream(bos);
-					oos.writeObject(list);
-					byte[] bytes = bos.toByteArray();
-					byteBuf.writeBytes(bytes);
-					Buffer buffer = new Buffer(byteBuf);
-					peer.peer().sendDirect(peerAddress).buffer(buffer).start();
-
-					peer.peer().sendDirect(peerAddress).object(list).start();
-				} else {
-					peer.peer().sendDirect(peerAddress).object("No Video Data available!").start();
-				}
+				peer.peer().sendDirect(peerAddress).object("Send you my VideoData").start();
 			}
-		} else if (object instanceof List) {
-			System.out.println("hiere");
-			showReceivedVideoData((List) object);
+			FutureGet futureGet = peer.get(Number160.createHash(peerAddress.toString())).start();
+			futureGet.addListener(new BaseFutureListener<FutureGet>() {
+
+				public void exceptionCaught(Throwable arg0) throws Exception {
+				}
+
+				public void operationComplete(FutureGet future) throws Exception {
+					if (future.isSuccess() && future.data() != null) {
+						mainWindowController.addReceivedMessage(future.data().object().toString(), obj.toString());
+					} else {
+						if (!future.isSuccess()) {
+							log.error("FutureGet was unsuccessful: " + future.failedReason());
+						} else {
+							log.error("FutureGet was successful, but data is null!");
+						}
+					}
+
+				}
+			});
+
 		} else {
 			System.out.println("else");
 		}
 		return 0;
 	}
 
-	private void showReceivedVideoData(List<BufferedImage> dataList) {
-		System.out.println("received VideoData, datalength: " + dataList.size());
-	}
-
-	private void connectToNode(String knownIP, int knownPort) throws UnknownHostException {
+	private void connectToNode(String knownIP, int knownPort) throws ClassNotFoundException, IOException {
 		InetAddress address = Inet4Address.getByName(knownIP);
 		FutureDiscover futureDiscover = peer.peer().discover().inetAddress(address).ports(knownPort).start();
 		futureDiscover.awaitUninterruptibly();
 		FutureBootstrap futureBootstrap = peer.peer().bootstrap().inetAddress(address).ports(knownPort).start();
 		futureBootstrap.awaitUninterruptibly();
+
+		FutureGet futureGet = peer.get(Number160.createHash(BOOTSTRAPNODE)).start();// TODO
+		futureGet.addListener(new BaseFutureListener<FutureGet>() {
+
+			public void exceptionCaught(Throwable arg0) throws Exception {
+			}
+
+			public void operationComplete(FutureGet future) throws Exception {
+				if (future.isSuccess() && future.data() != null) {
+					PeerAddress bootstrapNodePeerAddress = (PeerAddress) future.data().object();
+					peer.peer().sendDirect(bootstrapNodePeerAddress).object("<sys>newnode</sys>").start();
+				} else {
+					if (!future.isSuccess()) {
+						log.error("FutureGet was unsuccessful: " + future.failedReason());
+					} else {
+						log.error("FutureGet was successful, but data is null!");
+					}
+				}
+
+			}
+		});
 	}
 
 	public void shutdown() {
