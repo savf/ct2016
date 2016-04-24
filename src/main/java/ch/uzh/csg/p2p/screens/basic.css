@@ -7,4 +7,12 @@
 .btn{
 	-fx-border-radius:0;
 	-fx-background-radius:0;
+	-fx-padding: 10 50;
+	-fx-background-color: #2E8DEF;
+	-fx-text-fill: #FFFFFF;
+}
+
+.input{
+	-fx-border-radius:0;
+	-fx-background-radius:0;
 }

@@ -18,29 +18,29 @@ public class MainWindow {
 
 	private Stage stage;
 	private int id;
-	private int localPort;
 	private String ip;
-	private int remotePort;
 	private String username;
+	private String password;
 
-	public void start(Stage stage, int id, int localPort, String ip, int remotePort, String username) throws Exception {
+	public void start(Stage stage, int id, String ip, String username, String password)
+			throws Exception {
 		this.stage = stage;
 		this.id = id;
-		this.localPort = localPort;
 		this.ip = ip;
-		this.remotePort = remotePort;
 		this.username = username;
+		this.password = password;
 
 		initialiseWindow();
 	}
 
-	private void initialiseWindow() throws IOException, LineUnavailableException, ClassNotFoundException {
+	private void initialiseWindow()
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("MainWindow.fxml"));
 		AnchorPane pane = loader.load();
 
 		final MainWindowController mainWindowController = loader.getController();
 		mainWindowController.setMainWindow(this);
-		mainWindowController.startNode(id, localPort, ip, remotePort, username);
+		mainWindowController.startNode(id, ip, username, password);
 
 		Scene scene = new Scene(pane);
 

@@ -15,8 +15,6 @@ import javafx.scene.control.TextArea;
 
 public class MainWindowController {
 
-	private final int DEFAULTPORT = 4000;
-
 	@FXML
 	private TextField usernameText;
 	@FXML
@@ -31,15 +29,12 @@ public class MainWindowController {
 		this.mainWindow = mainWindow;
 	}
 
-	public void startNode(int id, int localPort, String ip, int remotePort, String username)
+	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		if (localPort < 0) {
-			localPort = DEFAULTPORT;
-		}
 		if (ip == null) {
-			node = new BootstrapNode(id, localPort, ip, remotePort, username, this);
+			node = new BootstrapNode(id, ip, username, password, this);
 		} else {
-			node = new Node(id, localPort, ip, remotePort, username, this);
+			node = new Node(id, ip, username, password, this);
 		}
 	}
 

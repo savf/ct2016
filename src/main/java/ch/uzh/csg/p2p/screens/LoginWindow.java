@@ -12,8 +12,6 @@ import javafx.stage.Stage;
 public class LoginWindow extends Application {
 
 	private final String TITLE = "SkypeClone - Login";
-	private final int WIDTH = 400;
-	private final int HEIGHT = 400;
 
 	private Stage stage;
 
@@ -23,12 +21,10 @@ public class LoginWindow extends Application {
 		initialiseWindow();
 	}
 
+
 	private void initialiseWindow() throws IOException {
 		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("LoginWindow.fxml"));
 		AnchorPane pane = loader.load();
-
-		stage.setHeight(HEIGHT);
-		stage.setWidth(WIDTH);
 
 		LoginWindowController loginWindowController = loader.getController();
 		loginWindowController.setLoginWindow(this);

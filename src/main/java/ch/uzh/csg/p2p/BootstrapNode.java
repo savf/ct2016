@@ -21,23 +21,25 @@ public class BootstrapNode extends Node {
 
 	private MainWindowController mainWindowController;
 
-	public BootstrapNode(int nodeId, int localPort, String knownIP, int knownPort, String username,
+	public BootstrapNode(int nodeId, String ip, String username, String password,
 			MainWindowController mainWindowController)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		super(nodeId, localPort, knownIP, knownPort, username, mainWindowController);
+		super(nodeId, ip, username, password, mainWindowController);
 
 		log = LoggerFactory.getLogger("BootstrapNode form user: " + username);
 
 		this.mainWindowController = mainWindowController;
-		createPeer(nodeId, localPort, username, true);
+		createPeer(nodeId, username, password, true);
 	}
 
 	@Override
 	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
-		log.info("BootstrapNode received message: " + object.toString() + " from: " + peerAddress.toString());
+		log.info("BootstrapNode received message: " + object.toString() + " from: "
+				+ peerAddress.toString());
 		if (object instanceof String && ((String) object).equals("<sys>newnode</sys>")) {
 			log.info("new node");
-			FutureBootstrap futureBootstrap = peer.peer().bootstrap().peerAddress(peerAddress).start();
+			FutureBootstrap futureBootstrap =
+					peer.peer().bootstrap().peerAddress(peerAddress).start();
 		} else {
 			super.handleMessage(peerAddress, object);
 		}

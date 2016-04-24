@@ -3,6 +3,8 @@ package ch.uzh.csg.p2p;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -10,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.multimedia.VideoApplication;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
@@ -27,6 +31,7 @@ import net.tomp2p.storage.Data;
 public class Node {
 
 	protected final String BOOTSTRAPNODE = "Bootstrapnode";
+	private final int DEFAULTPORT = 54000;
 
 	private Logger log;
 
@@ -34,7 +39,7 @@ public class Node {
 	protected PeerDHT peer;
 	private VideoApplication va;
 
-	public Node(int nodeId, int localPort, String knownIP, int knownPort, String username,
+	public Node(int nodeId, String ip, String username, String password,
 			MainWindowController mainWindowController)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
@@ -43,25 +48,25 @@ public class Node {
 		this.mainWindowController = mainWindowController;
 
 		// if not a BootstrapNode
-		if (knownIP != null) {
-			createPeer(nodeId, localPort, username, false);
-			connectToNode(knownIP, knownPort);
-		}
-		;
+		if (ip != null) {
+			createPeer(nodeId, username, password, false);
+			connectToNode(ip);
+		} ;
 
 	}
 
 	public void sendMessageToAddress(String username, String message) {
 		final String msg = message;
-		FutureGet futureGet = peer.get(Number160.createHash(username)).start();
+		FutureGet futureGet =
+				peer.get(Number160.createHash(LoginHelper.USER_PREFIX + username)).start();
 		futureGet.addListener(new BaseFutureListener<FutureGet>() {
 
-			public void exceptionCaught(Throwable arg0) throws Exception {
-			}
+			public void exceptionCaught(Throwable arg0) throws Exception {}
 
 			public void operationComplete(FutureGet future) throws Exception {
 				if (future.isSuccess() && future.data() != null) {
-					PeerAddress peerAddress = (PeerAddress) future.data().object();
+					User user = (User) future.data().object();
+					PeerAddress peerAddress = user.getPeerAddress();
 					log.info(peerAddress.toString());
 					peer.peer().sendDirect(peerAddress).object(msg).start();
 				} else {
@@ -76,13 +81,27 @@ public class Node {
 		});
 	}
 
-	protected void createPeer(int nodeId, int localPort, String username, Boolean isBootstrapNode) throws IOException {
+	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
+			throws IOException, ClassNotFoundException {
 		Bindings b = new Bindings().listenAny();
-		peer = new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(localPort).bindings(b).start()).start();
-		peer.put(Number160.createHash(username)).data(new Data(peer.peerAddress())).start();
-		peer.put(Number160.createHash(peer.peerAddress().toString())).data(new Data(username)).start();
+		peer = new PeerBuilderDHT(
+				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
+						.start();
+
+		if (LoginHelper.userExists(this, username)) {
+			// user still exist --> only update address
+			LoginHelper.updatePeerAddress(this, username);
+		} else {
+			// user not exist --> add user
+			LoginHelper.saveUsernamePassword(this, username, password);
+		}
+
+		// save address/username combination
+		peer.put(Number160.createHash(LoginHelper.ADDRESS_PREFIX + peer.peerAddress().toString()))
+				.data(new Data(username)).start();
 		if (isBootstrapNode) {
-			peer.put(Number160.createHash(BOOTSTRAPNODE)).data(new Data(peer.peerAddress())).start();
+			peer.put(Number160.createHash(BOOTSTRAPNODE)).data(new Data(peer.peerAddress()))
+					.start();
 		}
 		peer.peer().objectDataReply(new ObjectDataReply() {
 
@@ -99,15 +118,17 @@ public class Node {
 			if (object.toString().equals("start video")) {
 				peer.peer().sendDirect(peerAddress).object("Send you my VideoData").start();
 			}
-			FutureGet futureGet = peer.get(Number160.createHash(peerAddress.toString())).start();
+			FutureGet futureGet = peer
+					.get(Number160.createHash(LoginHelper.ADDRESS_PREFIX + peerAddress.toString()))
+					.start();
 			futureGet.addListener(new BaseFutureListener<FutureGet>() {
 
-				public void exceptionCaught(Throwable arg0) throws Exception {
-				}
+				public void exceptionCaught(Throwable arg0) throws Exception {}
 
 				public void operationComplete(FutureGet future) throws Exception {
 					if (future.isSuccess() && future.data() != null) {
-						mainWindowController.addReceivedMessage(future.data().object().toString(), obj.toString());
+						mainWindowController.addReceivedMessage(future.data().object().toString(),
+								obj.toString());
 					} else {
 						if (!future.isSuccess()) {
 							log.error("FutureGet was unsuccessful: " + future.failedReason());
@@ -115,7 +136,6 @@ public class Node {
 							log.error("FutureGet was successful, but data is null!");
 						}
 					}
-
 				}
 			});
 
@@ -125,23 +145,25 @@ public class Node {
 		return 0;
 	}
 
-	private void connectToNode(String knownIP, int knownPort) throws ClassNotFoundException, IOException {
+	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
 		InetAddress address = Inet4Address.getByName(knownIP);
-		FutureDiscover futureDiscover = peer.peer().discover().inetAddress(address).ports(knownPort).start();
+		FutureDiscover futureDiscover =
+				peer.peer().discover().inetAddress(address).ports(DEFAULTPORT).start();
 		futureDiscover.awaitUninterruptibly();
-		FutureBootstrap futureBootstrap = peer.peer().bootstrap().inetAddress(address).ports(knownPort).start();
+		FutureBootstrap futureBootstrap =
+				peer.peer().bootstrap().inetAddress(address).ports(DEFAULTPORT).start();
 		futureBootstrap.awaitUninterruptibly();
 
-		FutureGet futureGet = peer.get(Number160.createHash(BOOTSTRAPNODE)).start();// TODO
+		FutureGet futureGet = peer.get(Number160.createHash(BOOTSTRAPNODE)).start();
 		futureGet.addListener(new BaseFutureListener<FutureGet>() {
 
-			public void exceptionCaught(Throwable arg0) throws Exception {
-			}
+			public void exceptionCaught(Throwable arg0) throws Exception {}
 
 			public void operationComplete(FutureGet future) throws Exception {
 				if (future.isSuccess() && future.data() != null) {
 					PeerAddress bootstrapNodePeerAddress = (PeerAddress) future.data().object();
-					peer.peer().sendDirect(bootstrapNodePeerAddress).object("<sys>newnode</sys>").start();
+					peer.peer().sendDirect(bootstrapNodePeerAddress).object("<sys>newnode</sys>")
+							.start();
 				} else {
 					if (!future.isSuccess()) {
 						log.error("FutureGet was unsuccessful: " + future.failedReason());
@@ -149,9 +171,32 @@ public class Node {
 						log.error("FutureGet was successful, but data is null!");
 					}
 				}
-
 			}
 		});
+	}
+
+	private int getPort() {
+		int port = DEFAULTPORT;
+		while (portIsOpen("127.0.0.1", port, 200)) {
+			port++;
+		}
+		log.info("Free port found, port is: " + port);
+		return port;
+	}
+
+	private boolean portIsOpen(String ip, int port, int timeout) {
+		try {
+			Socket socket = new Socket();
+			socket.connect(new InetSocketAddress(ip, port), timeout);
+			socket.close();
+			return true;
+		} catch (Exception ex) {
+			return false;
+		}
+	}
+
+	public PeerDHT getPeer() {
+		return peer;
 	}
 
 	public void shutdown() {

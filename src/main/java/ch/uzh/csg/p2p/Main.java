@@ -8,7 +8,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 		LoginWindow loginWindow = new LoginWindow();
-		loginWindow.launch(LoginWindow.class);
+		loginWindow.launch(LoginWindow.class, args);
 	}
 
 }
