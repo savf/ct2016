@@ -9,6 +9,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -21,6 +22,15 @@ public class MainWindow {
 	private String ip;
 	private String username;
 	private String password;
+
+	private MainWindowController mainWindowController;
+
+	private BorderPane mainPane;
+	private BorderPane rightPane;
+	private AnchorPane infoPane;
+	private AnchorPane chatPane;
+	private AnchorPane friendlistPane;
+	private AnchorPane friendsearchResultPane;
 
 	public void start(Stage stage, int id, String ip, String username, String password)
 			throws Exception {
@@ -36,13 +46,30 @@ public class MainWindow {
 	private void initialiseWindow()
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("MainWindow.fxml"));
-		AnchorPane pane = loader.load();
+		mainWindowController = new MainWindowController();
+		loader.setController(mainWindowController);
+		mainPane = loader.load();
 
-		final MainWindowController mainWindowController = loader.getController();
+		initializeRightPane();
+		initializeInfoPane();
+		initializeChatPane();
+		initializeFriendlistPane();
+		initializeFriendsearchResultPane();
+
+		mainPane.setLeft(friendlistPane);
+		mainPane.setRight(rightPane);
+		rightPane.setTop(infoPane);
+
 		mainWindowController.setMainWindow(this);
+		mainWindowController.setMainPane(mainPane);
+		mainWindowController.setRightPane(rightPane);
+		mainWindowController.setInfoPane(infoPane);
+		mainWindowController.setChatPane(chatPane);
+		mainWindowController.setFriendlistPane(friendlistPane);
+		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.startNode(id, ip, username, password);
 
-		Scene scene = new Scene(pane);
+		Scene scene = new Scene(mainPane);
 
 		String css = LoginWindow.class.getResource("basic.css").toExternalForm();
 		scene.getStylesheets().add(css);
@@ -58,6 +85,41 @@ public class MainWindow {
 				stage.close();
 			}
 		});
+	}
+
+	public void showSearchResults() {
+		mainPane.setRight(friendsearchResultPane);
+	}
+
+	private void initializeRightPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("RightPane.fxml"));
+		loader.setController(mainWindowController);
+		rightPane = loader.load();
+	}
+
+	private void initializeInfoPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("InfoPane.fxml"));
+		loader.setController(mainWindowController);
+		infoPane = loader.load();
+	}
+
+	private void initializeChatPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("ChatPane.fxml"));
+		loader.setController(mainWindowController);
+		chatPane = loader.load();
+	}
+
+	private void initializeFriendlistPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("FriendlistPane.fxml"));
+		loader.setController(mainWindowController);
+		friendlistPane = loader.load();
+	}
+
+	private void initializeFriendsearchResultPane() throws IOException {
+		FXMLLoader loader =
+				new FXMLLoader(LoginWindow.class.getResource("FriendsearchResultPane.fxml"));
+		loader.setController(mainWindowController);
+		friendsearchResultPane = loader.load();
 	}
 
 }

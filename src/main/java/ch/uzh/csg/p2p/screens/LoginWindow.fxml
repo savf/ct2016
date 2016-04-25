@@ -76,7 +76,7 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" layoutX="78.0" layoutY="314.0" spacing="80.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
                <children>
-                  <Button id="loginBtn" fx:id="loginBtn" layoutX="287.0" layoutY="314.0" mnemonicParsing="false" onAction="#handleLogin" styleClass="btn" text="Login" />
+                  <Button id="loginBtn" fx:id="loginBtn" layoutX="287.0" layoutY="314.0" mnemonicParsing="false" onAction="#handleLogin" styleClass="btn, loginbtn" text="Login" />
                </children>
             </HBox>
          </children>
