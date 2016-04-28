@@ -71,6 +71,11 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" layoutX="76.0" layoutY="210.0" spacing="40.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
                <children>
+                  <CheckBox fx:id="bootstrapCB" mnemonicParsing="false" onAction="#handleBootstrapCB" styleClass="checkbox" text="This node is the bootstrap node" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="40.0">
+               <children>
                   <CheckBox mnemonicParsing="false" styleClass="checkbox" text="Remember my e-mail address and password" />
                </children>
             </HBox>

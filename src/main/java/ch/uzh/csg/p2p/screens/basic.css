@@ -16,6 +16,18 @@
 	-fx-padding: 10 50;
 }
 
+.friendRequestBtn{
+	-fx-padding: 2 30;
+}
+
+.messageSendBtn{
+	-fx-padding: 10 10;
+}
+
+#messageText{
+	-fx-pref-height:39;
+}
+
 .input{
 	-fx-border-radius:0;
 	-fx-background-radius:0;

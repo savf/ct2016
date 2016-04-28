@@ -1,6 +1,8 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.sound.sampled.LineUnavailableException;
@@ -12,6 +14,7 @@ import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -28,6 +31,8 @@ public class LoginWindowController {
 	private PasswordField passwordText;
 	@FXML
 	private TextField ipText;
+	@FXML
+	private CheckBox bootstrapCB;
 
 	private LoginWindow loginWindow;
 
@@ -39,13 +44,29 @@ public class LoginWindowController {
 	public void handleLogin() throws Exception {
 		int id = getId();
 		// check if ip not set --> is bootstrapnode
-		if (ipText.getText().equals("")) {
+		if (bootstrapCB.isSelected()) {
 			startMainWindow(id, null);
 		} else {
 			String ip = ipText.getText();
 			if (!ip.equals("")) {
 				startMainWindow(id, ip);
+			}else{
+				Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("IP address is missing");
+				String s = "Set IP address of bootstrap node or start as bootstrap";
+				alert.setContentText(s);
+				alert.showAndWait();
 			}
+		}
+	}
+	
+	@FXML public void handleBootstrapCB() throws UnknownHostException{
+		if(bootstrapCB.isSelected()){
+			ipText.setText("The local IP address is: "+InetAddress.getLocalHost().getHostAddress());
+			ipText.setDisable(true);
+		}else{
+			ipText.setText("");
+			ipText.setDisable(false);
 		}
 	}
 

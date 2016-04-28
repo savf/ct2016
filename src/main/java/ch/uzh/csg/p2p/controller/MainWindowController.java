@@ -115,6 +115,7 @@ public class MainWindowController {
 
 			Button button = new Button("Send friend request");
 			button.getStyleClass().add("btn");
+			button.getStyleClass().add("friendRequestBtn");
 			button.setOnAction(new EventHandler<ActionEvent>() {
 
 				public void handle(ActionEvent event) {
