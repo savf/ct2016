@@ -36,6 +36,8 @@ public class MainWindowController {
 	private VBox friendlist;
 	@FXML
 	private VBox searchResultList;
+	@FXML
+	private HBox btnWrapperChat;
 
 	private Node node;
 	private MainWindow mainWindow;
@@ -129,6 +131,27 @@ public class MainWindowController {
 			searchResultList.getChildren().add(hBox);
 		}
 	}
+	
+	@FXML
+	public void leaveChatHandler(){
+		rightPane.setTop(infoPane);
+		rightPane.setBottom(null);
+	}
+	
+	@FXML
+	public void addUserHandler(){
+		//TODO
+	}
+	
+	@FXML
+	public void startAudioHandler(){
+		//TODO
+	}
+	
+	@FXML
+	public void startVideoHandler(){
+		//TODO
+	}
 
 	private void addUserToFriendList(User user) {
 		HBox hBox = new HBox();
@@ -158,6 +181,17 @@ public class MainWindowController {
 			node.shutdown();
 		}
 		System.exit(0);
+	}
+	
+	/*
+	 * shows buttons list for which pane (chat, audio, video), null for not show buttons somewhere
+	 */
+	public void showChatBtns(String pane){
+		if(pane == null){
+			btnWrapperChat.setVisible(false);
+		}else if(pane.equals("chat")){
+			btnWrapperChat.setVisible(true);
+		}
 	}
 
 }

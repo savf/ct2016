@@ -12,6 +12,10 @@
 	-fx-text-fill: #FFFFFF;
 }
 
+.greenBtn{
+	-fx-background-color: #008A00;
+}
+
 .loginbtn{
 	-fx-padding: 10 50;
 }
