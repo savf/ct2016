@@ -1,22 +1,26 @@
 package ch.uzh.csg.p2p.model.request;
 
-public abstract class Request {
-private REQUEST_TYPE type;
+import java.io.Serializable;
 
-public Request(){
-  type = null;
-}
+public abstract class Request implements Serializable {
+	private static final long serialVersionUID = 3325627567053761196L;
 
-public Request(REQUEST_TYPE type){
-  setType(type);
-}
+	private REQUEST_TYPE type;
 
-public REQUEST_TYPE getType() {
-  return type;
-}
+	public Request() {
+		type = null;
+	}
 
-public void setType(REQUEST_TYPE type) {
-  this.type = type;
-}
+	public Request(REQUEST_TYPE type) {
+		setType(type);
+	}
+
+	public REQUEST_TYPE getType() {
+		return type;
+	}
+
+	public void setType(REQUEST_TYPE type) {
+		this.type = type;
+	}
 
 }

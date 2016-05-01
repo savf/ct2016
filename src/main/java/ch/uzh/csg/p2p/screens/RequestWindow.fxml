@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
+   <children>
+      <VBox spacing="40.0" style="-fx-border-width: 1;" AnchorPane.bottomAnchor="20.0">
+         <children>
+            <HBox alignment="CENTER">
+               <children>
+                  <Label fx:id="requestWindowLabel" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" spacing="40.0">
+               <children>
+                  <Button fx:id="requestWindowAcceptBtn" mnemonicParsing="false" text="Accept">
+                     <styleClass>
+                        <String fx:value="btn" />
+                        <String fx:value="greenBtn" />
+                     </styleClass>
+                  </Button>
+                  <Button fx:id="requestWindowRejectBtn" mnemonicParsing="false" text="Reject">
+                     <styleClass>
+                        <String fx:value="btn" />
+                        <String fx:value="redBtn" />
+                     </styleClass>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+         <opaqueInsets>
+            <Insets bottom="10.0" left="20.0" right="10.0" top="20.0" />
+         </opaqueInsets>
+      </VBox>
+   </children>
+</AnchorPane>

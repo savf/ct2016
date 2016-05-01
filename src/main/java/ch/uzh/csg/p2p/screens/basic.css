@@ -16,6 +16,10 @@
 	-fx-background-color: #008A00;
 }
 
+.redBtn{
+	-fx-background-color: #E51400;
+}
+
 .loginbtn{
 	-fx-padding: 10 50;
 }
@@ -36,4 +40,17 @@
 	-fx-border-radius:0;
 	-fx-background-radius:0;
 	-fx-pref-height:30;
+}
+
+.audioPane{
+	-fx-background-color: #000000;
+}
+
+.audiUserClass{
+	-fx-pref-height:100;
+	-fx-pref-width:100;
+	-fx-background-radius:50;
+	-fx-background-color: #008A00;
+	-fx-text-fill: #FFFFFF;
+	-fx-alignment:center;
 }

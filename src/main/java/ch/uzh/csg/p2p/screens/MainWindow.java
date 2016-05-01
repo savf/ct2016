@@ -29,8 +29,10 @@ public class MainWindow {
 	private BorderPane rightPane;
 	private AnchorPane infoPane;
 	private AnchorPane chatPane;
+	private AnchorPane audioPane;
 	private AnchorPane friendlistPane;
 	private AnchorPane friendsearchResultPane;
+	private AnchorPane requestPane;
 
 	public void start(Stage stage, int id, String ip, String username, String password)
 			throws Exception {
@@ -53,8 +55,10 @@ public class MainWindow {
 		initializeRightPane();
 		initializeInfoPane();
 		initializeChatPane();
+		initializeAudioPane();
 		initializeFriendlistPane();
 		initializeFriendsearchResultPane();
+		initializeRequestPane();
 
 		mainPane.setLeft(friendlistPane);
 		mainPane.setRight(rightPane);
@@ -65,9 +69,12 @@ public class MainWindow {
 		mainWindowController.setRightPane(rightPane);
 		mainWindowController.setInfoPane(infoPane);
 		mainWindowController.setChatPane(chatPane);
+		mainWindowController.setAudioPane(audioPane);
 		mainWindowController.setFriendlistPane(friendlistPane);
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
+		mainWindowController.setRequestPane(requestPane);
 		mainWindowController.startNode(id, ip, username, password);
+		mainWindowController.setUser(username);
 
 		Scene scene = new Scene(mainPane);
 
@@ -109,6 +116,12 @@ public class MainWindow {
 		chatPane = loader.load();
 	}
 
+	private void initializeAudioPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("AudioPane.fxml"));
+		loader.setController(mainWindowController);
+		audioPane = loader.load();
+	}
+
 	private void initializeFriendlistPane() throws IOException {
 		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("FriendlistPane.fxml"));
 		loader.setController(mainWindowController);
@@ -120,6 +133,12 @@ public class MainWindow {
 				new FXMLLoader(LoginWindow.class.getResource("FriendsearchResultPane.fxml"));
 		loader.setController(mainWindowController);
 		friendsearchResultPane = loader.load();
+	}
+
+	private void initializeRequestPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("RequestWindow.fxml"));
+		loader.setController(mainWindowController);
+		requestPane = loader.load();
 	}
 
 }

@@ -60,4 +60,16 @@ public class LoginHelper {
 		return false;
 	}
 
+	public static User getUser(Node node, String username)
+			throws ClassNotFoundException, IOException {
+		FutureGet futureGet =
+				node.getPeer().get(Number160.createHash(USER_PREFIX + username)).start();
+		futureGet.awaitUninterruptibly();
+		Data data = futureGet.data();
+		if (data != null) {
+			return (User) data.object();
+		}
+		return null;
+	}
+
 }

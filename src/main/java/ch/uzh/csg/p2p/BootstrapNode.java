@@ -33,7 +33,7 @@ public class BootstrapNode extends Node {
 	}
 
 	@Override
-	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+	protected Object handleReceivedData(PeerAddress peerAddress, Object object) throws IOException, LineUnavailableException, ClassNotFoundException {
 		log.info("BootstrapNode received message: " + object.toString() + " from: "
 				+ peerAddress.toString());
 		if (object instanceof String && ((String) object).equals("<sys>newnode</sys>")) {
@@ -41,7 +41,7 @@ public class BootstrapNode extends Node {
 			FutureBootstrap futureBootstrap =
 					peer.peer().bootstrap().peerAddress(peerAddress).start();
 		} else {
-			super.handleMessage(peerAddress, object);
+			super.handleReceivedData(peerAddress, object);
 		}
 		return 0;
 	}

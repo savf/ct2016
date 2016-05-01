@@ -12,9 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.helper.AudioUtils;
+import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.multimedia.VideoApplication;
+import ch.uzh.csg.p2p.model.request.AudioRequest;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
@@ -22,10 +25,12 @@ import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.message.Buffer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.rpc.ObjectDataReply;
+import net.tomp2p.rpc.RawDataReply;
 import net.tomp2p.storage.Data;
 
 public class Node {
@@ -37,13 +42,12 @@ public class Node {
 
 	private MainWindowController mainWindowController;
 	protected PeerDHT peer;
-	private VideoApplication va;
 
 	public Node(int nodeId, String ip, String username, String password,
 			MainWindowController mainWindowController)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
-		log = LoggerFactory.getLogger("Node form user: " + username);
+		log = LoggerFactory.getLogger("Node from user: " + username);
 
 		this.mainWindowController = mainWindowController;
 
@@ -106,12 +110,13 @@ public class Node {
 		peer.peer().objectDataReply(new ObjectDataReply() {
 
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
-				return handleMessage(peerAddress, object);
+				return handleReceivedData(peerAddress, object);
 			}
 		});
 	}
 
-	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
 		final Object obj = object;
 		if (object instanceof String) {
@@ -139,10 +144,40 @@ public class Node {
 				}
 			});
 
+		} else if (object instanceof AudioMessage) {
+			AudioMessage message = (AudioMessage) object;
+			try {
+				AudioUtils.playAudio(EncoderUtils.byteArrayToByteBuffer(message.getData()));
+			} catch (LineUnavailableException e) {
+				log.error("AudioMessage could not be played: " + e);
+			}
+		} else if (object instanceof AudioRequest) {
+			AudioRequest audioRequest = (AudioRequest) object;
+			handleAudioRequest(audioRequest);
 		} else {
 			System.out.println("else");
 		}
 		return 0;
+	}
+
+	private void handleAudioRequest(AudioRequest request)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
+		switch (request.getType()) {
+			case SEND:
+				mainWindowController.askAudioCall(request.getSenderName());
+				break;
+			case ACCEPTED:
+				mainWindowController.startAudioCall();
+				break;
+			case REJECTED:
+				mainWindowController.audioCallRejected();
+				break;
+			case ABORTED:
+				mainWindowController.audioCallAborted();
+				break;
+			default:
+				break;
+		}
 	}
 
 	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
