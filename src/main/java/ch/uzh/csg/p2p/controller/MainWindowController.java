@@ -1,13 +1,25 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.BootstrapNode;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -79,15 +91,11 @@ public class MainWindowController {
 
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		if (ip == null) {
-			node = new BootstrapNode(id, ip, username, password, this);
-		} else {
 			node = new Node(id, ip, username, password, this);
-		}
 	}
 
 	@FXML
-	public void handleSendMessage() {
+	public void handleSendMessage() {	  
 		if (messageText.getText().equals("")) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Empty informations");
@@ -95,8 +103,18 @@ public class MainWindowController {
 			alert.setContentText(s);
 			alert.showAndWait();
 		} else {
-			node.sendMessageToAddress(currentChatPartner, messageText.getText());
-			chatText.setText(chatText.getText() + "\n" + "ME: " + messageText.getText());
+		  String sender = node.getUser().getUsername();
+	      String receiver = currentChatPartner;
+	      String message = messageText.getText();
+	      
+	      Date date = new Date();
+	      ChatMessage m = new ChatMessage(sender, receiver, date, message);
+	      
+	      MessageRequest request = new MessageRequest(m, RequestType.SEND);
+	      // TODO: change to a fitting Date format!
+	      DateFormat f = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
+	      RequestHandler.handleRequest(request, node);
+			chatText.setText(chatText.getText() + "\n" +"[" + f.format(date) +"] ME: " + message);
 			messageText.setText("");
 		}
 	}
@@ -147,9 +165,24 @@ public class MainWindowController {
 
 		friendlist.getChildren().add(label);
 	}
+	
+	public Object handleReceiveMessage(PeerAddress peerAddress, Object object){
+      Message m = (Message) object;
+      if(m instanceof ChatMessage){
+        ChatMessage chatMessage = (ChatMessage) m;
+        addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), chatMessage.getDate());
+      }
+      else{
+        //TODO!
+      }
+  
+      return 0;
+	}
 
-	public void addReceivedMessage(String sender, String message) {
-		chatText.setText(chatText.getText() + "\n" + sender + ": " + message);
+	private void addReceivedMessage(String sender, String message, Date date) {
+	  //TODO: Change to a fitting date format
+		DateFormat f = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
+	  chatText.setText(chatText.getText() + "\n" +"[" + f.format(date) +"] "+ sender + ": " + message);
 	}
 
 	public void shutdownNode() {

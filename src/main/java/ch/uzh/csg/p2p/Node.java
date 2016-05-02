@@ -13,7 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.controller.MainWindowController;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.multimedia.VideoApplication;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
@@ -25,6 +31,7 @@ import net.tomp2p.futures.FutureDiscover;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
 
@@ -34,16 +41,15 @@ public class Node {
 	private final int DEFAULTPORT = 54000;
 
 	private Logger log;
+	private User user;
 
 	private MainWindowController mainWindowController;
 	protected PeerDHT peer;
-	private VideoApplication va;
 
 	public Node(int nodeId, String ip, String username, String password,
 			MainWindowController mainWindowController)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-
-		log = LoggerFactory.getLogger("Node form user: " + username);
+		log = LoggerFactory.getLogger("Node from user: " + username);
 
 		this.mainWindowController = mainWindowController;
 
@@ -51,34 +57,11 @@ public class Node {
 		if (ip != null) {
 			createPeer(nodeId, username, password, false);
 			connectToNode(ip);
-		} ;
+		}
+		else {
+		  createPeer(nodeId, username, password, true);
+		}
 
-	}
-
-	public void sendMessageToAddress(String username, String message) {
-		final String msg = message;
-		FutureGet futureGet =
-				peer.get(Number160.createHash(LoginHelper.USER_PREFIX + username)).start();
-		futureGet.addListener(new BaseFutureListener<FutureGet>() {
-
-			public void exceptionCaught(Throwable arg0) throws Exception {}
-
-			public void operationComplete(FutureGet future) throws Exception {
-				if (future.isSuccess() && future.data() != null) {
-					User user = (User) future.data().object();
-					PeerAddress peerAddress = user.getPeerAddress();
-					log.info(peerAddress.toString());
-					peer.peer().sendDirect(peerAddress).object(msg).start();
-				} else {
-					if (!future.isSuccess()) {
-						log.error("FutureGet was unsuccessful: " + future.failedReason());
-					} else {
-						log.error("FutureGet was successful, but data is null!");
-					}
-				}
-
-			}
-		});
 	}
 
 	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
@@ -95,58 +78,42 @@ public class Node {
 			// user not exist --> add user
 			LoginHelper.saveUsernamePassword(this, username, password);
 		}
-
-		// save address/username combination
-		peer.put(Number160.createHash(LoginHelper.ADDRESS_PREFIX + peer.peerAddress().toString()))
-				.data(new Data(username)).start();
+		user = new User(username, password, peer.peerAddress());
 		if (isBootstrapNode) {
-			peer.put(Number160.createHash(BOOTSTRAPNODE)).data(new Data(peer.peerAddress()))
-					.start();
+		  BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
+		  RequestHandler.handleRequest(request, this);
 		}
 		peer.peer().objectDataReply(new ObjectDataReply() {
-
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
-				return handleMessage(peerAddress, object);
+			  // TODO: Aufrufen RequestHandler
+				return mainWindowController.handleReceiveMessage(peerAddress, object);
 			}
 		});
+		// TODO: Indirect Replication or direct? Replication factor?
+		new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();
 	}
 
-	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+/*	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
+	  //TODO: Umwandeln mit RequestHandler!
 		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
-		final Object obj = object;
-		if (object instanceof String) {
-			if (object.toString().equals("start video")) {
-				peer.peer().sendDirect(peerAddress).object("Send you my VideoData").start();
-			}
-			FutureGet futureGet = peer
-					.get(Number160.createHash(LoginHelper.ADDRESS_PREFIX + peerAddress.toString()))
-					.start();
-			futureGet.addListener(new BaseFutureListener<FutureGet>() {
-
-				public void exceptionCaught(Throwable arg0) throws Exception {}
-
-				public void operationComplete(FutureGet future) throws Exception {
-					if (future.isSuccess() && future.data() != null) {
-						mainWindowController.addReceivedMessage(future.data().object().toString(),
-								obj.toString());
-					} else {
-						if (!future.isSuccess()) {
-							log.error("FutureGet was unsuccessful: " + future.failedReason());
-						} else {
-							log.error("FutureGet was successful, but data is null!");
-						}
-					}
-				}
-			});
-
-		} else {
-			System.out.println("else");
+		Message m = (Message) object;
+		if(m instanceof ChatMessage){
+		  ChatMessage chatMessage = (ChatMessage) m;
+		  mainWindowController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
 		}
+		else{
+		  //TODO!
+		}
+	
 		return 0;
-	}
+	} */
 
 	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
-		InetAddress address = Inet4Address.getByName(knownIP);
+	  BootstrapRequest request = new BootstrapRequest(user.getPeerAddress(), knownIP ,RequestType.SEND);
+	  RequestHandler.handleRequest(request, this);
+	  
+	  // TODO: BootstrapRequest
+		/*InetAddress address = Inet4Address.getByName(knownIP);
 		FutureDiscover futureDiscover =
 				peer.peer().discover().inetAddress(address).ports(DEFAULTPORT).start();
 		futureDiscover.awaitUninterruptibly();
@@ -172,7 +139,7 @@ public class Node {
 					}
 				}
 			}
-		});
+		});*/
 	}
 
 	private int getPort() {
@@ -197,6 +164,10 @@ public class Node {
 
 	public PeerDHT getPeer() {
 		return peer;
+	}
+	
+	public User getUser(){
+	  return user;
 	}
 
 	public void shutdown() {

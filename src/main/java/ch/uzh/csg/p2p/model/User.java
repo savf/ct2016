@@ -76,6 +76,7 @@ public class User implements Serializable {
 	
 	@Override
 	public String toString(){
+	  // TODO: maybe add the new attributes?
 		return "[username="+username+", password="+password+", peerAddress="+peerAddress+"]";
 	}
 }

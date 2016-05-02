@@ -26,13 +26,13 @@ public class BootstrapNode extends Node {
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		super(nodeId, ip, username, password, mainWindowController);
 
-		log = LoggerFactory.getLogger("BootstrapNode form user: " + username);
+		log = LoggerFactory.getLogger("BootstrapNode from user: " + username);
 
 		this.mainWindowController = mainWindowController;
 		createPeer(nodeId, username, password, true);
 	}
 
-	@Override
+/*	@Override
 	protected Object handleMessage(PeerAddress peerAddress, Object object) throws IOException {
 		log.info("BootstrapNode received message: " + object.toString() + " from: "
 				+ peerAddress.toString());
@@ -44,6 +44,6 @@ public class BootstrapNode extends Node {
 			super.handleMessage(peerAddress, object);
 		}
 		return 0;
-	}
+	} */
 
 }

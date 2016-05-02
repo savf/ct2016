@@ -11,7 +11,7 @@ public class MessageRequest extends Request {
     setMessage(null);
   }
   
-  public MessageRequest(Message message, REQUEST_TYPE type){
+  public MessageRequest(Message message, RequestType type){
     super(type);
     setMessage(message);
   }

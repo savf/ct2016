@@ -2,20 +2,21 @@ package ch.uzh.csg.p2p.model;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Date;
 
 public abstract class Message implements Serializable{
 
   private static final long serialVersionUID = 1L;
   private String senderID;
   private String receiverID;
-  private Timestamp timestamp;
+  private Date date;
   
   public Message(){}
   
-  public Message(String sender, String receiver, Timestamp timestamp){
+  public Message(String sender, String receiver, Date date){
     setSenderID(sender);
     setReceiverID(receiver);
-    setTimestamp(timestamp);
+    setDate(date);
   }
 
   public String getSenderID() {
@@ -34,14 +35,16 @@ public abstract class Message implements Serializable{
     this.receiverID = receiverID;
   }
 
-  public Timestamp getTimestamp() {
-    return timestamp;
+  public Date getDate() {
+    return date;
   }
 
-  public void setTimestamp(Timestamp timestamp) {
-    this.timestamp = timestamp;
+  public void setDate(Date date) {
+    this.date = date;
   }
   
   public abstract Object getData();
+  
+  public abstract String toString();
  
 }

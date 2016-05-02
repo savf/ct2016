@@ -1,5 +1,5 @@
 package ch.uzh.csg.p2p.model;
 
-public enum FRIENDSHIP_STATUS {
+public enum FriendshipStatus {
 ACCEPTED, WAITING, RECEIVED, REJECTED
 }

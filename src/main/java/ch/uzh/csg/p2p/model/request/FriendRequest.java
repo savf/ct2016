@@ -13,7 +13,7 @@ public class FriendRequest extends Request {
     setReceiverID("");
   }
   
-  public FriendRequest(String receiver, Friend friend, REQUEST_TYPE type){
+  public FriendRequest(String receiver, Friend friend, RequestType type){
     super(type);
     setFriend(friend);
     setReceiverID(receiver);
