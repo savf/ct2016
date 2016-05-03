@@ -26,24 +26,10 @@ public class BootstrapNode extends Node {
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		super(nodeId, ip, username, password, mainWindowController);
 
-		log = LoggerFactory.getLogger("BootstrapNode form user: " + username);
+		log = LoggerFactory.getLogger("BootstrapNode from user: " + username);
 
 		this.mainWindowController = mainWindowController;
 		createPeer(nodeId, username, password, true);
-	}
-
-	@Override
-	protected Object handleReceivedData(PeerAddress peerAddress, Object object) throws IOException, LineUnavailableException, ClassNotFoundException {
-		log.info("BootstrapNode received message: " + object.toString() + " from: "
-				+ peerAddress.toString());
-		if (object instanceof String && ((String) object).equals("<sys>newnode</sys>")) {
-			log.info("new node");
-			FutureBootstrap futureBootstrap =
-					peer.peer().bootstrap().peerAddress(peerAddress).start();
-		} else {
-			super.handleReceivedData(peerAddress, object);
-		}
-		return 0;
 	}
 
 }

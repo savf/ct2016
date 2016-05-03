@@ -10,5 +10,4 @@ public class Main {
 		LoginWindow loginWindow = new LoginWindow();
 		loginWindow.launch(LoginWindow.class, args);
 	}
-
 }

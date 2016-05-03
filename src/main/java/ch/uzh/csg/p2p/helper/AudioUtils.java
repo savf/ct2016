@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
@@ -18,7 +19,9 @@ import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
-import ch.uzh.csg.p2p.model.request.REQUEST_TYPE;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class AudioUtils {
 	public static AudioFormat FORMAT = new AudioFormat(8000.0f, 16, 1, true, true);
@@ -65,13 +68,13 @@ public class AudioUtils {
 							List<ByteBuffer> byteBufferList =
 									EncoderUtils.getByteBufferList(output);
 							if (!mute) {
-								Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+								Date date = new Date();
 								for (User receiver : receiverList) {
 									AudioMessage audioMessage = new AudioMessage(
-											sender.getUsername(), receiver.getUsername(), timestamp,
+											sender.getUsername(), receiver.getUsername(), date,
 											EncoderUtils.byteBufferToByteArray(byteBufferList));
-									node.getPeer().peer().sendDirect(receiver.getPeerAddress())
-											.object(audioMessage).start();
+									MessageRequest request = new MessageRequest(audioMessage, RequestType.SEND);
+									RequestHandler.handleRequest(request, node);
 								}
 							}
 						}
@@ -114,7 +117,8 @@ public class AudioUtils {
 	public void endAudio() throws ClassNotFoundException, IOException {
 		running = false;
 		for (User receiver : receiverList) {
-			sendRequest(REQUEST_TYPE.ABORTED, receiver.getUsername());
+		  AudioRequest request = new AudioRequest(RequestType.ABORTED, receiver.getUsername(), sender.getUsername());
+		  RequestHandler.handleRequest(request, node);
 		}
 	}
 
@@ -132,13 +136,6 @@ public class AudioUtils {
 
 	public void removeReceiver(User receiver) {
 		receiverList.remove(receiver);
-	}
-
-	public void sendRequest(REQUEST_TYPE type, String receiverName)
-			throws ClassNotFoundException, IOException {
-		AudioRequest audioRequest = new AudioRequest(type, receiverName, sender.getUsername());
-		node.getPeer().peer().sendDirect(LoginHelper.getUser(node, receiverName).getPeerAddress())
-				.object(audioRequest).start();
 	}
 
 }

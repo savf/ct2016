@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.sound.sampled.LineUnavailableException;
 
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -92,6 +93,8 @@ public class MainWindow {
 				stage.close();
 			}
 		});
+		
+	      RequestHandler.setMainWindowController(mainWindowController);
 	}
 
 	public void showSearchResults() {

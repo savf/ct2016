@@ -1,34 +1,26 @@
 package ch.uzh.csg.p2p.model.request;
 
+import ch.uzh.csg.p2p.model.User;
+
 public class UserRequest extends Request {
-private String name;
-private String password;
+private User user;
 
 public UserRequest(){
   super();
-  setName("test");
-  setPassword("1234");
+  setUser(new User("test", "1234", null));
 }
 
-public UserRequest(String name, String password, REQUEST_TYPE type){
+public void setUser(User user) {
+  this.user = user;
+}
+
+public User getUser(){
+  return user;
+}
+
+public UserRequest(User user, RequestType type){
   super(type);
-  setName(name);
-  setPassword(password);
+  setUser(user);
 }
-
-public String getName() {
-  return name;
-}
-public void setName(String name) {
-  this.name = name;
-}
-public String getPassword() {
-  return password;
-}
-public void setPassword(String password) {
-  this.password = password;
-}
-
-
 
 }

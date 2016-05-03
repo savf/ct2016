@@ -11,7 +11,7 @@ public class AudioRequest extends Request {
 		senderName = "";
 	}
 
-	public AudioRequest(REQUEST_TYPE type, String receiverName, String senderName) {
+	public AudioRequest(RequestType type, String receiverName, String senderName) {
 		super(type);
 		this.receiverName = receiverName;
 		this.senderName = senderName;

@@ -1,16 +1,14 @@
 package ch.uzh.csg.p2p.model;
 
-import java.nio.ByteBuffer;
-import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 public class AudioMessage extends Message {
-
 	private static final long serialVersionUID = -1954865919293641873L;
 	private List<byte[]> data;
 
-	public AudioMessage(String sender, String receiver, Timestamp timestamp, List<byte[]> message) {
-		super(sender, receiver, timestamp);
+	public AudioMessage(String sender, String receiver, Date date, List<byte[]> message) {
+		super(sender, receiver, date);
 		setData(message);
 	}
 
@@ -21,5 +19,10 @@ public class AudioMessage extends Message {
 	public List<byte[]> getData() {
 		return data;
 	}
-
+  
+  @Override
+  public String toString(){
+    return "[sender="+getSenderID()+", receiver="+getReceiverID()+", date="+getDate().toString()+", audioData="+getData().toString()+"]";
+  }
+  
 }

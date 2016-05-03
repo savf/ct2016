@@ -2,19 +2,29 @@ package ch.uzh.csg.p2p.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.uzh.csg.p2p.BootstrapNode;
+import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.request.REQUEST_TYPE;
+import ch.uzh.csg.p2p.model.request.AudioRequest;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -98,7 +108,7 @@ public class MainWindowController {
 	private String currentChatPartner;
 
 	public void setUser(String username) throws ClassNotFoundException, IOException {
-		user = LoginHelper.getUser(node, username);
+		user = LoginHelper.retrieveUser(username, node);
 	}
 
 	public void setMainWindow(MainWindow mainWindow) {
@@ -140,15 +150,11 @@ public class MainWindowController {
 
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		if (ip == null) {
-			node = new BootstrapNode(id, ip, username, password, this);
-		} else {
 			node = new Node(id, ip, username, password, this);
-		}
 	}
 
 	@FXML
-	public void handleSendMessage() {
+	public void handleSendMessage() {	  
 		if (messageText.getText().equals("")) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Empty informations");
@@ -156,8 +162,18 @@ public class MainWindowController {
 			alert.setContentText(s);
 			alert.showAndWait();
 		} else {
-			node.sendMessageToAddress(currentChatPartner, messageText.getText());
-			chatText.setText(chatText.getText() + "\n" + "ME: " + messageText.getText());
+		  String sender = node.getUser().getUsername();
+	      String receiver = currentChatPartner;
+	      String message = messageText.getText();
+	      
+	      Date date = new Date();
+	      ChatMessage m = new ChatMessage(sender, receiver, date, message);
+	      
+	      MessageRequest request = new MessageRequest(m, RequestType.SEND);
+	      // TODO: change to a fitting Date format!
+	      DateFormat f = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
+	      RequestHandler.handleRequest(request, node);
+			chatText.setText(chatText.getText() + "\n" +"[" + f.format(date) +"] ME: " + message);
 			messageText.setText("");
 		}
 	}
@@ -166,6 +182,7 @@ public class MainWindowController {
 	public void searchFriendHandler() throws ClassNotFoundException, IOException {
 		rightPane.setTop(friendsearchResultPane);
 		final User user = FriendlistHelper.findUser(node, friendSearchText.getText());
+		// TODO: grey out button if User already added to friendlist!
 		if (user != null) {
 			HBox hBox = new HBox();
 			hBox.setSpacing(40);
@@ -180,6 +197,7 @@ public class MainWindowController {
 			button.setOnAction(new EventHandler<ActionEvent>() {
 
 				public void handle(ActionEvent event) {
+				    sendFriendRequest(user, node);
 					addUserToFriendList(user);
 					searchResultList.getChildren().clear();
 					rightPane.setTop(infoPane);
@@ -199,7 +217,9 @@ public class MainWindowController {
 
 		if (audioUtils != null) {
 			audioUtils.endAudio();
-			audioUtils.sendRequest(REQUEST_TYPE.ABORTED, currentChatPartner);
+			AudioRequest request = new AudioRequest(RequestType.ABORTED, currentChatPartner, node.getUser().getUsername());
+			RequestHandler.handleRequest(request, node);
+			//audioUtils.sendRequest(RequestType.ABORTED, currentChatPartner);
 			audioUtils = null;
 		}
 	}
@@ -218,12 +238,13 @@ public class MainWindowController {
 		rightPane.setTop(audioPane);
 		showChatBtns("audio");
 		microphoneMute = false;
-		Image image = new Image(getClass().getResourceAsStream("/microphone.png"));
+		Image image = new Image(MainWindowController.class.getResourceAsStream("/microphone.png"));
 		microphoneLbl.setGraphic(new ImageView(image));
 		muteBTn.setText("Mute microphone");
 		audioUser1.setText(currentChatPartner + " calling...");
-		audioUtils = new AudioUtils(node, user, LoginHelper.getUser(node, currentChatPartner));
-		audioUtils.sendRequest(REQUEST_TYPE.SEND, currentChatPartner);
+		audioUtils = new AudioUtils(node, user, LoginHelper.retrieveUser(currentChatPartner, node));
+		AudioRequest request = new AudioRequest(RequestType.SEND, currentChatPartner, node.getUser().getUsername());
+		RequestHandler.handleRequest(request, node);
 	}
 
 	public void startAudioCall() throws LineUnavailableException {
@@ -263,7 +284,10 @@ public class MainWindowController {
 		microphoneLbl.setGraphic(null);
 		microphoneMute = true;
 		audioUtils.endAudio();
-		audioUtils.sendRequest(REQUEST_TYPE.ABORTED, currentChatPartner);
+		AudioRequest request = new AudioRequest(RequestType.ABORTED, currentChatPartner, node.getUser().getUsername());
+		RequestHandler.handleRequest(request, node);
+		
+		//audioUtils.sendRequest(RequestType.ABORTED, currentChatPartner);
 		audioUtils = null;
 	}
 
@@ -272,11 +296,11 @@ public class MainWindowController {
 		microphoneMute = !microphoneMute;
 		Image image;
 		if (microphoneMute) {
-			image = new Image(getClass().getResourceAsStream("/microphone_mute.png"));
+			image = new Image(MainWindowController.class.getResourceAsStream("/microphone_mute.png"));
 			muteBTn.setText("Unmute microphone");
 			audioUtils.mute();
 		} else {
-			image = new Image(getClass().getResourceAsStream("/microphone.png"));
+			image = new Image(MainWindowController.class.getResourceAsStream("/microphone.png"));
 			muteBTn.setText("Mute microphone");
 			audioUtils.unmute();
 		}
@@ -284,7 +308,10 @@ public class MainWindowController {
 	}
 
 	public void askAudioCall(String username) throws IOException {
-		makeAudioCallDialog(username);
+	  // TODO: Fehlerbehebung
+    //  AudioRequest request = new AudioRequest(RequestType.SEND, username, node.getUser().getUsername());
+     // RequestHandler.handleRequest(request, node);
+	  makeAudioCallDialog(username);
 	}
 
 	public void acceptAudioCall(String username)
@@ -293,8 +320,10 @@ public class MainWindowController {
 		if (audioUtils != null) {
 			audioUtils.endAudio();
 		}
-		audioUtils = new AudioUtils(node, user, LoginHelper.getUser(node, username));
-		audioUtils.sendRequest(REQUEST_TYPE.ACCEPTED, username);
+		AudioRequest request = new AudioRequest(RequestType.ACCEPTED, username, node.getUser().getUsername());
+		RequestHandler.handleRequest(request, node);
+		
+		audioUtils = new AudioUtils(node, user, LoginHelper.retrieveUser(username, node));
 		startAudioCall();
 
 		// set chatpane and audiopane
@@ -307,13 +336,8 @@ public class MainWindowController {
 
 	public void rejectAudioCall(String username) throws ClassNotFoundException, IOException {
 		mainPane.setTop(null);
-		if (audioUtils == null) {
-			audioUtils = new AudioUtils(node, user, null);
-			audioUtils.sendRequest(REQUEST_TYPE.REJECTED, username);
-			audioUtils = null;
-		} else {
-			audioUtils.sendRequest(REQUEST_TYPE.REJECTED, username);
-		}
+		AudioRequest request = new AudioRequest(RequestType.REJECTED, username, node.getUser().getUsername());
+		RequestHandler.handleRequest(request, node);
 		log.info("rejected audio call with: " + username);
 	}
 
@@ -380,9 +404,25 @@ public class MainWindowController {
 
 		friendlist.getChildren().add(label);
 	}
+	
+	public Object handleReceiveMessage(PeerAddress peerAddress, Object object){
+	  log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
+      Message m = (Message) object;
+      if(m instanceof ChatMessage){
+        ChatMessage chatMessage = (ChatMessage) m;
+        addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), chatMessage.getDate());
+      }
+      else{
+        //TODO!
+      }
+  
+      return 0;
+	}
 
-	public void addReceivedMessage(String sender, String message) {
-		chatText.setText(chatText.getText() + "\n" + sender + ": " + message);
+	public void addReceivedMessage(String sender, String message, Date date) {
+	  //TODO: Change to a fitting date format
+	  DateFormat f = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
+	  chatText.setText(chatText.getText() + "\n" +"[" + f.format(date) +"] "+ sender + ": " + message);
 	}
 
 	public void shutdownNode() {
@@ -407,5 +447,11 @@ public class MainWindowController {
 			btnWrapperAudio.setVisible(true);
 		}
 	}
+	
+	private void sendFriendRequest(User user, Node node) {
+      // TODO Send a friend Request and add Friend with Status Waiting 
+	  Friend friend = new Friend();
+      FriendRequest request = new FriendRequest(user.getUsername(), friend, RequestType.SEND);
+    }
 
 }
