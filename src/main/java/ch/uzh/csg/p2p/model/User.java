@@ -15,7 +15,7 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
-	private Set<Number160> friendStorage;
+	private List<String> friendStorage;
 	private List<String> audioMessageStorage;
 	private List<String> chatMessageStorage;
 	
@@ -24,16 +24,16 @@ public class User implements Serializable {
 	     this.username = username;
 	     this.password = password;
 	     this.peerAddress = peerAddress;
-	     setFriendStorage(new HashSet<Number160>());
+	     setFriendStorage(new ArrayList<String>());
 	     setAudioMessageStorage(new ArrayList<String>());
 	     setChatMessageStorage(new ArrayList<String>());
 	 }
 	
-	public Set<Number160> getFriendStorage() {
+	public List<String> getFriendStorage() {
     return friendStorage;
   }
 
-  public void setFriendStorage(Set<Number160> friendStorage) {
+  public void setFriendStorage(List<String> friendStorage) {
     this.friendStorage = friendStorage;
   }
 
@@ -77,7 +77,7 @@ public class User implements Serializable {
 		this.peerAddress = peerAddress;
 	}
 	
-	public void addFriend(Number160 hash){
+	public void addFriend(String hash){
 	  friendStorage.add(hash);
 	}
 	

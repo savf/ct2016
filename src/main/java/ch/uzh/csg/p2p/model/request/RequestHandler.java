@@ -140,9 +140,9 @@ public class RequestHandler {
     if(request instanceof FriendRequest){
       FriendRequest r = (FriendRequest) request;
       Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
-      Number160 hash = Number160.createHash(FRIEND_PREFIX + friend.getName());
+     // Number160 hash = Number160.createHash(FRIEND_PREFIX + friend.getName());
       User user = node.getUser();
-      user.addFriend(hash);
+      user.addFriend(r.getSenderName());
       node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
       .start();
     }

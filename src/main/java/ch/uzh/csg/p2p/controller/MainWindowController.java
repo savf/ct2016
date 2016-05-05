@@ -210,7 +210,7 @@ public class MainWindowController {
 	         if(alreadyFriend){
 	             button.setDisable(true); 
 	             button.setOpacity(0.5);
-	             button.setVisible(true);
+	             button.setVisible(false);
 	            }
 			hBox.getChildren().add(button);
 
@@ -472,8 +472,8 @@ public class MainWindowController {
   }
   
   private boolean checkAlreadyFriend(String username) {
-    for(Number160 n : node.getUser().getFriendStorage()){
-      if(Number160.createHash(username).equals(n)){
+    for(String n : node.getUser().getFriendStorage()){
+      if((username).equals(n)){
         return true;
       }
     }
