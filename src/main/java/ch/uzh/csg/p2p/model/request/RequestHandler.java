@@ -64,30 +64,6 @@ public class RequestHandler {
         } catch (IOException e) {
           e.printStackTrace();
         }
-      case ACCEPTED:
-        try {
-          return handleAcceptRequest(request, node);
-        } catch (ClassNotFoundException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      case REJECTED:
-        try {
-          return handleRejectRequest(request, node);
-        } catch (ClassNotFoundException e1) {
-          e1.printStackTrace();
-        } catch (IOException e1) {
-          e1.printStackTrace();
-        }
-      case ABORTED:
-        try {
-          return handleAbortRequest(request, node);
-        } catch (ClassNotFoundException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
       default:
         return null;
     }
