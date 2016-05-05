@@ -31,6 +31,7 @@ public class MainWindow {
 	private AnchorPane infoPane;
 	private AnchorPane chatPane;
 	private AnchorPane audioPane;
+	private AnchorPane videoPane;
 	private AnchorPane friendlistPane;
 	private AnchorPane friendsearchResultPane;
 	private AnchorPane requestPane;
@@ -57,6 +58,7 @@ public class MainWindow {
 		initializeInfoPane();
 		initializeChatPane();
 		initializeAudioPane();
+		initializeVideoPane();
 		initializeFriendlistPane();
 		initializeFriendsearchResultPane();
 		initializeRequestPane();
@@ -71,6 +73,7 @@ public class MainWindow {
 		mainWindowController.setInfoPane(infoPane);
 		mainWindowController.setChatPane(chatPane);
 		mainWindowController.setAudioPane(audioPane);
+		mainWindowController.setVideoPane(videoPane);
 		mainWindowController.setFriendlistPane(friendlistPane);
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
@@ -123,6 +126,12 @@ public class MainWindow {
 		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("AudioPane.fxml"));
 		loader.setController(mainWindowController);
 		audioPane = loader.load();
+	}
+	
+	private void initializeVideoPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("VideoPane.fxml"));
+		loader.setController(mainWindowController);
+		videoPane = loader.load();
 	}
 
 	private void initializeFriendlistPane() throws IOException {

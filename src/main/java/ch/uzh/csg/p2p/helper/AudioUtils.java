@@ -3,7 +3,6 @@ package ch.uzh.csg.p2p.helper;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,16 +14,21 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.TargetDataLine;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class AudioUtils {
 	public static AudioFormat FORMAT = new AudioFormat(8000.0f, 16, 1, true, true);
+	private Logger log = LoggerFactory.getLogger(AudioUtils.class);
 
 	private boolean running;
 	private boolean mute;
@@ -74,7 +78,12 @@ public class AudioUtils {
 											sender.getUsername(), receiver.getUsername(), date,
 											EncoderUtils.byteBufferToByteArray(byteBufferList));
 									MessageRequest request = new MessageRequest(audioMessage, RequestType.SEND);
-									RequestHandler.handleRequest(request, node);
+									try {
+										RequestHandler.handleRequest(request, node);
+									} catch (Exception e) {
+										log.error("AudioMessage not successed");
+										e.printStackTrace();
+									}
 								}
 							}
 						}
@@ -114,10 +123,10 @@ public class AudioUtils {
 		speaker.close();
 	}
 
-	public void endAudio() throws ClassNotFoundException, IOException {
+	public void endAudio() throws ClassNotFoundException, IOException, LineUnavailableException {
 		running = false;
 		for (User receiver : receiverList) {
-		  AudioRequest request = new AudioRequest(RequestType.ABORTED, receiver.getUsername(), sender.getUsername());
+		  AudioRequest request = new AudioRequest(RequestType.ABORTED, RequestStatus.CLOSED, receiver.getUsername(), sender.getUsername());
 		  RequestHandler.handleRequest(request, node);
 		}
 	}
