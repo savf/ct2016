@@ -5,7 +5,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -18,6 +20,7 @@ import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
@@ -49,9 +52,8 @@ public class Node {
 
 	private Logger log;
 	private User user;
+	private List<Friend> friendList;
 
-	//TODO: delete MWC from Node
-	private MainWindowController mainWindowController;
 	protected PeerDHT peer;
 
 	public Node(int nodeId, String ip, String username, String password,
@@ -59,9 +61,7 @@ public class Node {
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
 		log = LoggerFactory.getLogger("Node from user: " + username);
-
-		this.mainWindowController = mainWindowController;
-
+		
 		// if not a BootstrapNode
 		if (ip != null) {
 			createPeer(nodeId, username, password, false);
@@ -70,10 +70,15 @@ public class Node {
 		else {
 		  createPeer(nodeId, username, password, true);
 		}
-
+		friendList = loadFriendlistFromDHT();
 	}
 
-	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
+	private List<Friend> loadFriendlistFromDHT() {
+    List<Friend> list = new ArrayList<Friend>();
+    return list;
+  }
+
+  protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
 			throws IOException, ClassNotFoundException {
 		Bindings b = new Bindings().listenAny();
 		peer = new PeerBuilderDHT(
@@ -110,20 +115,30 @@ public class Node {
 		
 		final Object obj = object;
 		
-		if (object instanceof AudioMessage) {
-			AudioMessage message = (AudioMessage) object;
-			try {
-				AudioUtils.playAudio(EncoderUtils.byteArrayToByteBuffer(message.getData()));
-			} catch (LineUnavailableException e) {
-				log.error("AudioMessage could not be played: " + e);
-			}
-		} else if (object instanceof AudioRequest) {
-			AudioRequest audioRequest = (AudioRequest) object;
-			handleAudioRequest(audioRequest);
-		} 
-		else if(object instanceof ChatMessage){
-		  ChatMessage chatMessage = (ChatMessage) object;
-		  mainWindowController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), new Date());
+		//MessageRequest messageRequest = new MessageRequest();
+		if(object instanceof Message){
+		  MessageRequest messageRequest = new MessageRequest();
+		  messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((Message) object);
+          RequestHandler.handleRequest(messageRequest, this);
+		}
+        /*if (object instanceof AudioMessage) {
+          messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((AudioMessage) object);
+          RequestHandler.handleRequest(messageRequest, this);
+      } else if (object instanceof ChatMessage) {
+          messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((ChatMessage) object);
+          RequestHandler.handleRequest(messageRequest, this);}*/
+      /* else if (object instanceof AudioRequest) {
+          AudioRequest audioRequest = (AudioRequest) object;
+          audioRequest.setType(RequestType.RECEIVE);
+          RequestHandler.handleRequest(audioRequest, this);
+      }*/
+		else if(object instanceof Request){
+		  Request r = (Request) object;
+		  r.setType(RequestType.RECEIVE);
+		  RequestHandler.handleRequest(r, this);
 		}
 		else {
           System.out.println("else");
@@ -131,27 +146,6 @@ public class Node {
       
 		return 0;
 	} 
-
-	private void handleAudioRequest(AudioRequest request)
-			throws IOException, LineUnavailableException, ClassNotFoundException {
-		switch (request.getType()) {
-		  // TODO: let RequestHandler handle all P2P things!
-			case SEND:
-				mainWindowController.askAudioCall(request.getSenderName());
-				break;
-			case ACCEPTED:
-				mainWindowController.startAudioCall();
-				break;
-			case REJECTED:
-				mainWindowController.audioCallRejected();
-				break;
-			case ABORTED:
-				mainWindowController.audioCallAborted();
-				break;
-			default:
-				break;
-		}
-	}
 
 	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
 	  BootstrapRequest request = new BootstrapRequest(user.getPeerAddress(), knownIP ,RequestType.SEND);
@@ -185,6 +179,10 @@ public class Node {
 	public User getUser(){
 	  return user;
 	}
+	
+	public List<Friend> getFriendList(){
+	  return friendList;
+	}
 
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
@@ -192,5 +190,18 @@ public class Node {
 			peer.shutdown();
 		}
 	}
+
+  public Friend getFriend(String currentChatPartner) {
+    for(Friend f : friendList){
+      if(f.getName().equals(currentChatPartner)){
+        return f;
+      }
+    }
+    return null;
+  }
+
+  public void addFriend(Friend friend) {
+   friendList.add(friend);
+  }
 
 }

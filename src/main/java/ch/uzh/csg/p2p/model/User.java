@@ -2,8 +2,11 @@ package ch.uzh.csg.p2p.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 
 public class User implements Serializable {
@@ -12,7 +15,7 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
-	private List<String> friendStorage;
+	private Set<Number160> friendStorage;
 	private List<String> audioMessageStorage;
 	private List<String> chatMessageStorage;
 	
@@ -21,16 +24,16 @@ public class User implements Serializable {
 	     this.username = username;
 	     this.password = password;
 	     this.peerAddress = peerAddress;
-	     setFriendStorage(new ArrayList<String>());
+	     setFriendStorage(new HashSet<Number160>());
 	     setAudioMessageStorage(new ArrayList<String>());
 	     setChatMessageStorage(new ArrayList<String>());
 	 }
 	
-	public List<String> getFriendStorage() {
+	public Set<Number160> getFriendStorage() {
     return friendStorage;
   }
 
-  public void setFriendStorage(List<String> friendStorage) {
+  public void setFriendStorage(Set<Number160> friendStorage) {
     this.friendStorage = friendStorage;
   }
 
@@ -72,6 +75,10 @@ public class User implements Serializable {
 
 	public void setPeerAddress(PeerAddress peerAddress) {
 		this.peerAddress = peerAddress;
+	}
+	
+	public void addFriend(Number160 hash){
+	  friendStorage.add(hash);
 	}
 	
 	@Override

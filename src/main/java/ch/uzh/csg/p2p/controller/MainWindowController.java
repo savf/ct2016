@@ -11,11 +11,14 @@ import javax.sound.sampled.LineUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
+import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
@@ -23,6 +26,7 @@ import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.screens.MainWindow;
@@ -164,10 +168,11 @@ public class MainWindowController {
 		} else {
 		  String sender = node.getUser().getUsername();
 	      String receiver = currentChatPartner;
+	      PeerAddress receiverAddress = node.getFriend(currentChatPartner).getPeerAddress();
 	      String message = messageText.getText();
 	      
 	      Date date = new Date();
-	      ChatMessage m = new ChatMessage(sender, receiver, date, message);
+	      ChatMessage m = new ChatMessage(sender, receiver, receiverAddress, date, message);
 	      
 	      MessageRequest request = new MessageRequest(m, RequestType.SEND);
 	      // TODO: change to a fitting Date format!
@@ -190,7 +195,7 @@ public class MainWindowController {
 			Label label = new Label(user.getUsername());
 			label.getStyleClass().add("label");
 			hBox.getChildren().add(label);
-
+			boolean alreadyFriend = checkAlreadyFriend(user.getUsername());
 			Button button = new Button("Send friend request");
 			button.getStyleClass().add("btn");
 			button.getStyleClass().add("friendRequestBtn");
@@ -198,11 +203,15 @@ public class MainWindowController {
 
 				public void handle(ActionEvent event) {
 				    sendFriendRequest(user, node);
-					addUserToFriendList(user);
 					searchResultList.getChildren().clear();
 					rightPane.setTop(infoPane);
 				}
 			});
+	         if(alreadyFriend){
+	             button.setDisable(true); 
+	             button.setOpacity(0.5);
+	             button.setVisible(true);
+	            }
 			hBox.getChildren().add(button);
 
 			searchResultList.getChildren().add(hBox);
@@ -210,14 +219,14 @@ public class MainWindowController {
 		friendSearchText.setText("");
 	}
 
-	@FXML
+  @FXML
 	public void leaveChatHandler() throws ClassNotFoundException, IOException {
 		rightPane.setTop(infoPane);
 		rightPane.setBottom(null);
 
 		if (audioUtils != null) {
 			audioUtils.endAudio();
-			AudioRequest request = new AudioRequest(RequestType.ABORTED, currentChatPartner, node.getUser().getUsername());
+			AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, currentChatPartner, node.getFriend(currentChatPartner).getPeerAddress(), node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 			//audioUtils.sendRequest(RequestType.ABORTED, currentChatPartner);
 			audioUtils = null;
@@ -242,11 +251,83 @@ public class MainWindowController {
 		microphoneLbl.setGraphic(new ImageView(image));
 		muteBTn.setText("Mute microphone");
 		audioUser1.setText(currentChatPartner + " calling...");
-		audioUtils = new AudioUtils(node, user, LoginHelper.retrieveUser(currentChatPartner, node));
-		AudioRequest request = new AudioRequest(RequestType.SEND, currentChatPartner, node.getUser().getUsername());
+		// TODO: evtl können wir ohne retrieveUser arbeiten
+		User receiver = LoginHelper.retrieveUser(currentChatPartner, node);
+		audioUtils = new AudioUtils(node, user, receiver);
+		AudioRequest request = new AudioRequest(RequestType.SEND, currentChatPartner, receiver.getPeerAddress(), node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 	}
 
+	   public void askAudioCall(String username) throws IOException {
+	      // TODO: Fehlerbehebung
+	    //  AudioRequest request = new AudioRequest(RequestType.SEND, username, node.getUser().getUsername());
+	     // RequestHandler.handleRequest(request, node);
+	      makeAudioCallDialog(username);
+	    }
+	   
+	    private void makeAudioCallDialog(final String username) {
+	        Platform.runLater(new Runnable() {
+	            public void run() {
+	                mainPane.setTop(requestPane);
+	                requestWindowLabel.setText("Do you want to start an audio call with " + username);
+	            }
+	        });
+	        requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+	            public void handle(ActionEvent event) {
+	                try {
+	                    acceptAudioCall(username);
+	                } catch (Exception e) {
+	                    log.error("Cannot accept audio call: " + e);
+	                }
+	                mediaPlayer.stop();
+	            }
+	        });
+	        requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+	            public void handle(ActionEvent event) {
+	                try {
+	                    rejectAudioCall(username);
+	                } catch (Exception e) {
+	                    log.error("Cannot reject audio call: " + e);
+	                }
+	                mediaPlayer.stop();
+	            }
+	        });
+
+	        String musicFile = "resources/ring.mp3";
+	        Media sound = new Media(new File(musicFile).toURI().toString());
+	        mediaPlayer = new MediaPlayer(sound);
+	        mediaPlayer.play();
+	    }
+	    
+	    public void acceptAudioCall(String username)
+            throws ClassNotFoundException, IOException, LineUnavailableException {
+        mainPane.setTop(null);
+        if (audioUtils != null) {
+            audioUtils.endAudio();
+        }
+        AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, username, node.getFriend(username).getPeerAddress(), node.getUser().getUsername());
+        RequestHandler.handleRequest(request, node);
+        
+        audioUtils = new AudioUtils(node, user, LoginHelper.retrieveUser(username, node));
+        startAudioCall();
+
+        // set chatpane and audiopane
+        currentChatPartner = username;
+        rightPane.setBottom(chatPane);
+        rightPane.setTop(audioPane);
+
+        log.info("accept audio call with: " + username);
+    }
+
+    public void rejectAudioCall(String username) throws ClassNotFoundException, IOException {
+        mainPane.setTop(null);
+        AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.REJECTED, username, node.getFriend(username).getPeerAddress(),  node.getUser().getUsername());
+        RequestHandler.handleRequest(request, node);
+        log.info("rejected audio call with: " + username);
+    }
+	
 	public void startAudioCall() throws LineUnavailableException {
 		Platform.runLater(new Runnable() {
 			public void run() {
@@ -284,7 +365,7 @@ public class MainWindowController {
 		microphoneLbl.setGraphic(null);
 		microphoneMute = true;
 		audioUtils.endAudio();
-		AudioRequest request = new AudioRequest(RequestType.ABORTED, currentChatPartner, node.getUser().getUsername());
+		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, currentChatPartner, node.getFriend(currentChatPartner).getPeerAddress(), node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
 		//audioUtils.sendRequest(RequestType.ABORTED, currentChatPartner);
@@ -306,76 +387,98 @@ public class MainWindowController {
 		}
 		microphoneLbl.setGraphic(new ImageView(image));
 	}
+	
+	
+	/*
+     * Friend PART
+     */
+	
+	public void askFriend(FriendRequest request){
+	  final FriendRequest r = request;
+	  Platform.runLater(new Runnable() {
+        public void run() {
+            mainPane.setTop(requestPane);
+            requestWindowLabel.setText("Do you want to be friends with " + r.getSenderName() + "?");
+        }
+    });
+    requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
 
-	public void askAudioCall(String username) throws IOException {
-	  // TODO: Fehlerbehebung
-    //  AudioRequest request = new AudioRequest(RequestType.SEND, username, node.getUser().getUsername());
-     // RequestHandler.handleRequest(request, node);
-	  makeAudioCallDialog(username);
+        public void handle(ActionEvent event) {
+            try {
+                acceptFriendship(r);
+            } catch (Exception e) {
+                log.error("Cannot accept friendship request: " + e);
+            }
+        }
+    });
+    requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+        public void handle(ActionEvent event) {
+            try {
+                rejectFriendship(r);
+            } catch (Exception e) {
+                log.error("Cannot reject friendship request: " + e);
+            }
+        }
+    });
 	}
+	
+	private void sendFriendRequest(User user, Node node) {
+	   FriendRequest request = new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(), user.getUsername(), RequestType.SEND);
+	   RequestHandler.handleRequest(request, node);
+	 }
 
-	public void acceptAudioCall(String username)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		mainPane.setTop(null);
-		if (audioUtils != null) {
-			audioUtils.endAudio();
-		}
-		AudioRequest request = new AudioRequest(RequestType.ACCEPTED, username, node.getUser().getUsername());
-		RequestHandler.handleRequest(request, node);
-		
-		audioUtils = new AudioUtils(node, user, LoginHelper.retrieveUser(username, node));
-		startAudioCall();
+	protected void rejectFriendship(FriendRequest r) {
+	  mainPane.setTop(null);
+	  FriendRequest request = new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(), r.getSenderName(), RequestType.SEND);    
+      request.setStatus(RequestStatus.REJECTED);
+      RequestHandler.handleRequest(request, node);
+  }
 
-		// set chatpane and audiopane
-		currentChatPartner = username;
-		rightPane.setBottom(chatPane);
-		rightPane.setTop(audioPane);
-
-		log.info("accept audio call with: " + username);
-	}
-
-	public void rejectAudioCall(String username) throws ClassNotFoundException, IOException {
-		mainPane.setTop(null);
-		AudioRequest request = new AudioRequest(RequestType.REJECTED, username, node.getUser().getUsername());
-		RequestHandler.handleRequest(request, node);
-		log.info("rejected audio call with: " + username);
-	}
-
-	private void makeAudioCallDialog(final String username) {
-		Platform.runLater(new Runnable() {
-			public void run() {
-				mainPane.setTop(requestPane);
-				requestWindowLabel.setText("Do you want to start an audio call with " + username);
-			}
-		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				try {
-					acceptAudioCall(username);
-				} catch (Exception e) {
-					log.error("Cannot accept audio call: " + e);
-				}
-				mediaPlayer.stop();
-			}
-		});
-		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				try {
-					rejectAudioCall(username);
-				} catch (Exception e) {
-					log.error("Cannot reject audio call: " + e);
-				}
-				mediaPlayer.stop();
-			}
-		});
-
-		String musicFile = "resources/ring.mp3";
-		Media sound = new Media(new File(musicFile).toURI().toString());
-		mediaPlayer = new MediaPlayer(sound);
-		mediaPlayer.play();
-	}
+  protected void acceptFriendship(FriendRequest r) {
+    mainPane.setTop(null);
+    FriendRequest request = new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(), r.getSenderName(), RequestType.SEND);
+    request.setStatus(RequestStatus.ACCEPTED);
+    RequestHandler.handleRequest(request, node);
+    Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
+    storeFriend(friend);
+    addUserToFriendList(friend);
+  }
+  
+  private void storeFriend(Friend f){
+    FriendRequest r = new FriendRequest(f.getPeerAddress(), f.getName(), null, RequestType.STORE);
+    RequestHandler.handleRequest(r, node);   
+  }
+  
+  public void friendshipRejected(){
+    // TODO: show a message with username rejected your friendship request
+    Platform.runLater(new Runnable() {
+      public void run() {
+          rightPane.setTop(null);
+      }
+  });
+  }
+  
+  public void friendshipAccepted(Friend f){
+    // TODO: add a message with username accepted your friendship
+    final Friend friend = f;
+    Platform.runLater(new Runnable() {
+      public void run() {
+        mainPane.setTop(null);
+        storeFriend(friend);
+        addUserToFriendList(friend);
+      }
+  });
+  }
+  
+  private boolean checkAlreadyFriend(String username) {
+    for(Number160 n : node.getUser().getFriendStorage()){
+      if(Number160.createHash(username).equals(n)){
+        return true;
+      }
+    }
+    return false;
+  }
 
 	/*
 	 * VIDEO PART
@@ -386,11 +489,11 @@ public class MainWindowController {
 		// TODO
 	}
 
-	private void addUserToFriendList(User user) {
+	private void addUserToFriendList(Friend friend) {
 		HBox hBox = new HBox();
 		hBox.setSpacing(40);
-
-		Label label = new Label(user.getUsername());
+		final String labelname = friend.getName();
+		Label label = new Label(labelname);
 		label.getStyleClass().add("label");
 		label.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
@@ -403,17 +506,25 @@ public class MainWindowController {
 		hBox.getChildren().add(label);
 
 		friendlist.getChildren().add(label);
+		node.addFriend(friend);
 	}
 	
-	public Object handleReceiveMessage(PeerAddress peerAddress, Object object){
-	  log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
-      Message m = (Message) object;
+	public Object handleReceiveMessage(Message m){
+	  log.info("received message: " + m.toString() + " from: " + m.getSenderID());
       if(m instanceof ChatMessage){
         ChatMessage chatMessage = (ChatMessage) m;
         addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), chatMessage.getDate());
       }
+      else if(m instanceof AudioMessage){
+        AudioMessage audioMessage = (AudioMessage) m;
+        try {
+          AudioUtils.playAudio(EncoderUtils.byteArrayToByteBuffer(audioMessage.getData()));
+        } catch (LineUnavailableException e) {
+          e.printStackTrace();
+        }
+      }
       else{
-        //TODO!
+        
       }
   
       return 0;
@@ -447,11 +558,5 @@ public class MainWindowController {
 			btnWrapperAudio.setVisible(true);
 		}
 	}
-	
-	private void sendFriendRequest(User user, Node node) {
-      // TODO Send a friend Request and add Friend with Status Waiting 
-	  Friend friend = new Friend();
-      FriendRequest request = new FriendRequest(user.getUsername(), friend, RequestType.SEND);
-    }
 
 }

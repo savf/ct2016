@@ -5,13 +5,15 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+import net.tomp2p.peers.PeerAddress;
+
 public class VideoMessage extends Message {
 
   private static final long serialVersionUID = 5905024972095013097L;
   private List<BufferedImage> data;
   
-  public VideoMessage(String sender, String receiver, Date date, List<BufferedImage> data){
-    super(sender, receiver, date);
+  public VideoMessage(String sender, String receiver, PeerAddress receiverAddress, Date date, List<BufferedImage> data){
+    super(sender, receiver, receiverAddress, date);
     setData(data);
   }
   

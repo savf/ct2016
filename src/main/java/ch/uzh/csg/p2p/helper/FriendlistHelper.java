@@ -47,7 +47,7 @@ public class FriendlistHelper {
 	}
 	
 	private static User retrieveUser(String username, Node node){
-      User userToRetrieve = new User(username, "", null);
+      User userToRetrieve = new User(username, null, null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
       User user = (User)RequestHandler.handleRequest(requestRetrieve, node);
       return user;

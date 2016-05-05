@@ -1,36 +1,56 @@
 package ch.uzh.csg.p2p.model.request;
 
+import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.model.Friend;
 
 public class FriendRequest extends Request {
-
-  private Friend friend;
-  private String receiverID;
+  
+  private String senderName;
+  private PeerAddress senderPeerAddress;
+  private String receiverName;
   
   public FriendRequest(){
     super();
-    setFriend(new Friend());
-    setReceiverID("");
+    //setFriend(new Friend());
+    setReceiverName("");
   }
   
-  public FriendRequest(String receiver, Friend friend, RequestType type){
+  public FriendRequest(PeerAddress senderPeerAddress, String sendername, String receiver, RequestType type){
     super(type);
-    setFriend(friend);
-    setReceiverID(receiver);
+    //setFriend(friend);
+    setSenderPeerAddress(senderPeerAddress);
+    setSenderName(sendername);
+    setReceiverName(receiver);
   }
   
-  public String getReceiverID() {
-    return receiverID;
+  public String getReceiverName() {
+    return receiverName;
   }
-  public void setReceiverID(String receiverID) {
-    this.receiverID = receiverID;
+  public void setReceiverName(String name) {
+    this.receiverName = name;
   }
 
-  public Friend getFriend() {
+  public PeerAddress getSenderPeerAddress() {
+    return senderPeerAddress;
+  }
+
+  public void setSenderPeerAddress(PeerAddress senderPeerAddress) {
+    this.senderPeerAddress = senderPeerAddress;
+  }
+
+  public String getSenderName() {
+    return senderName;
+  }
+
+  public void setSenderName(String name) {
+    this.senderName = name;
+  }
+
+  /*public Friend getFriend() {
     return friend;
   }
 
   public void setFriend(Friend friend) {
     this.friend = friend;
-  }
+  }*/
 }

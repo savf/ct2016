@@ -21,6 +21,7 @@ import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class AudioUtils {
@@ -71,7 +72,7 @@ public class AudioUtils {
 								Date date = new Date();
 								for (User receiver : receiverList) {
 									AudioMessage audioMessage = new AudioMessage(
-											sender.getUsername(), receiver.getUsername(), date,
+											sender.getUsername(), receiver.getUsername(), receiver.getPeerAddress(), date,
 											EncoderUtils.byteBufferToByteArray(byteBufferList));
 									MessageRequest request = new MessageRequest(audioMessage, RequestType.SEND);
 									RequestHandler.handleRequest(request, node);
@@ -117,7 +118,7 @@ public class AudioUtils {
 	public void endAudio() throws ClassNotFoundException, IOException {
 		running = false;
 		for (User receiver : receiverList) {
-		  AudioRequest request = new AudioRequest(RequestType.ABORTED, receiver.getUsername(), sender.getUsername());
+		  AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, receiver.getUsername(), receiver.getPeerAddress(), sender.getUsername());
 		  RequestHandler.handleRequest(request, node);
 		}
 	}

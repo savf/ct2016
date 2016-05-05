@@ -4,18 +4,22 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
 
+import net.tomp2p.peers.PeerAddress;
+
 public abstract class Message implements Serializable{
 
   private String senderID;
   private String receiverID;
+  private PeerAddress receiverAddress;
   private Date date;
   
   public Message(){}
   
-  public Message(String sender, String receiver, Date date){
+  public Message(String sender, String receiver, PeerAddress address, Date date){
     setSenderID(sender);
     setReceiverID(receiver);
     setDate(date);
+    setReceiverAddress(address);
   }
 
   public String getSenderID() {
@@ -45,5 +49,13 @@ public abstract class Message implements Serializable{
   public abstract Object getData();
   
   public abstract String toString();
+
+  public PeerAddress getReceiverAddress() {
+    return receiverAddress;
+  }
+
+  public void setReceiverAddress(PeerAddress receiverAddress) {
+    this.receiverAddress = receiverAddress;
+  }
  
 }
