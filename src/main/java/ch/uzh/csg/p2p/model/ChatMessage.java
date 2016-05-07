@@ -1,6 +1,5 @@
 package ch.uzh.csg.p2p.model;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 public class ChatMessage extends Message {

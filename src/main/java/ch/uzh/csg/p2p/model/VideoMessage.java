@@ -5,7 +5,7 @@ import java.util.List;
 
 public class VideoMessage extends Message {
 
-	private static final long serialVersionUID = 5905024972095013097L;
+	private static final long serialVersionUID = 1L;
 	private List<byte[]> data;
 
 	public VideoMessage(String sender, String receiver, Timestamp timestamp, List<byte[]> data) {
@@ -24,7 +24,8 @@ public class VideoMessage extends Message {
 
 	@Override
 	public String toString() {
-		 return "[sender="+getSenderID()+", receiver="+getReceiverID()+", date="+getDate().toString()+", videoData="+getData().toString()+"]";
+		return "[sender=" + getSenderID() + ", receiver=" + getReceiverID() + ", date="
+				+ getDate().toString() + ", videoData=" + getData().toString() + "]";
 	}
 
 }

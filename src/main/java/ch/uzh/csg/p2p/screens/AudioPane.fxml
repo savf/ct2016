@@ -24,9 +24,6 @@
                </children>
             </HBox>
             <HBox fx:id="audioUserWrapper" alignment="CENTER">
-               <children>
-                  <Label fx:id="audioUser1" styleClass="audiUserClass" />
-               </children>
                <VBox.margin>
                   <Insets bottom="20.0" top="20.0" />
                </VBox.margin></HBox>
@@ -38,12 +35,8 @@
                         <String fx:value="redBtn" />
                      </styleClass>
                   </Button>
-                  <Button fx:id="muteBTn" mnemonicParsing="false" onAction="#muteHandler" styleClass="btn" text="Mute Microphone" />
-                  <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel">
-                  <styleClass>
-                        <String fx:value="btn" />
-                        </styleClass>
-                  </Label>
+                  <Button fx:id="muteBtn" mnemonicParsing="false" onAction="#muteHandler" styleClass="btn" text="Mute Microphone" />
+                  <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel" />
                </children></HBox>
          </children>
       </VBox>

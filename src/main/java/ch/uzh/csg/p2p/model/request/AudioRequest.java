@@ -2,9 +2,9 @@ package ch.uzh.csg.p2p.model.request;
 
 public class AudioRequest extends Request {
 
+	private static final long serialVersionUID = 1L;
 	String receiverName;
 	String senderName;
-	RequestStatus status;
 
 	public AudioRequest() {
 		super();
@@ -12,12 +12,17 @@ public class AudioRequest extends Request {
 		senderName = "";
 	}
 
-	public AudioRequest(RequestType type, RequestStatus status, String receiverName, String senderName) {
+	public AudioRequest(RequestType type, String receiverName, String senderName) {
 		super(type);
 		this.receiverName = receiverName;
 		this.senderName = senderName;
-		this.status = status;
 	}
+	
+	public AudioRequest(RequestType type, RequestStatus status, String receiverName, String senderName) {
+      super(type, status);
+      this.receiverName = receiverName;
+      this.senderName = senderName;
+  }
 
 	public void setReceiverName(String receiverName) {
 		this.receiverName = receiverName;
@@ -33,13 +38,5 @@ public class AudioRequest extends Request {
 
 	public String getSenderName() {
 		return senderName;
-	}
-	
-	public void setStatus(RequestStatus status){
-		this.status = status;
-	}
-	
-	public RequestStatus getStatus(){
-		return status;
 	}
 }

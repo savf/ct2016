@@ -14,9 +14,6 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.TargetDataLine;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.User;
@@ -28,7 +25,6 @@ import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class AudioUtils {
 	public static AudioFormat FORMAT = new AudioFormat(8000.0f, 16, 1, true, true);
-	private Logger log = LoggerFactory.getLogger(AudioUtils.class);
 
 	private boolean running;
 	private boolean mute;
@@ -41,6 +37,12 @@ public class AudioUtils {
 		this.sender = sender;
 		receiverList = new ArrayList<User>();
 		receiverList.add(receiver);
+	}
+	
+	public AudioUtils(Node node, User sender) {
+		this.node = node;
+		this.sender = sender;
+		receiverList = new ArrayList<User>();
 	}
 
 	public void startAudio() throws LineUnavailableException {
@@ -80,8 +82,7 @@ public class AudioUtils {
 									MessageRequest request = new MessageRequest(audioMessage, RequestType.SEND);
 									try {
 										RequestHandler.handleRequest(request, node);
-									} catch (Exception e) {
-										log.error("AudioMessage not successed");
+									} catch (LineUnavailableException e) {
 										e.printStackTrace();
 									}
 								}
@@ -124,10 +125,12 @@ public class AudioUtils {
 	}
 
 	public void endAudio() throws ClassNotFoundException, IOException, LineUnavailableException {
-		running = false;
-		for (User receiver : receiverList) {
-		  AudioRequest request = new AudioRequest(RequestType.ABORTED, RequestStatus.CLOSED, receiver.getUsername(), sender.getUsername());
-		  RequestHandler.handleRequest(request, node);
+		if(running) {
+			running = false;
+			for (User receiver : receiverList) {
+			  AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, receiver.getUsername(), sender.getUsername());
+			  RequestHandler.handleRequest(request, node);
+			}
 		}
 	}
 

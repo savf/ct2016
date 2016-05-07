@@ -53,6 +53,12 @@ public class VideoUtils {
 		receiverList = new ArrayList<User>();
 		receiverList.add(receiver);
 	}
+	
+	public VideoUtils(Node node, User sender) {
+		this.node = node;
+		this.sender = sender;
+		receiverList = new ArrayList<User>();
+	}
 
 	public void startVideo(ImageView imageView) throws LineUnavailableException {
 		running = true;
@@ -120,11 +126,13 @@ public class VideoUtils {
 	}
 
 	public void endVideo() throws ClassNotFoundException, IOException, LineUnavailableException {
-		running = false;
-		for (User receiver : receiverList) {
-			VideoRequest request = new VideoRequest(RequestType.ABORTED, RequestStatus.CLOSED,
-					receiver.getUsername(), sender.getUsername());
-			RequestHandler.handleRequest(request, node);
+		if(running) {
+			running = false;
+			for (User receiver : receiverList) {
+				VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
+						receiver.getUsername(), sender.getUsername());
+				RequestHandler.handleRequest(request, node);
+			}
 		}
 	}
 

@@ -3,16 +3,12 @@ package ch.uzh.csg.p2p;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.uzh.csg.p2p.controller.MainWindowController;
-import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.helper.VideoUtils;
 import ch.uzh.csg.p2p.model.AudioMessage;
@@ -21,9 +17,10 @@ import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.VideoMessage;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.VideoRequest;
-import ch.uzh.csg.p2p.model.request.RequestHandler;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
@@ -41,24 +38,20 @@ public class Node {
 	private Logger log;
 	private User user;
 
-	// TODO: delete MWC from Node
-	private MainWindowController mainWindowController;
 	protected PeerDHT peer;
 
-	public Node(int nodeId, String ip, String username, String password,
-			MainWindowController mainWindowController)
+	public Node(int nodeId, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
 		log = LoggerFactory.getLogger("Node from user: " + username);
-
-		this.mainWindowController = mainWindowController;
 
 		// if not a BootstrapNode
 		if (ip != null) {
 			createPeer(nodeId, username, password, false);
 			connectToNode(ip);
-		} else {
-			createPeer(nodeId, username, password, true);
+		}
+		else {
+		  createPeer(nodeId, username, password, true);
 		}
 
 	}
@@ -79,14 +72,14 @@ public class Node {
 		}
 		user = new User(username, password, peer.peerAddress());
 		if (isBootstrapNode) {
-			BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
-			RequestHandler.handleRequest(request, this);
+		  BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
+		  RequestHandler.handleRequest(request, this);
 		}
 		peer.peer().objectDataReply(new ObjectDataReply() {
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
-				return handleReceivedData(peerAddress, object);
-			}
-		});
+			  return handleReceivedData(peerAddress, object);			  
+			  }
+			});
 		// TODO: Indirect Replication or direct? Replication factor?
 		new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();
 	}
@@ -94,21 +87,18 @@ public class Node {
 
 	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
+		log.info("Received message: " + object.toString() + " from: " + peerAddress.toString());
+		MessageRequest messageRequest = new MessageRequest();
 
 		if (object instanceof AudioMessage) {
-			AudioMessage message = (AudioMessage) object;
-			try {
-				AudioUtils.playAudio(EncoderUtils.byteArrayToByteBuffer(message.getData()));
-			} catch (LineUnavailableException e) {
-				log.error("AudioMessage could not be played: " + e);
-			}
+			messageRequest.setType(RequestType.RECEIVE);
+			messageRequest.setMessage((AudioMessage) object);
+			RequestHandler.handleRequest(messageRequest, this);
 		} else if (object instanceof AudioRequest) {
 			AudioRequest audioRequest = (AudioRequest) object;
 			audioRequest.setType(RequestType.RECEIVE);
 			RequestHandler.handleRequest(audioRequest, this);
 		} else if (object instanceof VideoMessage) {
-			System.out.println("videomessage");
 			VideoMessage message = (VideoMessage) object;
 			VideoUtils.playVideo(message.getData());
 		} else if (object instanceof VideoRequest) {
@@ -116,10 +106,11 @@ public class Node {
 			videoRequest.setType(RequestType.RECEIVE);
 			RequestHandler.handleRequest(videoRequest, this);
 		} else if (object instanceof ChatMessage) {
-			ChatMessage chatMessage = (ChatMessage) object;
-			// UMWANDELN MIT REQUESTHANDLER
-			mainWindowController.addReceivedMessage(chatMessage.getSenderID(),
-					chatMessage.getData(), new Date());
+			messageRequest.setType(RequestType.RECEIVE);
+			messageRequest.setMessage((ChatMessage) object);
+			RequestHandler.handleRequest(messageRequest, this);
+		} else {
+			System.out.println("else");
 		}
 
 		return 0;
@@ -127,9 +118,8 @@ public class Node {
 
 	private void connectToNode(String knownIP)
 			throws ClassNotFoundException, IOException, LineUnavailableException {
-		BootstrapRequest request =
-				new BootstrapRequest(user.getPeerAddress(), knownIP, RequestType.SEND);
-		RequestHandler.handleRequest(request, this);
+	  BootstrapRequest request = new BootstrapRequest(RequestType.SEND, user.getPeerAddress(), knownIP);
+	  RequestHandler.handleRequest(request, this);
 	}
 
 	private int getPort() {
@@ -155,9 +145,9 @@ public class Node {
 	public PeerDHT getPeer() {
 		return peer;
 	}
-
-	public User getUser() {
-		return user;
+	
+	public User getUser(){
+	  return user;
 	}
 
 	public void shutdown() {

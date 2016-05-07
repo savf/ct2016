@@ -40,8 +40,8 @@
                   </Button>
                   <Region HBox.hgrow="ALWAYS" />
                   <Button fx:id="hideMyselfBtn" mnemonicParsing="false" onAction="#hideMyselfHandler" styleClass="btn" text="Hide myself" />
-                  <Button fx:id="muteBtnVideo" mnemonicParsing="false" onAction="#muteHandlerVideo" styleClass="btn" text="Mute Microphone" />
-                  <Label id="microphoneLbl" fx:id="microphoneLblAudio" styleClass="imageLabel" />
+                  <Button fx:id="muteMicrophoneBtn" mnemonicParsing="false" onAction="#muteMicrophoneHandler" styleClass="btn" text="Mute Microphone" />
+                  <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel" />
                   <Button fx:id="muteVideoBtn" mnemonicParsing="false" onAction="#muteVideoHandler" styleClass="btn" text="Mute Camera" />
                   <Label id="cameraLbl" fx:id="cameraLbl" styleClass="imageLabel" />
                </children></HBox>
