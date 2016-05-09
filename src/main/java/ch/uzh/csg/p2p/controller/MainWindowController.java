@@ -2,6 +2,7 @@ package ch.uzh.csg.p2p.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -155,6 +156,9 @@ public class MainWindowController {
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 			node = new Node(id, ip, username, password, this);
+			for(Friend f : node.getFriendList()){
+			  addUserToFriendList(f);
+			}
 	}
 
 	@FXML
@@ -443,6 +447,7 @@ public class MainWindowController {
     Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
     storeFriend(friend);
     addUserToFriendList(friend);
+    node.addFriend(friend);
   }
   
   private void storeFriend(Friend f){
@@ -467,11 +472,12 @@ public class MainWindowController {
         mainPane.setTop(null);
         storeFriend(friend);
         addUserToFriendList(friend);
+        node.addFriend(friend);
       }
   });
   }
   
-  private boolean checkAlreadyFriend(String username) {
+  private boolean checkAlreadyFriend(String username) throws UnsupportedEncodingException {
     for(String n : node.getUser().getFriendStorage()){
       if((username).equals(n)){
         return true;
@@ -506,7 +512,6 @@ public class MainWindowController {
 		hBox.getChildren().add(label);
 
 		friendlist.getChildren().add(label);
-		node.addFriend(friend);
 	}
 	
 	public Object handleReceiveMessage(Message m){

@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,10 +26,12 @@ import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.UserRequest;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
@@ -73,8 +76,15 @@ public class Node {
 		friendList = loadFriendlistFromDHT();
 	}
 
-	private List<Friend> loadFriendlistFromDHT() {
-    List<Friend> list = new ArrayList<Friend>();
+	private List<Friend> loadFriendlistFromDHT() throws UnsupportedEncodingException {
+	  ArrayList<Friend> list = new ArrayList<Friend>();
+    for(String friendName : user.getFriendStorage()){
+      FriendRequest r = new FriendRequest();
+      r.setSenderName(friendName);
+      r.setType(RequestType.RETRIEVE);
+      Friend friend = (Friend) RequestHandler.handleRequest(r, this);
+      list.add(friend);
+    }
     return list;
   }
 

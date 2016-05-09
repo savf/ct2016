@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p.helper;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.User;
@@ -13,7 +14,7 @@ public class LoginHelper {
 	public final static String USER_PREFIX = "user_";
 	public final static String ADDRESS_PREFIX = "address_";
 
-	public static boolean usernamePasswordCorrect(Node node, String username, String password) {	        
+	public static boolean usernamePasswordCorrect(Node node, String username, String password) throws UnsupportedEncodingException {	        
 	        User user = retrieveUser(username, node);
 	        if(user == null){
 	          return true;
@@ -42,7 +43,7 @@ public class LoginHelper {
 		storeUser(user, node);
 	}
 
-	public static Boolean userExists(Node node, String username) {
+	public static Boolean userExists(Node node, String username) throws UnsupportedEncodingException {
 	  User user = retrieveUser(username, node);
 		if (user != null) {
 			return true;
@@ -50,7 +51,7 @@ public class LoginHelper {
 		return false;
 	}
 
-	public static User retrieveUser(String username, Node node){
+	public static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
 	  User userToRetrieve = new User(username, "", null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
       User user = (User)RequestHandler.handleRequest(requestRetrieve, node);

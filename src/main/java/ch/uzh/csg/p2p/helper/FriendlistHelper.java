@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p.helper;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class FriendlistHelper {
 		*/
 	}
 	
-	private static User retrieveUser(String username, Node node){
+	private static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
       User userToRetrieve = new User(username, null, null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
       User user = (User)RequestHandler.handleRequest(requestRetrieve, node);

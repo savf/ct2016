@@ -10,8 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
@@ -143,6 +145,8 @@ public class RequestHandler {
      // Number160 hash = Number160.createHash(FRIEND_PREFIX + friend.getName());
       User user = node.getUser();
       user.addFriend(r.getSenderName());
+      // TODO: necessary?
+      node.getPeer().remove(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername()));
       node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
       .start();
     }
@@ -331,9 +335,10 @@ public class RequestHandler {
         futureGet.awaitUninterruptibly();
         User result = null;
         if(futureGet!= null && futureGet.data() != null){
-          if(futureGet.data().object() instanceof User){
-          result = (User) futureGet.data().object();
-          }
+          Object r = futureGet.data().object();
+          System.out.println("Test123: " + r.toString());
+          return (User) r;
+        //  result = (User) futureGet.data().object();
         }
         else{
           log.error("FutureGet was unsuccessful.");

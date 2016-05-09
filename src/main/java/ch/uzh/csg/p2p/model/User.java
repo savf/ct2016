@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p.model;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
