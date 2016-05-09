@@ -352,12 +352,6 @@ public class MainWindowController {
 			e1.printStackTrace();
 		}
 	}
-	
-	@FXML
-	public void startVideoHandler() {
-		// TODO: Implement
-		// TODO: Move to VideoPaneController
-	}
 
 	private void addUserToFriendList(User user) {
 		// TODO: Move this to FriendlistPaneController

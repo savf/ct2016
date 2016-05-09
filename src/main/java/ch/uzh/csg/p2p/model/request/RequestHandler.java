@@ -213,7 +213,7 @@ public class RequestHandler {
       }
       else if(message instanceof ChatMessage) {
     	  ChatMessage chatMessage = (ChatMessage) message;
-		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), new Date());
+		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
       }
       log.info(message.getReceiverID() + " received message: " + message.toString() + " from: " + message.getSenderID().toString());
       return message;

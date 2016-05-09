@@ -11,7 +11,7 @@
          <children>
             <HBox spacing="10.0">
                <children>
-                  <TextField id="friendSearchText" fx:id="friendSearchText" styleClass="input" />
+                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" styleClass="input" />
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
             </HBox>
