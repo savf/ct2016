@@ -54,3 +54,12 @@
 	-fx-text-fill: #FFFFFF;
 	-fx-alignment:center;
 }
+
+.audioUserRejected{
+	-fx-pref-height:100;
+	-fx-pref-width:100;
+	-fx-background-radius:50;
+	-fx-background-color: #D11010;
+	-fx-text-fill: #FFFFFF;
+	-fx-alignment:center;
+}

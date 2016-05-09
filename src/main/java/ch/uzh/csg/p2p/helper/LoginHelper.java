@@ -3,6 +3,8 @@ package ch.uzh.csg.p2p.helper;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import javax.sound.sampled.LineUnavailableException;
+
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.RequestType;
@@ -14,7 +16,7 @@ public class LoginHelper {
 	public final static String USER_PREFIX = "user_";
 	public final static String ADDRESS_PREFIX = "address_";
 
-	public static boolean usernamePasswordCorrect(Node node, String username, String password) throws UnsupportedEncodingException {	        
+	public static boolean usernamePasswordCorrect(Node node, String username, String password) throws LineUnavailableException {	        
 	        User user = retrieveUser(username, node);
 	        if(user == null){
 	          return true;
@@ -27,13 +29,13 @@ public class LoginHelper {
 	}
 
 	public static void saveUsernamePassword(Node node, String username, String password)
-			throws IOException {
+			throws IOException, LineUnavailableException {
 	  User user = new User(username, password, node.getPeer().peerAddress());
 	  storeUser(user, node);
 	}
 
 	public static void updatePeerAddress(Node node, String username)
-			throws ClassNotFoundException, IOException {
+			throws ClassNotFoundException, LineUnavailableException {
 	   // zuerst das bestehende User-Objekt laden
 	    User user = retrieveUser(username, node);
         if(user == null){
@@ -43,7 +45,8 @@ public class LoginHelper {
 		storeUser(user, node);
 	}
 
-	public static Boolean userExists(Node node, String username) throws UnsupportedEncodingException {
+	//public static Boolean userExists(Node node, String username) throws UnsupportedEncodingException {
+	public static Boolean userExists(Node node, String username) throws LineUnavailableException {
 	  User user = retrieveUser(username, node);
 		if (user != null) {
 			return true;
@@ -51,14 +54,15 @@ public class LoginHelper {
 		return false;
 	}
 
-	public static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
+	//public static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
+	public static User retrieveUser(String username, Node node) throws LineUnavailableException{
 	  User userToRetrieve = new User(username, "", null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
       User user = (User)RequestHandler.handleRequest(requestRetrieve, node);
       return user;
 	}
 	
-	private static void storeUser(User user, Node node){
+	private static void storeUser(User user, Node node) throws LineUnavailableException{
 	   UserRequest requestStore = new UserRequest(user, RequestType.STORE);
 	   RequestHandler.handleRequest(requestStore, node);
 	}

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.image.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
@@ -10,33 +11,39 @@
    <children>
       <VBox AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <children>
-            <HBox id="btnWrapperAudiot" fx:id="btnWrapperAudio" alignment="TOP_RIGHT" spacing="10.0" styleClass="btnWrapper" VBox.vgrow="ALWAYS">
+            <HBox id="btnWrapperVideo" fx:id="btnWrapperVideo" alignment="TOP_RIGHT" spacing="10.0" styleClass="btnWrapper" VBox.vgrow="ALWAYS">
                <children>
                   <Button fx:id="leaveChatBtn" mnemonicParsing="false" onAction="#leaveChatHandler" styleClass="btn" text="Leave Chat" />
-                  <Region HBox.hgrow="ALWAYS" />
                   <Button fx:id="addUserBtn" alignment="CENTER_RIGHT" mnemonicParsing="false" onAction="#addUserHandler" text="Add user to chat">
                      <styleClass>
                         <String fx:value="greenBtn" />
                         <String fx:value="btn" />
                      </styleClass>
                   </Button>
-                  <Button fx:id="startVideoBtn" alignment="CENTER_RIGHT" mnemonicParsing="false" onAction="#startVideoHandler" styleClass="btn" text="Start video chat" />
                </children>
             </HBox>
-            <HBox fx:id="audioUserWrapper" alignment="CENTER">
+            <HBox fx:id="videoUserWrapper" alignment="CENTER">
+               <children>
+                  <ImageView fx:id="videoUser1" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" styleClass="videoUserClass" />
+                  <ImageView id="meImageView" fx:id="meImageView" fitHeight="75.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" styleClass="meImageView" />
+               </children>
                <VBox.margin>
                   <Insets bottom="20.0" top="20.0" />
                </VBox.margin></HBox>
             <HBox alignment="CENTER" spacing="40.0" VBox.vgrow="ALWAYS">
                <children>
-                  <Button fx:id="endAudioBtn" mnemonicParsing="false" onAction="#endAudioHandler" text="End audio chat">
+                  <Button fx:id="endVideoBtn" mnemonicParsing="false" onAction="#endVideoHandler" text="End video chat">
                      <styleClass>
                         <String fx:value="btn" />
                         <String fx:value="redBtn" />
                      </styleClass>
                   </Button>
-                  <Button fx:id="muteBtn" mnemonicParsing="false" onAction="#muteHandler" styleClass="btn" text="Mute Microphone" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Button fx:id="hideMyselfBtn" mnemonicParsing="false" onAction="#hideMyselfHandler" styleClass="btn" text="Hide myself" />
+                  <Button fx:id="muteMicrophoneBtn" mnemonicParsing="false" onAction="#muteMicrophoneHandler" styleClass="btn" text="Mute Microphone" />
                   <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel" />
+                  <Button fx:id="muteVideoBtn" mnemonicParsing="false" onAction="#muteVideoHandler" styleClass="btn" text="Mute Camera" />
+                  <Label id="cameraLbl" fx:id="cameraLbl" styleClass="imageLabel" />
                </children></HBox>
          </children>
       </VBox>

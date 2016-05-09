@@ -59,12 +59,12 @@ public class Node {
 
 	protected PeerDHT peer;
 
-	public Node(int nodeId, String ip, String username, String password,
-			MainWindowController mainWindowController)
+	public Node(int nodeId, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
 		log = LoggerFactory.getLogger("Node from user: " + username);
 		
+
 		// if not a BootstrapNode
 		if (ip != null) {
 			createPeer(nodeId, username, password, false);
@@ -89,7 +89,7 @@ public class Node {
   }
 
   protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
-			throws IOException, ClassNotFoundException {
+			throws IOException, ClassNotFoundException, LineUnavailableException {
 		Bindings b = new Bindings().listenAny();
 		peer = new PeerBuilderDHT(
 				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
@@ -119,13 +119,9 @@ public class Node {
 
 	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-	  //TODO: Umwandeln mit RequestHandler!
-	  
-		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());
+  
+		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());			
 		
-		final Object obj = object;
-		
-		//MessageRequest messageRequest = new MessageRequest();
 		if(object instanceof Message){
 		  MessageRequest messageRequest = new MessageRequest();
 		  messageRequest.setType(RequestType.RECEIVE);
@@ -158,7 +154,7 @@ public class Node {
 	} 
 
 	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
-	  BootstrapRequest request = new BootstrapRequest(user.getPeerAddress(), knownIP ,RequestType.SEND);
+	  BootstrapRequest request = new BootstrapRequest(RequestType.SEND, user.getPeerAddress(), knownIP);
 	  RequestHandler.handleRequest(request, this);
 	}
 

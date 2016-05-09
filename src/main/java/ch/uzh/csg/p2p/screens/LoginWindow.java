@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 public class LoginWindow extends Application {
 
-	private final String TITLE = "Quack - Login";
+	private final String TITLE = "Quack! - Login";
 
 	private Stage stage;
 
@@ -23,7 +23,7 @@ public class LoginWindow extends Application {
 
 
 	private void initialiseWindow() throws IOException {
-		FXMLLoader loader = new FXMLLoader(LoginWindow.class.getResource("LoginWindow.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("LoginWindow.fxml"));
 		AnchorPane pane = loader.load();
 
 		LoginWindowController loginWindowController = loader.getController();
@@ -31,8 +31,7 @@ public class LoginWindow extends Application {
 
 		Scene scene = new Scene(pane);
 
-		String css = LoginWindow.class.getResource("basic.css").toExternalForm();
-		scene.getStylesheets().add(css);
+		scene.getStylesheets().add("basic.css");
 
 		stage.setScene(scene);
 		stage.setTitle(TITLE);

@@ -1,19 +1,24 @@
 package ch.uzh.csg.p2p.model;
-
-import java.io.Serializable;
-import java.sql.Timestamp;
 import java.util.Date;
+import java.io.Serializable;
 
 import net.tomp2p.peers.PeerAddress;
 
 public abstract class Message implements Serializable{
 
+  private static final long serialVersionUID = 1L;
   private String senderID;
   private String receiverID;
   private PeerAddress receiverAddress;
   private Date date;
   
   public Message(){}
+  
+  public Message(String sender, String receiver, Date date){
+    setSenderID(sender);
+    setReceiverID(receiver);
+    setDate(date);
+  }
   
   public Message(String sender, String receiver, PeerAddress address, Date date){
     setSenderID(sender);

@@ -1,10 +1,10 @@
 package ch.uzh.csg.p2p.model.request;
 
 import net.tomp2p.peers.PeerAddress;
-import ch.uzh.csg.p2p.model.Friend;
 
 public class FriendRequest extends Request {
-  
+
+  private static final long serialVersionUID = -2514333310601556161L;
   private String senderName;
   private PeerAddress senderPeerAddress;
   private String receiverName;

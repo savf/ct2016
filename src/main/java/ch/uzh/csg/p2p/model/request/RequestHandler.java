@@ -3,26 +3,32 @@ package ch.uzh.csg.p2p.model.request;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
+
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.PeerBuilderDHT;
-import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.futures.FutureDiscover;
-import net.tomp2p.p2p.PeerBuilder;
-import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.storage.Data;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.helper.AudioUtils;
+import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.helper.VideoUtils;
+import ch.uzh.csg.p2p.model.AudioMessage;
+import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.VideoMessage;
 
 
 public class RequestHandler {
@@ -77,43 +83,6 @@ public class RequestHandler {
     }
   }
 
-  private static Object handleAbortRequest(Request request, Node node) throws ClassNotFoundException, IOException {
-    if(request instanceof AudioRequest){
-      // TODO: handle Audio Request
-      AudioRequest r = (AudioRequest) request;
-      final Node n = node;
-      User user = new User(r.getReceiverName(), null, null);
-      n.getPeer().peer().sendDirect(retrieveUser(user, node).getPeerAddress())
-      .object(r).start();
-      return true;
-    }
-    return null;
-  }
-
-  private static Object handleRejectRequest(Request request, Node node) throws ClassNotFoundException, IOException {
-    if(request instanceof AudioRequest){
-      AudioRequest r = (AudioRequest) request;
-      final Node n = node;
-      User user = new User(r.getReceiverName(), null, null);
-      n.getPeer().peer().sendDirect(retrieveUser(user, node).getPeerAddress())
-      .object(r).start();
-      return true;
-    }
-    return null;
-  }
-
-  private static Object handleAcceptRequest(Request request, Node node) throws ClassNotFoundException, IOException {
-    if(request instanceof AudioRequest){
-      AudioRequest r = (AudioRequest) request;
-      final Node n = node;
-      User user = new User(r.getReceiverName(), null, null);
-      n.getPeer().peer().sendDirect(retrieveUser(user, node).getPeerAddress())
-      .object(r).start();
-      return true;
-    }
-    return null;
-  }
-
   private static Boolean handleStore(Request request, Node node) throws IOException, ClassNotFoundException {
     if(request instanceof UserRequest){
       UserRequest r = (UserRequest) request;
@@ -141,7 +110,7 @@ public class RequestHandler {
     }
     if(request instanceof FriendRequest){
       FriendRequest r = (FriendRequest) request;
-      Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
+     // Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
      // Number160 hash = Number160.createHash(FRIEND_PREFIX + friend.getName());
       User user = node.getUser();
       user.addFriend(r.getSenderName());
@@ -207,18 +176,47 @@ public class RequestHandler {
         
       }      
       if(request instanceof AudioRequest){
+        // TODO: remove retrieveUser!
         AudioRequest r = (AudioRequest) request;
+        PeerAddress peerAddress = null;
+        if(r.getReceiverAddress()!=null){
+          peerAddress = r.getReceiverAddress();
+        }
+        else{
         User user = new User(r.getReceiverName(), null, null);
-        n.getPeer().peer().sendDirect(retrieveUser(user, node).getPeerAddress())
-        .object(r).start();
+        peerAddress = retrieveUser(user, node).getPeerAddress();
+        }
+        n.getPeer().peer().sendDirect(peerAddress).object(r).start();
         return true;
       }
+      if(request instanceof VideoRequest){
+     // TODO: remove retrieveUser!
+          VideoRequest videoRequest = (VideoRequest) request;
+          PeerAddress peerAddress = null;
+          if(videoRequest.getReceiverAddress()!=null){
+            peerAddress = videoRequest.getReceiverAddress();
+          }
+          else{
+          User user = new User(videoRequest.getReceiverName(), null, null);
+          peerAddress = retrieveUser(user, node).getPeerAddress();
+          }
+          
+          n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
+          return true;
+        }
       
       if(request instanceof FriendRequest){
+     // TODO: remove retrieveUser!
         FriendRequest r = (FriendRequest) request;
+        PeerAddress peerAddress = null;
+        if(r.getReceiverAddress()!=null){
+          peerAddress = r.getReceiverAddress();
+        }
+        else{
         User user = new User(r.getReceiverName(), null, null);
-        n.getPeer().peer().sendDirect(retrieveUser(user, node).getPeerAddress())
-        .object(r).start();
+        peerAddress = retrieveUser(user, node).getPeerAddress();
+        }
+        n.getPeer().peer().sendDirect(peerAddress).object(r).start();
         return true;
       }
       
@@ -269,11 +267,26 @@ public class RequestHandler {
 
   private static Message handleReceive(Request request, Node node) throws IOException, LineUnavailableException, ClassNotFoundException {
     if(request instanceof MessageRequest){
-      MessageRequest r = (MessageRequest) request;
-      Message msg = r.getMessage();
-      mainWindowController.handleReceiveMessage(msg);
-      log.info(msg.getReceiverID() + " received message: " + msg.toString() + " from: " + msg.getSenderID().toString());
-      return msg;
+      MessageRequest r = (MessageRequest) request;      
+      Message message = r.getMessage();
+      if(message instanceof AudioMessage) {
+    	  AudioMessage audioMessage = (AudioMessage) message;
+    	  try {
+				AudioUtils.playAudio(EncoderUtils.byteArrayToByteBuffer(audioMessage.getData()));
+			} catch (LineUnavailableException e) {
+				log.error("AudioMessage could not be played: " + e);
+			}
+      }
+      else if(message instanceof ChatMessage) {
+    	  ChatMessage chatMessage = (ChatMessage) message;
+		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), new Date());
+      }
+      else if(message instanceof VideoMessage) {
+        VideoMessage videoMessage = (VideoMessage) message;
+        VideoUtils.playVideo(videoMessage.getData());
+      }
+      log.info(message.getReceiverID() + " received message: " + message.toString() + " from: " + message.getSenderID().toString());
+      return message;
     }   
     
     if(request instanceof BootstrapRequest){
@@ -289,16 +302,16 @@ public class RequestHandler {
       AudioRequest audioRequest = (AudioRequest) request;
       switch(audioRequest.getStatus()){
         case WAITING:
-          mainWindowController.askAudioCall(audioRequest.getSenderName());
+          mainWindowController.audioPaneController.askAudioCall(audioRequest);
           break;
         case ACCEPTED:
-          mainWindowController.startAudioCall();
+          mainWindowController.audioPaneController.startAudioCall();
           break;
         case REJECTED:
-          mainWindowController.audioCallRejected();
+          mainWindowController.audioPaneController.audioCallRejected(audioRequest);
           break;
         case ABORTED:
-          mainWindowController.audioCallAborted();
+          mainWindowController.audioPaneController.audioCallAborted();
           break;
           default:
             break;
@@ -307,24 +320,44 @@ public class RequestHandler {
     
     if(request instanceof FriendRequest){
       FriendRequest friendRequest = (FriendRequest) request;
+      Friend f = new Friend(friendRequest.getSenderPeerAddress(), friendRequest.getSenderName());
       switch(friendRequest.getStatus()){
         case WAITING:
           mainWindowController.askFriend(friendRequest);
           break;
         case ACCEPTED:
-          Friend f = new Friend(friendRequest.getSenderPeerAddress(), friendRequest.getSenderName());
-          mainWindowController.friendshipAccepted(f);;
+          mainWindowController.friendlistPaneController.friendshipAccepted(f);
           break;
         case REJECTED:
-          mainWindowController.friendshipRejected();;
+          mainWindowController.friendlistPaneController.friendshipRejected(f);
           break;
         case ABORTED:
-          mainWindowController.friendshipRejected();;
+          mainWindowController.friendlistPaneController.friendshipRejected(f);
           break;
           default:
             break;
       }
     }
+    
+    if(request instanceof VideoRequest){
+        VideoRequest videoRequest = (VideoRequest) request;
+        switch(videoRequest.getStatus()){
+          case WAITING:
+            mainWindowController.videoPaneController.askVideoCall(videoRequest);
+            break;
+          case ACCEPTED:
+            mainWindowController.videoPaneController.startVideoCall();
+            break;
+          case REJECTED:
+            mainWindowController.videoPaneController.videoCallRejected(videoRequest);
+            break;
+          case ABORTED:
+            mainWindowController.videoPaneController.videoCallAborted();
+            break;
+            default:
+              break;
+        }
+      }
     
     return null;
   }

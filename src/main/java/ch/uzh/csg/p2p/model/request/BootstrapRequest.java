@@ -4,7 +4,9 @@ import net.tomp2p.peers.PeerAddress;
 
 
 public class BootstrapRequest extends Request {
-    private PeerAddress senderPeerAddress;
+
+	private static final long serialVersionUID = 1L;
+	private PeerAddress senderPeerAddress;
     private String bootstrapIP;
     
     public BootstrapRequest(){
@@ -13,7 +15,7 @@ public class BootstrapRequest extends Request {
       setBootstrapNodeIP("");
     }
     
-    public BootstrapRequest(PeerAddress senderPeerAddress, String bootstrapIP, RequestType type){
+    public BootstrapRequest(RequestType type, PeerAddress senderPeerAddress, String bootstrapIP){
       super(type);
       setSenderPeerAddress(senderPeerAddress);
       setBootstrapNodeIP(bootstrapIP);

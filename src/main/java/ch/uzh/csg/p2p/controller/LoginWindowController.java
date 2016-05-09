@@ -7,6 +7,9 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.screens.LoginWindow;
@@ -22,6 +25,7 @@ import javafx.scene.control.TextField;
 public class LoginWindowController {
 
 	private final String LOGINNODENAME = "loginnode";
+	private Logger log = LoggerFactory.getLogger(getClass());
 
 	@FXML
 	private Label title;
@@ -98,7 +102,7 @@ public class LoginWindowController {
 		} else if (ip != null) {
 			// if ip is null -> is first node in network --> no user exists
 		  
-			Node node = new Node(getId(), ip, LOGINNODENAME, "", null);
+			Node node = new Node(getId(), ip, LOGINNODENAME, "");
 			isCorrect = LoginHelper.usernamePasswordCorrect(node, username, password);
 			node.shutdown();
 		}

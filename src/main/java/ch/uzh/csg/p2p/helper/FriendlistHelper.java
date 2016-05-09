@@ -3,6 +3,8 @@ package ch.uzh.csg.p2p.helper;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import javax.sound.sampled.LineUnavailableException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +19,7 @@ public class FriendlistHelper {
 	private static Logger log = LoggerFactory.getLogger(FriendlistHelper.class);
 
 	public static User findUser(Node node, String username)
-			throws ClassNotFoundException, IOException {
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 	  User user = retrieveUser(username,node);
 	  if(user != null){
 	    if(user.getPeerAddress().equals(node.getPeer().peerAddress())){
