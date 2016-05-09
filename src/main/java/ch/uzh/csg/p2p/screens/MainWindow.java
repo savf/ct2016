@@ -16,7 +16,7 @@ import javafx.stage.WindowEvent;
 
 public class MainWindow {
 
-	private final String TITLE = "SkypeClone - Main";
+	private final String TITLE = "Quack - ";
 
 	private Stage stage;
 	private int id;
@@ -82,7 +82,7 @@ public class MainWindow {
 		String css = LoginWindow.class.getResource("basic.css").toExternalForm();
 		scene.getStylesheets().add(css);
 
-		stage.setTitle(TITLE);
+		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
 		stage.setFullScreen(true);
 

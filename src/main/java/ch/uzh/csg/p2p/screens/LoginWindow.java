@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 public class LoginWindow extends Application {
 
-	private final String TITLE = "SkypeClone - Login";
+	private final String TITLE = "Quack - Login";
 
 	private Stage stage;
 
