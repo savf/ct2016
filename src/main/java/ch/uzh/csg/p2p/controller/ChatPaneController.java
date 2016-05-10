@@ -51,7 +51,6 @@ public class ChatPaneController {
 	public void initialize() {
 		messagesVBox.heightProperty().addListener(new ChangeListener<Number>(){
 
-			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue,
 					Number newValue) {
 				messagesScrollPane.setVvalue( 1.0d );
@@ -107,7 +106,7 @@ public class ChatPaneController {
 		handleSendMessage();
 	}
 
-	private void addChatBubble(String message, String sender, boolean fromMe) {
+	private void addChatBubble(final String message, final String sender, final boolean fromMe) {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				FXMLLoader loader;
