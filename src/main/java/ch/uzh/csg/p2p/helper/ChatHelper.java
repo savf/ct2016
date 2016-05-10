@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
@@ -20,7 +21,8 @@ public class ChatHelper {
 		
 		for(String chatPartner: users) {
 			Date date = new Date();
-			ChatMessage m = new ChatMessage(sender, chatPartner, date, message);
+	        PeerAddress receiverAddress = node.getFriend(chatPartner).getPeerAddress();
+			ChatMessage m = new ChatMessage(sender, chatPartner, receiverAddress, date, message);
 		  
 			MessageRequest request = new MessageRequest(m, RequestType.SEND);
 			RequestHandler.handleRequest(request, node);

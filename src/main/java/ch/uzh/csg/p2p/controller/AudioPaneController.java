@@ -53,7 +53,7 @@ public class AudioPaneController {
 	
 	@FXML
 	public void startAudioHandler() throws ClassNotFoundException, IOException, LineUnavailableException {
-		mainWindowController.showAudioPane();
+	  mainWindowController.showAudioPane();
 		microphoneMuted = false;
 		Image image = new Image(getClass().getResourceAsStream("/microphone.png"));
 		microphoneLbl.setGraphic(new ImageView(image));
@@ -65,7 +65,7 @@ public class AudioPaneController {
 		
 		for(String chatPartner: mainWindowController.currentChatPartners) {
 			addChatPartner(chatPartner, " ringing...");
-			AudioRequest request = new AudioRequest(RequestType.SEND, chatPartner, node.getUser().getUsername());
+			AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.WAITING, node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
 		
@@ -86,7 +86,7 @@ public class AudioPaneController {
 		microphoneMuted = true;
 		endAudio();
 		for(String chatPartner: mainWindowController.currentChatPartners) {
-			AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, chatPartner,
+			AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, node.getFriend(chatPartner).getPeerAddress(), chatPartner,
 					node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
@@ -122,11 +122,7 @@ public class AudioPaneController {
 	}
 	
 	public void startAudioCall()
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		//User user = new User(audioRequest.getReceiverName(), null, null);
-	    //node.getPeer().peer().sendDirect(RequestHandler.retrieveUser(user, node).getPeerAddress())
-	    //  .object(audioRequest).start();
-	    
+			throws ClassNotFoundException, IOException, LineUnavailableException {    
 		Platform.runLater(new Runnable() {
 			public void run() {
 				audioUserWrapper.getChildren().clear();
@@ -154,7 +150,7 @@ public class AudioPaneController {
 			addChatPartner(chatPartner, "");
 		}
 		
-		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, username,
+		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, node.getFriend(username).getPeerAddress(), username, 
 				node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
@@ -175,7 +171,7 @@ public class AudioPaneController {
 	
 	public void rejectAudioCall(String username) throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.setMainPaneTop(null);
-		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.REJECTED, username,
+		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.REJECTED, node.getFriend(username).getPeerAddress(), username,
 				node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		log.info("Rejected audio call with: " + username);
@@ -190,7 +186,7 @@ public class AudioPaneController {
 			}
 		});
 
-		audioUtils.removeReceiver(LoginHelper.retrieveUser(audioRequest.getSenderName(), node));
+		audioUtils.removeReceiver(node.getFriend(audioRequest.getSenderName()));
 	}
 	
 	private void markRejectedChatPartner(String chatPartner) {
@@ -229,7 +225,7 @@ public class AudioPaneController {
 		audioUserLabel.setText(username + labelPostfix);
 		audioUserLabel.getStyleClass().add("audioUser");
 		audioUsersMap.put(username, audioUserLabel);
-		audioUtils.addReceiver(LoginHelper.retrieveUser(username, node));
+		audioUtils.addReceiver(node.getFriend(username));
 	}
 	
 }

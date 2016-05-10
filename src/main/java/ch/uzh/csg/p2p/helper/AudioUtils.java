@@ -16,6 +16,7 @@ import javax.sound.sampled.TargetDataLine;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.AudioMessage;
+import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
@@ -30,19 +31,19 @@ public class AudioUtils {
 	private boolean mute;
 	private Node node;
 	private User sender;
-	private List<User> receiverList;
+	private List<Friend> receiverList;
 
-	public AudioUtils(Node node, User sender, User receiver) {
+	public AudioUtils(Node node, User sender, Friend receiver) {
 		this.node = node;
 		this.sender = sender;
-		receiverList = new ArrayList<User>();
+		receiverList = new ArrayList<Friend>();
 		receiverList.add(receiver);
 	}
 	
 	public AudioUtils(Node node, User sender) {
 		this.node = node;
 		this.sender = sender;
-		receiverList = new ArrayList<User>();
+		receiverList = new ArrayList<Friend>();
 	}
 
 	public void startAudio() throws LineUnavailableException {
@@ -75,16 +76,12 @@ public class AudioUtils {
 									EncoderUtils.getByteBufferList(output);
 							if (!mute) {
 								Date date = new Date();
-								for (User receiver : receiverList) {
+								for (Friend receiver : receiverList) {
 									AudioMessage audioMessage = new AudioMessage(
-											sender.getUsername(), receiver.getUsername(), date,
+											sender.getUsername(), receiver.getName(), receiver.getPeerAddress(), date,
 											EncoderUtils.byteBufferToByteArray(byteBufferList));
 									MessageRequest request = new MessageRequest(audioMessage, RequestType.SEND);
-									try {
-										RequestHandler.handleRequest(request, node);
-									} catch (LineUnavailableException e) {
-										e.printStackTrace();
-									}
+									RequestHandler.handleRequest(request, node);
 								}
 							}
 						}
@@ -127,9 +124,9 @@ public class AudioUtils {
 	public void endAudio() throws ClassNotFoundException, IOException, LineUnavailableException {
 		if(running) {
 			running = false;
-			for (User receiver : receiverList) {
-			  AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, receiver.getUsername(), sender.getUsername());
-			  RequestHandler.handleRequest(request, node);
+			for (Friend receiver : receiverList) {
+		  	AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
+		  	RequestHandler.handleRequest(request, node);
 			}
 		}
 	}
@@ -142,11 +139,11 @@ public class AudioUtils {
 		mute = false;
 	}
 
-	public void addReceiver(User receiver) {
+	public void addReceiver(Friend receiver) {
 		receiverList.add(receiver);
 	}
 
-	public void removeReceiver(User receiver) {
+	public void removeReceiver(Friend receiver) {
 		receiverList.remove(receiver);
 	}
 

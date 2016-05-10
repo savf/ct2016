@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.github.sarxos.webcam.Webcam;
 
 import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.VideoMessage;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
@@ -41,23 +43,23 @@ public class VideoUtils {
 	private boolean mute;
 	private Node node;
 	private User sender;
-	private List<User> receiverList;
+	private List<Friend> receiverList;
 
 	private Webcam webcam;
 	private VideoData frameVideo;
 	private ImageView IMG;
 
-	public VideoUtils(Node node, User sender, User receiver) {
+	public VideoUtils(Node node, User sender, Friend receiver) {
 		this.node = node;
 		this.sender = sender;
-		receiverList = new ArrayList<User>();
+		receiverList = new ArrayList<Friend>();
 		receiverList.add(receiver);
 	}
 	
 	public VideoUtils(Node node, User sender) {
 		this.node = node;
 		this.sender = sender;
-		receiverList = new ArrayList<User>();
+		receiverList = new ArrayList<Friend>();
 	}
 
 	public void startVideo(ImageView imageView) throws LineUnavailableException {
@@ -91,10 +93,10 @@ public class VideoUtils {
 
 	private void sendVideoData(List<ByteBuffer> byteBufferList) {
 		if (!mute) {
-			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-			for (User receiver : receiverList) {
+			Date date = new Date();
+			for (Friend receiver : receiverList) {
 				VideoMessage videoMessage =
-						new VideoMessage(sender.getUsername(), receiver.getUsername(), timestamp,
+						new VideoMessage(sender.getUsername(), receiver.getName(), receiver.getPeerAddress(), date,
 								EncoderUtils.byteBufferToByteArray(byteBufferList));
 				node.getPeer().peer().sendDirect(receiver.getPeerAddress()).object(videoMessage)
 						.start();
@@ -128,9 +130,9 @@ public class VideoUtils {
 	public void endVideo() throws ClassNotFoundException, IOException, LineUnavailableException {
 		if(running) {
 			running = false;
-			for (User receiver : receiverList) {
+			for (Friend receiver : receiverList) {
 				VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
-						receiver.getUsername(), sender.getUsername());
+						receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
 				RequestHandler.handleRequest(request, node);
 			}
 		}
@@ -144,11 +146,11 @@ public class VideoUtils {
 		mute = false;
 	}
 
-	public void addReceiver(User receiver) {
+	public void addReceiver(Friend receiver) {
 		receiverList.add(receiver);
 	}
 
-	public void removeReceiver(User receiver) {
+	public void removeReceiver(Friend receiver) {
 		receiverList.remove(receiver);
 	}
 }

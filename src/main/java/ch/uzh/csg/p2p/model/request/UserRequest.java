@@ -1,5 +1,7 @@
 package ch.uzh.csg.p2p.model.request;
 
+import java.io.UnsupportedEncodingException;
+
 import ch.uzh.csg.p2p.model.User;
 
 public class UserRequest extends Request {

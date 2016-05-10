@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p.helper;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -15,8 +16,7 @@ public class LoginHelper {
 	public final static String USER_PREFIX = "user_";
 	public final static String ADDRESS_PREFIX = "address_";
 
-	public static boolean usernamePasswordCorrect(Node node, String username, String password)
-			throws LineUnavailableException {	        
+	public static boolean usernamePasswordCorrect(Node node, String username, String password) throws LineUnavailableException {	        
 	        User user = retrieveUser(username, node);
 	        if(user == null){
 	          return true;
@@ -35,7 +35,7 @@ public class LoginHelper {
 	}
 
 	public static void updatePeerAddress(Node node, String username)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
+			throws ClassNotFoundException, LineUnavailableException {
 	   // zuerst das bestehende User-Objekt laden
 	    User user = retrieveUser(username, node);
         if(user == null){
@@ -45,6 +45,7 @@ public class LoginHelper {
 		storeUser(user, node);
 	}
 
+	//public static Boolean userExists(Node node, String username) throws UnsupportedEncodingException {
 	public static Boolean userExists(Node node, String username) throws LineUnavailableException {
 	  User user = retrieveUser(username, node);
 		if (user != null) {
@@ -53,6 +54,7 @@ public class LoginHelper {
 		return false;
 	}
 
+	//public static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
 	public static User retrieveUser(String username, Node node) throws LineUnavailableException{
 	  User userToRetrieve = new User(username, "", null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);

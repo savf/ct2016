@@ -1,32 +1,28 @@
 package ch.uzh.csg.p2p.model;
 
+import net.tomp2p.peers.PeerAddress;
+
 public class Friend {
 
-  private String peerID;
+  private PeerAddress peerAddress;
   private String name;
   private OnlineStatus onlineStatus;
-  private FriendshipStatus friendshipStatus;
+ // private FriendshipStatus friendshipStatus;
   
   public Friend(){
-    setPeerID(null);
+    setPeerAddress(null);
     setName("");
     setStatus(OnlineStatus.OFFLINE);
-    friendshipStatus = FriendshipStatus.WAITING;
+   // friendshipStatus = FriendshipStatus.WAITING;
   }
   
-  public Friend(String peerID, String name){
-    setPeerID(peerID);
+  public Friend(PeerAddress peerAddress, String name){
+    setPeerAddress(peerAddress);
     setName(name);
     setStatus(OnlineStatus.OFFLINE);
-    friendshipStatus = FriendshipStatus.WAITING;
+  //  friendshipStatus = FriendshipStatus.WAITING;
   }
   
-  public String getPeerID() {
-    return peerID;
-  }
-  public void setPeerID(String peerID) {
-    this.peerID = peerID;
-  }
   public String getName() {
     return name;
   }
@@ -39,7 +35,7 @@ public class Friend {
   public void setStatus(OnlineStatus status) {
     this.onlineStatus = status;
   }
-  public FriendshipStatus getFriendStatus() {
+  /*public FriendshipStatus getFriendStatus() {
     return friendshipStatus;
   }
   
@@ -53,5 +49,13 @@ public class Friend {
   
   public void hasAccepted(){
     friendshipStatus = FriendshipStatus.ACCEPTED;
+  }*/
+
+  public PeerAddress getPeerAddress() {
+    return peerAddress;
+  }
+
+  public void setPeerAddress(PeerAddress peerAddress) {
+    this.peerAddress = peerAddress;
   }
 }

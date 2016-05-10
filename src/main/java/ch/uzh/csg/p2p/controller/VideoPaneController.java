@@ -98,7 +98,7 @@ public class VideoPaneController {
 
 		for(String chatPartner: mainWindowController.currentChatPartners) {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
-					chatPartner, node.getUser().getUsername());
+					node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
 		
@@ -118,7 +118,7 @@ public class VideoPaneController {
 		videoUtils.endVideo();
 		for(String chatPartner: mainWindowController.currentChatPartners) {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
-					chatPartner, node.getUser().getUsername());
+			    node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
 		
@@ -194,8 +194,8 @@ public class VideoPaneController {
 			}
 		});
 		
-		audioUtils.removeReceiver(LoginHelper.retrieveUser(videoRequest.getSenderName(), node));
-		videoUtils.removeReceiver(LoginHelper.retrieveUser(videoRequest.getSenderName(), node));
+		audioUtils.removeReceiver(node.getFriend(videoRequest.getSenderName()));
+		videoUtils.removeReceiver(node.getFriend(videoRequest.getSenderName()));
 	}
 
 	public void videoCallAborted()
@@ -228,7 +228,7 @@ public class VideoPaneController {
 		mainWindowController.showVideoAndChatPanes();
 
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
-				username, node.getUser().getUsername());
+		    node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
 		audioUtils.startAudio();
@@ -241,7 +241,7 @@ public class VideoPaneController {
 			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.setMainPaneTop(null);
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.REJECTED,
-				username, node.getUser().getUsername());
+		    node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 
 		log.info("Rejected video call with: " + username);

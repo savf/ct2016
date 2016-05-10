@@ -1,34 +1,52 @@
 package ch.uzh.csg.p2p;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.helper.AudioUtils;
+import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.helper.VideoUtils;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.VideoMessage;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
-import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import ch.uzh.csg.p2p.model.request.VideoRequest;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.UserRequest;
 import net.tomp2p.connection.Bindings;
+import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.futures.BaseFutureListener;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.message.Buffer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
+import net.tomp2p.rpc.RawDataReply;
+import net.tomp2p.storage.Data;
 
 public class Node {
 
@@ -37,13 +55,14 @@ public class Node {
 
 	private Logger log;
 	private User user;
+	private List<Friend> friendList;
 
 	protected PeerDHT peer;
 
 	public Node(int nodeId, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-
 		log = LoggerFactory.getLogger("Node from user: " + username);
+		user = new User(username, password, null);
 
 		// if not a BootstrapNode
 		if (ip != null) {
@@ -53,24 +72,46 @@ public class Node {
 		else {
 		  createPeer(nodeId, username, password, true);
 		}
-
+		initiateUser(username, password);
+		loadStoredDataFromDHT();
 	}
 
-	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
+	private void loadStoredDataFromDHT() throws UnsupportedEncodingException {
+    // TODO load messages, calls, friendrequests...
+      loadFriendlistFromDHT();
+  }
+
+  private void initiateUser(String username, String password) throws ClassNotFoundException, LineUnavailableException, IOException {
+	  if (LoginHelper.userExists(this, username)) {
+        // user still exist --> only update address
+        LoginHelper.updatePeerAddress(this, username);
+        user = LoginHelper.retrieveUser(username, this);
+    } else {
+        // user not exist --> add user
+        LoginHelper.saveUsernamePassword(this, username, password);
+        user = new User(username, password, peer.peerAddress());
+    }
+  }
+
+  private void loadFriendlistFromDHT() throws UnsupportedEncodingException {
+	  ArrayList<Friend> list = new ArrayList<Friend>();
+    for(String friendName : user.getFriendStorage()){
+      User user = new User(friendName, null, null);
+      UserRequest r = new UserRequest(user,RequestType.RETRIEVE);
+      User result = (User) RequestHandler.handleRequest(r, this);
+      Friend friend = new Friend(result.getPeerAddress(), result.getUsername());
+      list.add(friend);
+    }
+    this.friendList = list;
+  }
+
+  protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
 			throws IOException, ClassNotFoundException, LineUnavailableException {
 		Bindings b = new Bindings().listenAny();
 		peer = new PeerBuilderDHT(
 				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
 						.start();
-
-		if (LoginHelper.userExists(this, username)) {
-			// user still exist --> only update address
-			LoginHelper.updatePeerAddress(this, username);
-		} else {
-			// user not exist --> add user
-			LoginHelper.saveUsernamePassword(this, username, password);
-		}
-		user = new User(username, password, peer.peerAddress());
+		
 		if (isBootstrapNode) {
 		  BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
 		  RequestHandler.handleRequest(request, this);
@@ -84,40 +125,43 @@ public class Node {
 		new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();
 	}
 
-
 	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		log.info("Received message: " + object.toString() + " from: " + peerAddress.toString());
-		MessageRequest messageRequest = new MessageRequest();
-
-		if (object instanceof AudioMessage) {
-			messageRequest.setType(RequestType.RECEIVE);
-			messageRequest.setMessage((AudioMessage) object);
-			RequestHandler.handleRequest(messageRequest, this);
-		} else if (object instanceof AudioRequest) {
-			AudioRequest audioRequest = (AudioRequest) object;
-			audioRequest.setType(RequestType.RECEIVE);
-			RequestHandler.handleRequest(audioRequest, this);
-		} else if (object instanceof VideoMessage) {
-			VideoMessage message = (VideoMessage) object;
-			VideoUtils.playVideo(message.getData());
-		} else if (object instanceof VideoRequest) {
-			VideoRequest videoRequest = (VideoRequest) object;
-			videoRequest.setType(RequestType.RECEIVE);
-			RequestHandler.handleRequest(videoRequest, this);
-		} else if (object instanceof ChatMessage) {
-			messageRequest.setType(RequestType.RECEIVE);
-			messageRequest.setMessage((ChatMessage) object);
-			RequestHandler.handleRequest(messageRequest, this);
-		} else {
-			System.out.println("else");
+  
+		log.info("received message: " + object.toString() + " from: " + peerAddress.toString());			
+		
+		if(object instanceof Message){
+		  MessageRequest messageRequest = new MessageRequest();
+		  messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((Message) object);
+          RequestHandler.handleRequest(messageRequest, this);
 		}
-
+        /*if (object instanceof AudioMessage) {
+          messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((AudioMessage) object);
+          RequestHandler.handleRequest(messageRequest, this);
+      } else if (object instanceof ChatMessage) {
+          messageRequest.setType(RequestType.RECEIVE);
+          messageRequest.setMessage((ChatMessage) object);
+          RequestHandler.handleRequest(messageRequest, this);}*/
+      /* else if (object instanceof AudioRequest) {
+          AudioRequest audioRequest = (AudioRequest) object;
+          audioRequest.setType(RequestType.RECEIVE);
+          RequestHandler.handleRequest(audioRequest, this);
+      }*/
+		else if(object instanceof Request){
+		  Request r = (Request) object;
+		  r.setType(RequestType.RECEIVE);
+		  RequestHandler.handleRequest(r, this);
+		}
+		else {
+          System.out.println("else");
+		}    
+      
 		return 0;
-	}
+	} 
 
-	private void connectToNode(String knownIP)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
+	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
 	  BootstrapRequest request = new BootstrapRequest(RequestType.SEND, user.getPeerAddress(), knownIP);
 	  RequestHandler.handleRequest(request, this);
 	}
@@ -149,6 +193,10 @@ public class Node {
 	public User getUser(){
 	  return user;
 	}
+	
+	public List<Friend> getFriendList(){
+	  return friendList;
+	}
 
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
@@ -156,5 +204,18 @@ public class Node {
 			peer.shutdown();
 		}
 	}
+
+  public Friend getFriend(String currentChatPartner) {
+    for(Friend f : friendList){
+      if(f.getName().equals(currentChatPartner)){
+        return f;
+      }
+    }
+    return null;
+  }
+
+  public void addFriend(Friend friend) {
+   friendList.add(friend);
+  }
 
 }

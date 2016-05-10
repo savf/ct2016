@@ -1,6 +1,7 @@
 package ch.uzh.csg.p2p.helper;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -32,25 +33,10 @@ public class FriendlistHelper {
 	    log.info("User with username: {} not found", username);
         return null;
 	  }
-	  /*
-		FutureGet futureGet = node.getPeer()
-				.get(Number160.createHash(LoginHelper.USER_PREFIX + username)).start();
-		futureGet.awaitUninterruptibly(); 
-		if (futureGet.data() != null) {
-			log.info("User with username: {} found", username);
-			User user = (User) futureGet.data().object();
-			return user;
-		} else {
-			// No data available --> user not exists
-			log.info("User with username: {} not found", username);
-			return null;
-		}
-		*/
 	}
 	
-	private static User retrieveUser(String username, Node node)
-			throws LineUnavailableException{
-      User userToRetrieve = new User(username, "", null);
+	private static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{
+      User userToRetrieve = new User(username, null, null);
       UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
       User user = (User)RequestHandler.handleRequest(requestRetrieve, node);
       return user;

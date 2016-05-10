@@ -1,37 +1,39 @@
 package ch.uzh.csg.p2p.model.request;
 
-import ch.uzh.csg.p2p.model.Friend;
+import net.tomp2p.peers.PeerAddress;
 
 public class FriendRequest extends Request {
-	private static final long serialVersionUID = 1L;
-	private Friend friend;
-	private String receiverID;
 
-	public FriendRequest() {
-		super();
-		setFriend(new Friend());
-		setReceiverID("");
-	}
+  private static final long serialVersionUID = -2514333310601556161L;
+  private PeerAddress senderPeerAddress;
+  
+  public FriendRequest(){
+    super();
+    //setFriend(new Friend());
+    setReceiverName("");
+  }
+  
+  public FriendRequest(PeerAddress senderPeerAddress, String sendername, String receiver, RequestType type){
+    super(type);
+    //setFriend(friend);
+    setSenderName(sendername);
+    setReceiverName(receiver);
+    setSenderPeerAddress(senderPeerAddress);
+  }
 
-	public FriendRequest(String receiver, Friend friend, RequestType type) {
-		super(type);
-		setFriend(friend);
-		setReceiverID(receiver);
-	}
+  public PeerAddress getSenderPeerAddress() {
+    return senderPeerAddress;
+  }
 
-	public String getReceiverID() {
-		return receiverID;
-	}
+  public void setSenderPeerAddress(PeerAddress senderPeerAddress) {
+    this.senderPeerAddress = senderPeerAddress;
+  }
 
-	public void setReceiverID(String receiverID) {
-		this.receiverID = receiverID;
-	}
+  /*public Friend getFriend() {
+    return friend;
+  }
 
-	public Friend getFriend() {
-		return friend;
-	}
-
-	public void setFriend(Friend friend) {
-		this.friend = friend;
-	}
+  public void setFriend(Friend friend) {
+    this.friend = friend;
+  }*/
 }

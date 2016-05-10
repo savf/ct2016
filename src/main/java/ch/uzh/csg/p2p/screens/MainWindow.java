@@ -7,8 +7,10 @@ import javax.sound.sampled.LineUnavailableException;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.controller.AudioPaneController;
 import ch.uzh.csg.p2p.controller.ChatPaneController;
+import ch.uzh.csg.p2p.controller.FriendlistPaneController;
 import ch.uzh.csg.p2p.controller.MainWindowController;
 import ch.uzh.csg.p2p.controller.VideoPaneController;
+import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -20,7 +22,7 @@ import javafx.stage.WindowEvent;
 
 public class MainWindow {
 
-	private final String TITLE = "SkypeClone - Main";
+	private final String TITLE = "Quack! - ";
 
 	private Node node;
 	
@@ -34,6 +36,7 @@ public class MainWindow {
 	private ChatPaneController chatPaneController;
 	private AudioPaneController audioPaneController;
 	private VideoPaneController videoPaneController;
+	private FriendlistPaneController friendlistPaneController;
 
 	private BorderPane mainPane;
 	private BorderPane rightPane;
@@ -58,7 +61,7 @@ public class MainWindow {
 
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-			node = new Node(id, ip, username, password);
+			node = new Node(id, ip, username, password);  
 	}
 	
 	private void initialiseWindow()
@@ -74,7 +77,8 @@ public class MainWindow {
 		mainWindowController.setAudioPaneController(audioPaneController);
 		videoPaneController = new VideoPaneController(node, mainWindowController);
 		mainWindowController.setVideoPaneController(videoPaneController);
-		
+		friendlistPaneController = new FriendlistPaneController(node, mainWindowController);
+		mainWindowController.setFriendlistPaneController(friendlistPaneController);
 		loader.setController(mainWindowController);
 		mainPane = loader.load();
 
@@ -102,11 +106,13 @@ public class MainWindow {
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
 
+	    mainWindowController.initialiseFriendlist(node);
+		
 		Scene scene = new Scene(mainPane);
 
 		scene.getStylesheets().add("basic.css");
 
-		stage.setTitle(TITLE);
+		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
 		stage.centerOnScreen();
 		//stage.setFullScreen(true);
@@ -168,14 +174,14 @@ public class MainWindow {
 
 	private void initializeFriendlistPane() throws IOException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("FriendlistPane.fxml"));
-		loader.setController(mainWindowController);
+		loader.setController(friendlistPaneController);
 		friendlistPane = loader.load();
 	}
 
 	private void initializeFriendsearchResultPane() throws IOException {
 		FXMLLoader loader =
 				new FXMLLoader(getClass().getResource("FriendsearchResultPane.fxml"));
-		loader.setController(mainWindowController);
+		loader.setController(friendlistPaneController);
 		friendsearchResultPane = loader.load();
 	}
 
