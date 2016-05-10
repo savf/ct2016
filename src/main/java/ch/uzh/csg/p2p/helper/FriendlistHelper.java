@@ -33,20 +33,6 @@ public class FriendlistHelper {
 	    log.info("User with username: {} not found", username);
         return null;
 	  }
-	  /*
-		FutureGet futureGet = node.getPeer()
-				.get(Number160.createHash(LoginHelper.USER_PREFIX + username)).start();
-		futureGet.awaitUninterruptibly(); 
-		if (futureGet.data() != null) {
-			log.info("User with username: {} found", username);
-			User user = (User) futureGet.data().object();
-			return user;
-		} else {
-			// No data available --> user not exists
-			log.info("User with username: {} not found", username);
-			return null;
-		}
-		*/
 	}
 	
 	private static User retrieveUser(String username, Node node) throws UnsupportedEncodingException{

@@ -9,6 +9,7 @@ import javax.sound.sampled.LineUnavailableException;
 
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDiscover;
@@ -85,13 +86,15 @@ public class RequestHandler {
           e.printStackTrace();
         } catch (ClassNotFoundException e) {
           e.printStackTrace();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
         }
       default:
         return null;
     }
   }
 
-  private static Boolean handleStore(Request request, Node node) throws IOException, ClassNotFoundException {
+  private static Boolean handleStore(Request request, Node node) throws IOException, ClassNotFoundException, InterruptedException {
     if(request instanceof UserRequest){
       UserRequest r = (UserRequest) request;
       User user = r.getUser();
@@ -125,8 +128,10 @@ public class RequestHandler {
       final String username = user.getUsername();
       user.addFriend(r.getSenderName());
       // TODO: necessary?
-     // node.getPeer().remove(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
-      FuturePut futurePut = node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
+     FutureRemove futureRemove = node.getPeer().remove(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
+     futureRemove.await(); 
+     
+     FuturePut futurePut = node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
       .start();
       futurePut.addListener(new BaseFutureAdapter<FuturePut>(){
         public void operationComplete(FuturePut future) throws Exception {
