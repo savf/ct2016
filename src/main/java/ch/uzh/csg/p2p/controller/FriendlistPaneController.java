@@ -9,10 +9,12 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import ch.uzh.csg.p2p.Node;
@@ -23,6 +25,7 @@ import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.screens.MainWindow;
 
 public class FriendlistPaneController {
 
@@ -51,46 +54,68 @@ public class FriendlistPaneController {
   @FXML
   public void searchFriendHandler() throws ClassNotFoundException, IOException,
       LineUnavailableException {
-    mainWindowController.showFriendSearchResultPane();
-    searchResultList.getChildren().clear();
-    final User user = FriendlistHelper.findUser(node, friendSearchText.getText());
-    // TODO: grey out button if User already added to friendlist!
-    // TODO: control if logged out & then again logged in user can find friends!
-    if (user != null) {
-      HBox hBox = new HBox();
-      hBox.setSpacing(40);
+    Platform.runLater(new Runnable() {
+        public void run() {
+          mainWindowController.showFriendSearchResultPane();
+          searchResultList.getChildren().clear();           
+            try {
+              final User user = FriendlistHelper.findUser(node, friendSearchText.getText());
+              if (user != null) {
+                HBox hBox = new HBox();
+                hBox.setSpacing(40);
 
-      Label label = new Label(user.getUsername());
-      label.getStyleClass().add("label");
-      hBox.getChildren().add(label);
-      boolean alreadyFriend = checkAlreadyFriend(user.getUsername());
-      Button button = new Button("Send friend request");
-      button.getStyleClass().add("btn");
-      button.getStyleClass().add("friendRequestBtn");
-      button.setOnAction(new EventHandler<ActionEvent>() {
+                Label label = new Label(user.getUsername());
+                label.getStyleClass().add("label");
+                hBox.getChildren().add(label);
+                boolean alreadyFriend = true;
+                try {
+                  alreadyFriend = checkAlreadyFriend(user.getUsername());
+                } catch (UnsupportedEncodingException e) {
+                  // TODO Auto-generated catch block
+                  e.printStackTrace();
+                }
+                Button button = new Button("Send friend request");
+                button.getStyleClass().add("btn");
+                button.getStyleClass().add("friendRequestBtn");
+                button.setOnAction(new EventHandler<ActionEvent>() {
 
-        public void handle(ActionEvent event) {
-          sendFriendRequest(user, node);
-          searchResultList.getChildren().clear();
-          mainWindowController.showInfoPane();
-        }
-      });
-      if (alreadyFriend) {
-        button.setDisable(true);
-        button.setVisible(false);
+                  public void handle(ActionEvent event) {
+                    sendFriendRequest(user, node);
+                    searchResultList.getChildren().clear();
+                    mainWindowController.showInfoPane();
+                  }
+                });
+                if (alreadyFriend) {
+                  button.setDisable(true);
+                  button.setVisible(false);
+                }
+                hBox.getChildren().add(button);
+
+                searchResultList.getChildren().add(hBox);
+              }
+              friendSearchText.setText(""); 
+            } catch (ClassNotFoundException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+            } catch (IOException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+            } catch (LineUnavailableException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+            }
       }
-      hBox.getChildren().add(button);
-
-      searchResultList.getChildren().add(hBox);
-    }
-    friendSearchText.setText("");
+  });
   }
 
   public void addUserToFriendList(Friend friend) {
+    final Friend f = friend;
+    Platform.runLater(new Runnable() {
+      public void run() {
     HBox hBox = new HBox();
     hBox.setSpacing(40);
 
-    Label label = new Label(friend.getName());
+    Label label = new Label(f.getName());
     label.getStyleClass().add("label");
     label.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
@@ -103,29 +128,41 @@ public class FriendlistPaneController {
     hBox.getChildren().add(label);
 
     friendlist.getChildren().add(label);
+      }
+    });
   }
 
   protected void rejectFriendship(FriendRequest r) {
+    final FriendRequest req = r;
+    Platform.runLater(new Runnable() {
+      public void run() {
     mainWindowController.setMainPaneTop(null);
     FriendRequest request =
         new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(),
-            r.getSenderName(), RequestType.SEND);
+            req.getSenderName(), RequestType.SEND);
     request.setStatus(RequestStatus.REJECTED);
     RequestHandler.handleRequest(request, node);
+      }
+    });
   }
 
   protected void acceptFriendship(FriendRequest r) {
+    final FriendRequest req = r;
+    Platform.runLater(new Runnable() {
+      public void run() {
     mainWindowController.setMainPaneTop(null);
     FriendRequest request =
         new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(),
-            r.getSenderName(), RequestType.SEND);
-    request.setReceiverAddress(r.getSenderPeerAddress());
+            req.getSenderName(), RequestType.SEND);
+    request.setReceiverAddress(req.getSenderPeerAddress());
     request.setStatus(RequestStatus.ACCEPTED);
     RequestHandler.handleRequest(request, node);
-    Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
+    Friend friend = new Friend(req.getSenderPeerAddress(), req.getSenderName());
     storeFriend(friend);
     addUserToFriendList(friend);
     node.addFriend(friend);
+      }
+    });
   }
 
   private void storeFriend(Friend f) {

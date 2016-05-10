@@ -108,7 +108,6 @@ public class LoginWindowController {
       } else if (ip != null) {
           // if ip is null -> is first node in network --> no user exists       
           Node node = new Node(getId(), ip, LOGINNODENAME, "");
-          // TODO: funktioniert!
           isCorrect = LoginHelper.userExists(node, username);
           node.shutdown();
       }

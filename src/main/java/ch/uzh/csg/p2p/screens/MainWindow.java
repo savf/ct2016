@@ -114,7 +114,8 @@ public class MainWindow {
 
 		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
-		stage.setFullScreen(true);
+		stage.centerOnScreen();
+		//stage.setFullScreen(true);
 
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 

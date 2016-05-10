@@ -1,5 +1,3 @@
-
-
 .root{
 	-fx-background-color: #63D1F4;
 }
@@ -44,6 +42,35 @@
 
 .audioPane{
 	-fx-background-color: #000000;
+}
+
+.chatBubble{
+	-fx-border-radius: 20;
+	-fx-border-color: #c1c1c1;
+	-fx-padding: 10;
+	-fx-background-color: #FFFFFF;
+	-fx-background-radius: 20;
+}
+
+.chatBubbleSender{
+	-fx-font-size: 10;
+	-fx-font-weight: bold;
+}
+
+.chatBubbleText{
+	-fx-padding: 10 0 0 0;
+}
+
+.chatBubbleMe{
+	-fx-background-image:url("bubble_me.png");
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: bottom right;
+}
+
+.chatBubblePeer{
+	-fx-background-image:url("bubble_peer.png");
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: bottom left;
 }
 
 .audioUser{

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox alignment="CENTER" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <AnchorPane fx:id="bubbleContainerAnchorPane">
+               <children>
+                  <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <VBox fillWidth="false" styleClass="chatBubble" stylesheets="@../../../../../../resources/basic.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="19.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <Label fx:id="senderLbl" styleClass="chatBubbleSender" stylesheets="@../../../../../../resources/basic.css" text="Sender" />
+                              <Label fx:id="messageLbl" maxWidth="350.0" styleClass="chatBubbleText" stylesheets="@../../../../../../resources/basic.css" text="Message" wrapText="true" />
+                           </children>
+                        </VBox>
+                        <Region maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="chatBubblePeer" stylesheets="@../../../../../../resources/basic.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+               </children>
+            </AnchorPane>
+            <Label fx:id="dateTimeLbl" text="Date&amp;Time">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin></Label>
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>

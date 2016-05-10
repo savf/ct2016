@@ -163,9 +163,7 @@ public class RequestHandler {
         else{
         User u = new User(r.getMessage().getReceiverID(), null, null);
        // User user = retrieveUser(u, node);
-        FutureGet futureGet = retrieveUser(u, n);
-        futureGet.await();
-        User user = (User) futureGet.data().object();
+        User user = retrieveUser(u, n);
         if(user!= null){
           peerAddress = user.getPeerAddress();
           log.info(r.getMessage().getSenderID() + "sent Message of type " +r.getMessage().getClass()+ " " +r.getType().toString() + "to: " + peerAddress.toString());
@@ -202,9 +200,7 @@ public class RequestHandler {
         }
         else{
         User user = new User(r.getReceiverName(), null, null);
-        FutureGet futureGet = retrieveUser(user, node);
-        futureGet.await();
-        User result = (User) futureGet.data().object();;
+       User result = retrieveUser(user, node);
         peerAddress = result.getPeerAddress();
         }
         n.getPeer().peer().sendDirect(peerAddress).object(r).start();
@@ -219,9 +215,7 @@ public class RequestHandler {
           }
           else{
           User user = new User(videoRequest.getReceiverName(), null, null);
-          FutureGet futureGet = retrieveUser(user, node);
-          futureGet.await();
-          User result = (User) futureGet.data().object();
+          User result = retrieveUser(user, node);
           peerAddress = result.getPeerAddress();
           }
           
@@ -238,9 +232,7 @@ public class RequestHandler {
         }
         else{
         User user = new User(r.getReceiverName(), null, null);
-        FutureGet futureGet = retrieveUser(user, node);
-        futureGet.await();
-        User result = (User) futureGet.data().object();
+        User result = retrieveUser(user, node);
         peerAddress = result.getPeerAddress();
         }
         n.getPeer().peer().sendDirect(peerAddress).object(r).start();
@@ -254,12 +246,7 @@ public class RequestHandler {
   private static Object handleRetrieve(Request request, Node node) throws ClassNotFoundException, IOException, InterruptedException {
     if(request instanceof UserRequest){
       UserRequest r = (UserRequest) request;
-      FutureGet futureGet = retrieveUser(r.getUser(), node);
-      futureGet.await();
-      User result = null;
-      if(futureGet != null && futureGet.data()!=null && futureGet.data().object() instanceof User){
-      result = (User) futureGet.data().object();
-      }
+      User result = retrieveUser(r.getUser(), node);
       return result;
     }
     if(request instanceof MessageRequest){
@@ -312,7 +299,7 @@ public class RequestHandler {
       }
       else if(message instanceof ChatMessage) {
     	  ChatMessage chatMessage = (ChatMessage) message;
-		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData(), new Date());
+		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
       }
       else if(message instanceof VideoMessage) {
         VideoMessage videoMessage = (VideoMessage) message;
@@ -395,30 +382,18 @@ public class RequestHandler {
     return null;
   }
   
-  private static FutureGet retrieveUser(User user, Node node) throws ClassNotFoundException, IOException{
+  private static User retrieveUser(User user, Node node) throws ClassNotFoundException, IOException{
     FutureGet futureGet =
         node.getPeer().get(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
-    /*User result = null;
-    try {
-     if(! futureGet.await(5000)){
-       log.error("FutureGet was unsuccessful.");
-      return result; 
-     }
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }    
-        
+    futureGet.awaitUninterruptibly();
+    User result = null;
         if(futureGet!= null && futureGet.data() != null){
-          Object r = futureGet.data().object();
-          System.out.println("Test123: " + r.toString());
-          return (User) r;
-        //  result = (User) futureGet.data().object();
+          result = (User) futureGet.data().object();
         }
         else{
           log.error("FutureGet was unsuccessful.");
         }
-          return result;         */
-    return futureGet;
+          return result;         
   }
 
   public static void setMainWindowController(MainWindowController mWC) {

@@ -53,7 +53,7 @@ public class AudioPaneController {
 	
 	@FXML
 	public void startAudioHandler() throws ClassNotFoundException, IOException, LineUnavailableException {
-		mainWindowController.showAudioPane();
+	  mainWindowController.showAudioPane();
 		microphoneMuted = false;
 		Image image = new Image(getClass().getResourceAsStream("/microphone.png"));
 		microphoneLbl.setGraphic(new ImageView(image));
@@ -118,11 +118,7 @@ public class AudioPaneController {
 	}
 	
 	public void startAudioCall()
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		//User user = new User(audioRequest.getReceiverName(), null, null);
-	    //node.getPeer().peer().sendDirect(RequestHandler.retrieveUser(user, node).getPeerAddress())
-	    //  .object(audioRequest).start();
-	    
+			throws ClassNotFoundException, IOException, LineUnavailableException {    
 		Platform.runLater(new Runnable() {
 			public void run() {
 				audioUserWrapper.getChildren().clear();

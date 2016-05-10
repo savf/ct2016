@@ -37,7 +37,7 @@
                               <Insets />
                            </VBox.margin>
                         </Label>
-                        <TextField id="usernameText" fx:id="usernameText" styleClass="input">
+                        <TextField id="usernameText" fx:id="usernameText" onAction="#handleLogin" styleClass="input">
                            <VBox.margin>
                               <Insets />
                            </VBox.margin>
@@ -54,7 +54,7 @@
                   <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Label id="localPortLabel" fx:id="localPortLabel" text="Password" />
-                        <PasswordField id="passwordText" fx:id="passwordText" styleClass="input" />
+                        <PasswordField id="passwordText" fx:id="passwordText" onAction="#handleLogin" styleClass="input" />
                      </children>
                   </VBox>
                </children>
@@ -64,7 +64,7 @@
                   <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Label id="remoteIPLabel" fx:id="remoteIPLabel" text="IP address of bootstrap node" />
-                        <TextField id="ipText" fx:id="ipText" styleClass="input" />
+                        <TextField id="ipText" fx:id="ipText" onAction="#handleLogin" styleClass="input" />
                      </children>
                   </VBox>
                </children>

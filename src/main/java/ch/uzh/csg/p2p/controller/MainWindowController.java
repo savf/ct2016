@@ -321,12 +321,6 @@ public class MainWindowController {
 	        }
 	    }
 	    
-	    @FXML
-	    public void startVideoHandler() {
-	        // TODO: Implement
-	        // TODO: Move to VideoPaneController
-	    }
-	    
 	    /*
 	     * FRIENDLIST
 	     */
@@ -402,8 +396,6 @@ public class MainWindowController {
           });
         }
 	    
-
-	
 	/*
 	 * shows buttons list for which pane (chat, audio, video), null for not show buttons somewhere
 	 */
