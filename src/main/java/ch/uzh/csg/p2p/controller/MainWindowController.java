@@ -81,7 +81,13 @@ public class MainWindowController {
 		this.node = node;
 	}
 	
-	/*
+	public void initialiseFriendlist(Node node) {
+	  for (Friend f : node.getFriendList()) {
+        friendlistPaneController.addUserToFriendList(f);
+      }   
+  }
+
+  /*
 	 * SETUP
 	 */
 	

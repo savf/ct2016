@@ -78,8 +78,8 @@ public class User implements Serializable {
 		this.peerAddress = peerAddress;
 	}
 	
-	public void addFriend(String hash){
-	  friendStorage.add(hash);
+	public void addFriend(String username){
+	  friendStorage.add(username);
 	}
 	
 	@Override

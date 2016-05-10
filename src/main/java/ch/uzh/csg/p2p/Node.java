@@ -61,9 +61,8 @@ public class Node {
 
 	public Node(int nodeId, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-
 		log = LoggerFactory.getLogger("Node from user: " + username);
-		
+		user = new User(username, password, null);
 
 		// if not a BootstrapNode
 		if (ip != null) {
@@ -73,19 +72,37 @@ public class Node {
 		else {
 		  createPeer(nodeId, username, password, true);
 		}
-		friendList = loadFriendlistFromDHT();
+		initiateUser(username, password);
+		loadStoredDataFromDHT();
 	}
 
-	private List<Friend> loadFriendlistFromDHT() throws UnsupportedEncodingException {
+	private void loadStoredDataFromDHT() throws UnsupportedEncodingException {
+    // TODO load messages, calls, friendrequests...
+      loadFriendlistFromDHT();
+  }
+
+  private void initiateUser(String username, String password) throws ClassNotFoundException, LineUnavailableException, IOException {
+	  if (LoginHelper.userExists(this, username)) {
+        // user still exist --> only update address
+        LoginHelper.updatePeerAddress(this, username);
+        user = LoginHelper.retrieveUser(username, this);
+    } else {
+        // user not exist --> add user
+        LoginHelper.saveUsernamePassword(this, username, password);
+        user = new User(username, password, peer.peerAddress());
+    }
+  }
+
+  private void loadFriendlistFromDHT() throws UnsupportedEncodingException {
 	  ArrayList<Friend> list = new ArrayList<Friend>();
     for(String friendName : user.getFriendStorage()){
-      FriendRequest r = new FriendRequest();
-      r.setSenderName(friendName);
-      r.setType(RequestType.RETRIEVE);
-      Friend friend = (Friend) RequestHandler.handleRequest(r, this);
+      User user = new User(friendName, null, null);
+      UserRequest r = new UserRequest(user,RequestType.RETRIEVE);
+      User result = (User) RequestHandler.handleRequest(r, this);
+      Friend friend = new Friend(result.getPeerAddress(), result.getUsername());
       list.add(friend);
     }
-    return list;
+    this.friendList = list;
   }
 
   protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
@@ -94,15 +111,7 @@ public class Node {
 		peer = new PeerBuilderDHT(
 				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
 						.start();
-
-		if (LoginHelper.userExists(this, username)) {
-			// user still exist --> only update address
-			LoginHelper.updatePeerAddress(this, username);
-		} else {
-			// user not exist --> add user
-			LoginHelper.saveUsernamePassword(this, username, password);
-		}
-		user = new User(username, password, peer.peerAddress());
+		
 		if (isBootstrapNode) {
 		  BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
 		  RequestHandler.handleRequest(request, this);
@@ -115,7 +124,6 @@ public class Node {
 		// TODO: Indirect Replication or direct? Replication factor?
 		new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();
 	}
-
 
 	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
 			throws IOException, LineUnavailableException, ClassNotFoundException {

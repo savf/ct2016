@@ -8,6 +8,8 @@ import java.util.Date;
 import javax.sound.sampled.LineUnavailableException;
 
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
+import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDiscover;
 import net.tomp2p.peers.Number160;
@@ -61,6 +63,9 @@ public class RequestHandler {
           e.printStackTrace();
         } catch (IOException e) {
           e.printStackTrace();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       case SEND:
         try {
@@ -69,6 +74,9 @@ public class RequestHandler {
           e1.printStackTrace();
         } catch (IOException e1) {
           e1.printStackTrace();
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       case STORE:
         try {
@@ -109,15 +117,30 @@ public class RequestHandler {
       MessageRequest r = (MessageRequest) request;
     }
     if(request instanceof FriendRequest){
-      FriendRequest r = (FriendRequest) request;
+      final FriendRequest r = (FriendRequest) request;
+      final Node node1 = node;
      // Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());
      // Number160 hash = Number160.createHash(FRIEND_PREFIX + friend.getName());
       User user = node.getUser();
+      final String username = user.getUsername();
       user.addFriend(r.getSenderName());
       // TODO: necessary?
-      node.getPeer().remove(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername()));
-      node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
+     // node.getPeer().remove(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
+      FuturePut futurePut = node.getPeer().put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).data(new Data(user))
       .start();
+      futurePut.addListener(new BaseFutureAdapter<FuturePut>(){
+        public void operationComplete(FuturePut future) throws Exception {
+          System.out.println(username + " put into DHT friend " + r.getSenderName());
+          System.out.println("With success: " + future.isSuccess());
+          //User user = new User(username, null, null);
+        //  User result = retrieveUser(user,node1);
+         /* FutureGet futureGet = retrieveUser(user, node1);
+          futureGet.await();
+          User result = (User) futureGet.data().object();
+          System.out.println("Friendlist has " +result.getFriendStorage().size() + " number of friends.");*/
+        }   
+      });
+      
     }
     if(request instanceof BootstrapRequest){ 
       User user = new User(null, null, node.getPeer().peerAddress());
@@ -129,7 +152,7 @@ public class RequestHandler {
     return false;
   }
 
-  private static Boolean handleSend(Request request, Node node) throws ClassNotFoundException, IOException {
+  private static Boolean handleSend(Request request, Node node) throws ClassNotFoundException, IOException, InterruptedException {
     final Node n = node;
       if(request instanceof MessageRequest){
         final MessageRequest r = (MessageRequest) request;
@@ -139,7 +162,10 @@ public class RequestHandler {
         }
         else{
         User u = new User(r.getMessage().getReceiverID(), null, null);
-        User user = retrieveUser(u, node);
+       // User user = retrieveUser(u, node);
+        FutureGet futureGet = retrieveUser(u, n);
+        futureGet.await();
+        User user = (User) futureGet.data().object();
         if(user!= null){
           peerAddress = user.getPeerAddress();
           log.info(r.getMessage().getSenderID() + "sent Message of type " +r.getMessage().getClass()+ " " +r.getType().toString() + "to: " + peerAddress.toString());
@@ -163,17 +189,9 @@ public class RequestHandler {
         FutureBootstrap futureBootstrap =
             n.getPeer().peer().bootstrap().inetAddress(address).ports(DEFAULTPORT).start();
         futureBootstrap.awaitUninterruptibly();
-        
-        BootstrapRequest r2 = new BootstrapRequest(RequestType.RETRIEVE);
-        User bootstrap = (User)handleRetrieve(r2, n);
-        if(bootstrap != null && bootstrap.getPeerAddress()!=null){
-          log.info(r.getSenderPeerAddress() + "sent Bootstrap Request of type " +r.getType()+ "to: " + bootstrap.getPeerAddress().toString());
-          n.getPeer().peer().sendDirect(bootstrap.getPeerAddress()).object(r).start();
-        }
-        else{
-          log.error("FutureGet was successful, but data is null!");
-        }
-        
+        System.out.println(node.getUser().getUsername()+" knows: " + node.getPeer().peerBean().peerMap().all() + " unverified: "
+            + node.getPeer().peerBean().peerMap().allOverflow());
+        System.out.println("wait for maintenance ping");
       }      
       if(request instanceof AudioRequest){
         // TODO: remove retrieveUser!
@@ -184,7 +202,10 @@ public class RequestHandler {
         }
         else{
         User user = new User(r.getReceiverName(), null, null);
-        peerAddress = retrieveUser(user, node).getPeerAddress();
+        FutureGet futureGet = retrieveUser(user, node);
+        futureGet.await();
+        User result = (User) futureGet.data().object();;
+        peerAddress = result.getPeerAddress();
         }
         n.getPeer().peer().sendDirect(peerAddress).object(r).start();
         return true;
@@ -198,7 +219,10 @@ public class RequestHandler {
           }
           else{
           User user = new User(videoRequest.getReceiverName(), null, null);
-          peerAddress = retrieveUser(user, node).getPeerAddress();
+          FutureGet futureGet = retrieveUser(user, node);
+          futureGet.await();
+          User result = (User) futureGet.data().object();
+          peerAddress = result.getPeerAddress();
           }
           
           n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
@@ -214,7 +238,10 @@ public class RequestHandler {
         }
         else{
         User user = new User(r.getReceiverName(), null, null);
-        peerAddress = retrieveUser(user, node).getPeerAddress();
+        FutureGet futureGet = retrieveUser(user, node);
+        futureGet.await();
+        User result = (User) futureGet.data().object();
+        peerAddress = result.getPeerAddress();
         }
         n.getPeer().peer().sendDirect(peerAddress).object(r).start();
         return true;
@@ -224,10 +251,16 @@ public class RequestHandler {
       return true;
   }
 
-  private static Object handleRetrieve(Request request, Node node) throws ClassNotFoundException, IOException {
+  private static Object handleRetrieve(Request request, Node node) throws ClassNotFoundException, IOException, InterruptedException {
     if(request instanceof UserRequest){
       UserRequest r = (UserRequest) request;
-      return retrieveUser(r.getUser(), node);
+      FutureGet futureGet = retrieveUser(r.getUser(), node);
+      futureGet.await();
+      User result = null;
+      if(futureGet != null && futureGet.data()!=null && futureGet.data().object() instanceof User){
+      result = (User) futureGet.data().object();
+      }
+      return result;
     }
     if(request instanceof MessageRequest){
       MessageRequest r = (MessageRequest) request;
@@ -290,12 +323,12 @@ public class RequestHandler {
     }   
     
     if(request instanceof BootstrapRequest){
-      BootstrapRequest r = (BootstrapRequest) request;
+ /*     BootstrapRequest r = (BootstrapRequest) request;
       log.info("BootstrapNode received Bootstrap Request from: "
           + r.getSenderPeerAddress().toString());
       log.info("new node");
       FutureBootstrap futureBootstrap =
-              node.getPeer().peer().bootstrap().peerAddress(r.getSenderPeerAddress()).start();
+              node.getPeer().peer().bootstrap().peerAddress(r.getSenderPeerAddress()).start();*/
     }
     
     if(request instanceof AudioRequest){
@@ -362,11 +395,19 @@ public class RequestHandler {
     return null;
   }
   
-  private static User retrieveUser(User user, Node node) throws ClassNotFoundException, IOException{
+  private static FutureGet retrieveUser(User user, Node node) throws ClassNotFoundException, IOException{
     FutureGet futureGet =
         node.getPeer().get(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
-        futureGet.awaitUninterruptibly();
-        User result = null;
+    /*User result = null;
+    try {
+     if(! futureGet.await(5000)){
+       log.error("FutureGet was unsuccessful.");
+      return result; 
+     }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }    
+        
         if(futureGet!= null && futureGet.data() != null){
           Object r = futureGet.data().object();
           System.out.println("Test123: " + r.toString());
@@ -376,7 +417,8 @@ public class RequestHandler {
         else{
           log.error("FutureGet was unsuccessful.");
         }
-          return result;        
+          return result;         */
+    return futureGet;
   }
 
   public static void setMainWindowController(MainWindowController mWC) {

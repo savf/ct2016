@@ -5,9 +5,7 @@ import net.tomp2p.peers.PeerAddress;
 public class FriendRequest extends Request {
 
   private static final long serialVersionUID = -2514333310601556161L;
-  private String senderName;
   private PeerAddress senderPeerAddress;
-  private String receiverName;
   
   public FriendRequest(){
     super();
@@ -18,16 +16,9 @@ public class FriendRequest extends Request {
   public FriendRequest(PeerAddress senderPeerAddress, String sendername, String receiver, RequestType type){
     super(type);
     //setFriend(friend);
-    setSenderPeerAddress(senderPeerAddress);
     setSenderName(sendername);
     setReceiverName(receiver);
-  }
-  
-  public String getReceiverName() {
-    return receiverName;
-  }
-  public void setReceiverName(String name) {
-    this.receiverName = name;
+    setSenderPeerAddress(senderPeerAddress);
   }
 
   public PeerAddress getSenderPeerAddress() {
@@ -36,14 +27,6 @@ public class FriendRequest extends Request {
 
   public void setSenderPeerAddress(PeerAddress senderPeerAddress) {
     this.senderPeerAddress = senderPeerAddress;
-  }
-
-  public String getSenderName() {
-    return senderName;
-  }
-
-  public void setSenderName(String name) {
-    this.senderName = name;
   }
 
   /*public Friend getFriend() {

@@ -82,16 +82,37 @@ public class LoginWindowController {
 	private void startMainWindow(int id, String ip) throws Exception {
 		String password = getPassword();
 		String username = usernameText.getText();
-		if (checkUsernamePassword(username, password, id, ip)) {
+		if(checkUserExists(username, password, id, ip)){
+		  if (checkUsernamePassword(username, password, id, ip)) {
+		    //TODO: change the process when user already exists!!
 			MainWindow mainWindow = new MainWindow();
 			mainWindow.start(loginWindow.getStage(), id, ip, username, password);
-		} else {
+		  } else {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Wrong username/password");
 			String s = "Username password combination not correct";
 			alert.setContentText(s);
 			alert.showAndWait();
+		  }
 		}
+		else{
+		  MainWindow mainWindow = new MainWindow();
+          mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+		}
+	}
+	
+	private Boolean checkUserExists(String username, String password, int id, String ip) throws ClassNotFoundException, IOException, LineUnavailableException{
+	  Boolean isCorrect = true;
+      if (username.equals("") || password.equals("")) {
+          isCorrect = false;
+      } else if (ip != null) {
+          // if ip is null -> is first node in network --> no user exists       
+          Node node = new Node(getId(), ip, LOGINNODENAME, "");
+          // TODO: funktioniert!
+          isCorrect = LoginHelper.userExists(node, username);
+          node.shutdown();
+      }
+      return isCorrect;
 	}
 
 	private Boolean checkUsernamePassword(String username, String password, int id, String ip)
@@ -100,8 +121,7 @@ public class LoginWindowController {
 		if (username.equals("") || password.equals("")) {
 			isCorrect = false;
 		} else if (ip != null) {
-			// if ip is null -> is first node in network --> no user exists
-		  
+			// if ip is null -> is first node in network --> no user exists		  
 			Node node = new Node(getId(), ip, LOGINNODENAME, "");
 			isCorrect = LoginHelper.usernamePasswordCorrect(node, username, password);
 			node.shutdown();

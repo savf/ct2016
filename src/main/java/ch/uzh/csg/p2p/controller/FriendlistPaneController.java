@@ -55,6 +55,7 @@ public class FriendlistPaneController {
     searchResultList.getChildren().clear();
     final User user = FriendlistHelper.findUser(node, friendSearchText.getText());
     // TODO: grey out button if User already added to friendlist!
+    // TODO: control if logged out & then again logged in user can find friends!
     if (user != null) {
       HBox hBox = new HBox();
       hBox.setSpacing(40);
@@ -118,6 +119,7 @@ public class FriendlistPaneController {
     FriendRequest request =
         new FriendRequest(node.getPeer().peerAddress(), node.getUser().getUsername(),
             r.getSenderName(), RequestType.SEND);
+    request.setReceiverAddress(r.getSenderPeerAddress());
     request.setStatus(RequestStatus.ACCEPTED);
     RequestHandler.handleRequest(request, node);
     Friend friend = new Friend(r.getSenderPeerAddress(), r.getSenderName());

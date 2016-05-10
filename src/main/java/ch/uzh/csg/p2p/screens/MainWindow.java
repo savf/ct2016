@@ -62,9 +62,6 @@ public class MainWindow {
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 			node = new Node(id, ip, username, password);  
-			    for (Friend f : node.getFriendList()) {
-			      friendlistPaneController.addUserToFriendList(f);
-			    }
 	}
 	
 	private void initialiseWindow()
@@ -82,7 +79,6 @@ public class MainWindow {
 		mainWindowController.setVideoPaneController(videoPaneController);
 		friendlistPaneController = new FriendlistPaneController(node, mainWindowController);
 		mainWindowController.setFriendlistPaneController(friendlistPaneController);
-		
 		loader.setController(mainWindowController);
 		mainPane = loader.load();
 
@@ -110,6 +106,8 @@ public class MainWindow {
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
 
+	    mainWindowController.initialiseFriendlist(node);
+		
 		Scene scene = new Scene(mainPane);
 
 		scene.getStylesheets().add("basic.css");
