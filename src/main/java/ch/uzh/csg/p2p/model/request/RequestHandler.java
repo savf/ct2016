@@ -291,7 +291,10 @@ public class RequestHandler {
   }
 
   private static Message handleReceive(Request request, Node node) throws IOException, LineUnavailableException, ClassNotFoundException {
-    if(request instanceof MessageRequest){
+    
+	  System.out.println("handleReceive");
+	  
+	  if(request instanceof MessageRequest){
       MessageRequest r = (MessageRequest) request;      
       Message message = r.getMessage();
       if(message instanceof AudioMessage) {
@@ -307,6 +310,7 @@ public class RequestHandler {
 		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
       }
       else if(message instanceof VideoMessage) {
+    	  System.out.println("handleReceive VideoMessage");
         VideoMessage videoMessage = (VideoMessage) message;
         VideoUtils.playVideo(videoMessage.getData());
       }

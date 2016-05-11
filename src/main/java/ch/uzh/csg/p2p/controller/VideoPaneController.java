@@ -100,6 +100,7 @@ public class VideoPaneController {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
 					node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
+			videoUtils.addReceiver(node.getFriend(chatPartner));
 		}
 		
 	}
@@ -172,7 +173,7 @@ public class VideoPaneController {
 		mainWindowController.makeVideoCallDialog(videoRequest.getSenderName());
 	}
 
-	public void startVideoCall() throws LineUnavailableException {
+	public void startVideoCall() throws LineUnavailableException, IOException {
 		/*Platform.runLater(new Runnable() {
 			public void run() {
 				videoUserWrapper.getChildren().clear();
@@ -184,6 +185,7 @@ public class VideoPaneController {
 			}
 		});*/
 		
+		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 	}
 
@@ -232,6 +234,7 @@ public class VideoPaneController {
 		RequestHandler.handleRequest(request, node);
 		
 		audioUtils.startAudio();
+		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 
 		log.info("Accept audio call with: " + username);
