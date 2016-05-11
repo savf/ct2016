@@ -68,6 +68,10 @@ public class AudioPaneController {
 			AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.WAITING, node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
+		
+		for(Map.Entry<String, Label> audioUser: audioUsersMap.entrySet()) {
+			audioUserWrapper.getChildren().add(audioUser.getValue());
+		}
 	}
 	
 	@FXML
