@@ -15,7 +15,7 @@
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
             </HBox>
-            <VBox id="friendlist" fx:id="friendlist" />
+            <VBox id="friendlist" fx:id="friendlist" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
    </children>

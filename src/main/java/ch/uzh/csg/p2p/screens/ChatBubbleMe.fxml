@@ -13,12 +13,12 @@
                <children>
                   <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <VBox fillWidth="false" styleClass="chatBubble" stylesheets="@../../../../../../resources/basic.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="19.0" AnchorPane.topAnchor="0.0">
+                        <VBox fillWidth="false" styleClass="chatBubble" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="17.0" AnchorPane.topAnchor="0.0">
                            <children>
-                              <Label fx:id="messageLbl" maxWidth="350.0" styleClass="chatBubbleText" stylesheets="@../../../../../../resources/basic.css" text="Message" wrapText="true" />
+                              <Label fx:id="messageLbl" maxWidth="350.0" styleClass="chatBubbleText" text="Message" wrapText="true" />
                            </children>
                         </VBox>
-                        <Region maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="chatBubbleMe" stylesheets="@../../../../../../resources/basic.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Region maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="chatBubbleMe" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
                   </AnchorPane>
                </children>

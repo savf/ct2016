@@ -40,7 +40,7 @@ import javazoom.jl.player.Player;
 public class MainWindowController {
 
 	private Logger log = LoggerFactory.getLogger(MainWindowController.class);
-	
+
 	/*
 	 * Audio request dialog
 	 */
@@ -55,10 +55,11 @@ public class MainWindowController {
 	public Node node;
 	public User user;
 	private ChatHelper chatHelper;
+	private FriendlistHelper friendlistHelper;
 	public List<String> currentChatPartners;
 	public Thread audioRingingThread;
 	public Thread videoRingingThread;
-	
+
 	private MainWindow mainWindow;
 	private BorderPane mainPane;
 	private BorderPane rightPane;
@@ -69,48 +70,49 @@ public class MainWindowController {
 	private AnchorPane friendlistPane;
 	private AnchorPane friendsearchResultPane;
 	private AnchorPane requestPane;
-	
+
 	public ChatPaneController chatPaneController;
 	public AudioPaneController audioPaneController;
 	public VideoPaneController videoPaneController;
 	public FriendlistPaneController friendlistPaneController;
-	
+
 	public MainWindowController(Node node) {
+		this.node = node;
 		this.chatHelper = new ChatHelper();
 		this.currentChatPartners = new ArrayList<String>();
-		this.node = node;
+		this.friendlistHelper = new FriendlistHelper(this.node);
 	}
-	
-	public void initialiseFriendlist(Node node) {
-	  for (Friend f : node.getFriendList()) {
-        friendlistPaneController.addUserToFriendList(f);
-      }   
-  }
 
-  /*
+	public void initialiseFriendlist(Node node) {
+		for (Friend f : node.getFriendList()) {
+			friendlistPaneController.addUserToFriendList(f);
+		}
+	}
+
+	/*
 	 * SETUP
 	 */
-	
+
 	public void setUser(String username)
 			throws ClassNotFoundException, IOException, LineUnavailableException {
 		user = LoginHelper.retrieveUser(username, node);
 	}
-	
+
 	public void setChatPaneController(ChatPaneController chatPaneController) {
 		this.chatPaneController = chatPaneController;
 	}
-	
+
 	public void setAudioPaneController(AudioPaneController audioPaneController) {
 		this.audioPaneController = audioPaneController;
 	}
-	
+
 	public void setVideoPaneController(VideoPaneController videoPaneController) {
 		this.videoPaneController = videoPaneController;
 	}
-	
+
 	public void setFriendlistPaneController(FriendlistPaneController friendlistPaneController) {
-      this.friendlistPaneController = friendlistPaneController;
-  }
+		this.friendlistPaneController = friendlistPaneController;
+	}
 
 	public void setMainWindow(MainWindow mainWindow) {
 		this.mainWindow = mainWindow;
@@ -120,7 +122,7 @@ public class MainWindowController {
 		System.out.println("setMainPane");
 		this.mainPane = mainPane;
 	}
-	
+
 	public void setMainPaneTop(AnchorPane anchorPane) {
 		mainPane.setTop(anchorPane);
 	}
@@ -128,9 +130,9 @@ public class MainWindowController {
 	public void setRightPane(BorderPane rightPane) {
 		this.rightPane = rightPane;
 	}
-	
-	public void setRightPaneTop(AnchorPane anchorPane){
-	  rightPane.setTop(anchorPane);
+
+	public void setRightPaneTop(AnchorPane anchorPane) {
+		rightPane.setTop(anchorPane);
 	}
 
 	public void setInfoPane(AnchorPane infoPane) {
@@ -144,7 +146,7 @@ public class MainWindowController {
 	public void setAudioPane(AnchorPane audioPane) {
 		this.audioPane = audioPane;
 	}
-	
+
 	public void setVideoPane(AnchorPane videoPane) {
 		this.videoPane = videoPane;
 	}
@@ -162,22 +164,26 @@ public class MainWindowController {
 	}
 
 	public void addChatPartner(String username) {
-      if(!currentChatPartners.contains(username)) {
-          // TODO: Check in FriendListHelper, if username exists
-          currentChatPartners.add(username);
-      }
-  }
+		if (!currentChatPartners.contains(username)
+				&& friendlistHelper.checkAlreadyFriend(username)) {
+			currentChatPartners.add(username);
+		}
+	}
 	
+	public void clearChatPartners() {
+		currentChatPartners.clear();
+	}
+
 	/*
 	 * NOTIFICATIONS
 	 */
-	
+
 	public void showInfoPane() {
 		rightPane.setTop(infoPane);
 		rightPane.setBottom(null);
 	}
-	
-	
+
+
 	/*
 	 * AUDIO PART
 	 */
@@ -186,23 +192,24 @@ public class MainWindowController {
 		rightPane.setTop(audioPane);
 		showChatBtns("audio");
 	}
-	
+
 	public void hideAudioPane() {
 		rightPane.setTop(null);
 		showChatBtns("chat");
 	}
-	
+
 	public void showAudioAndChatPanes() {
 		rightPane.setBottom(chatPane);
 		rightPane.setTop(audioPane);
 		showChatBtns("audio");
 	}
-	
-		public void makeAudioCallDialog(final String username) {
+
+	public void makeAudioCallDialog(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				mainPane.setTop(requestPane);
-				requestWindowLabel.setText("Do you want to start an audio call with " + username+"?");
+				requestWindowLabel
+						.setText("Do you want to start an audio call with " + username + "?");
 			}
 		});
 		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -227,175 +234,177 @@ public class MainWindowController {
 				audioRingingThread.stop();
 			}
 		});
-		
+
 		InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ring.mp3");
 		final Player player;
 		try {
 			player = new Player(inputStream);
-			
-			audioRingingThread = new Thread(new Runnable() {
-			    public void run() {
-			            try {
-							player.play();
-						} catch (JavaLayerException e) {
-							e.printStackTrace();
-						}
 
-			        }
+			audioRingingThread = new Thread(new Runnable() {
+				public void run() {
+					try {
+						player.play();
+					} catch (JavaLayerException e) {
+						e.printStackTrace();
+					}
+
+				}
 			});
 			audioRingingThread.start();
 		} catch (JavaLayerException e1) {
 			e1.printStackTrace();
 		}
 	}
-		
-		/*
-	     * VIDEO PART
-	     */
 
-	    public void showVideoPane() {
-	        rightPane.setTop(videoPane);
-	        showChatBtns("video");
-	    }
-	    
-	    public void hideVideoPane() {
-	        rightPane.setTop(null);
-	        showChatBtns("chat");
-	    }
-	    
-	    public void showVideoAndChatPanes() {
-	        rightPane.setBottom(chatPane);
-	        rightPane.setTop(videoPane);
-	        showChatBtns("video");
-	    }
-	    
-	    public void makeVideoCallDialog(final String username) {
-	        Platform.runLater(new Runnable() {
-	            public void run() {
-	                mainPane.setTop(requestPane);
-	                requestWindowLabel.setText("Do you want to start a video call with " + username+"?");
-	            }
-	        });
-	        requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+	/*
+	 * VIDEO PART
+	 */
 
-	            public void handle(ActionEvent event) {
-	                try {
-	                    videoPaneController.acceptVideoCall(username);
-	                    videoRingingThread.stop();
-	                } catch (Exception e) {
-	                    log.error("Cannot accept video call: " + e);
-	                    e.printStackTrace();
-	                }
-	            }
-	        });
-	        requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+	public void showVideoPane() {
+		rightPane.setTop(videoPane);
+		showChatBtns("video");
+	}
 
-	            public void handle(ActionEvent event) {
-	                try {
-	                    videoPaneController.rejectVideoCall(username);
-	                    videoRingingThread.stop();
-	                } catch (Exception e) {
-	                    log.error("Cannot reject video call: " + e);
-	                }
-	            }
-	        });
+	public void hideVideoPane() {
+		rightPane.setTop(null);
+		showChatBtns("chat");
+	}
 
-	        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ring.mp3");
-	        final Player player;
-	        try {
-	            player = new Player(inputStream);
-	            
-	            videoRingingThread = new Thread(new Runnable() {
-	                public void run() {
-	                        try {
-	                            player.play();
-	                        } catch (JavaLayerException e) {
-	                            e.printStackTrace();
-	                        }
+	public void showVideoAndChatPanes() {
+		rightPane.setBottom(chatPane);
+		rightPane.setTop(videoPane);
+		showChatBtns("video");
+	}
 
-	                    }
-	            });
-	            videoRingingThread.start();
-	        } catch (JavaLayerException e1) {
-	            e1.printStackTrace();
-	        }
-	    }
-	    
-	    /*
-	     * FRIENDLIST
-	     */
+	public void makeVideoCallDialog(final String username) {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				mainPane.setTop(requestPane);
+				requestWindowLabel
+						.setText("Do you want to start a video call with " + username + "?");
+			}
+		});
+		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
 
-	    public void showFriendSearchResultPane(){
-	      rightPane.setTop(friendsearchResultPane);
-	    }
-	    
-	    public void showChatPane(){
-	      rightPane.setBottom(chatPane);
-	    }
-	    
-	    public void askFriend(FriendRequest request) {
-	      final FriendRequest r = request;
-	      Platform.runLater(new Runnable() {
-	        public void run() {
-	          
-	          mainPane.setTop(requestPane);
-	          requestWindowLabel.setText("Do you want to be friends with " + r.getSenderName() + "?");
-	        }
-	      });
-	      requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					videoPaneController.acceptVideoCall(username);
+					videoRingingThread.stop();
+				} catch (Exception e) {
+					log.error("Cannot accept video call: " + e);
+					e.printStackTrace();
+				}
+			}
+		});
+		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
 
-	        public void handle(ActionEvent event) {
-	          try {
-	            friendlistPaneController.acceptFriendship(r);
-	          } catch (Exception e) {
-	            log.error("Cannot accept friendship request: " + e);
-	          }
-	        }
-	      });
-	      requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					videoPaneController.rejectVideoCall(username);
+					videoRingingThread.stop();
+				} catch (Exception e) {
+					log.error("Cannot reject video call: " + e);
+				}
+			}
+		});
 
-	        public void handle(ActionEvent event) {
-	          try {
-	            friendlistPaneController.rejectFriendship(r);
-	          } catch (Exception e) {
-	            log.error("Cannot reject friendship request: " + e);
-	          }
-	        }
-	      });
-	    }
-	    
-	    public void friendshipAccepted(final String username){
-	      Platform.runLater(new Runnable() {
-            public void run() {
-           // TODO: InformationPane with only OK as button
-              mainPane.setTop(infoPane);
-              requestWindowLabel.setText(username + " accepted your friendship request.");
-            }
-          });
-          requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+		InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ring.mp3");
+		final Player player;
+		try {
+			player = new Player(inputStream);
 
-            public void handle(ActionEvent event) {
-              setMainPaneTop(null);
-            }
-          });
-	    }
-	    
-	    public void friendshipRejected(final String username){
-          Platform.runLater(new Runnable() {
-            public void run() {
-              // TODO: InformationPane with only OK as button
-              mainPane.setTop(infoPane);
-              requestWindowLabel.setText(username + " rejected your friendship request.");
-            }
-          });
-          requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+			videoRingingThread = new Thread(new Runnable() {
+				public void run() {
+					try {
+						player.play();
+					} catch (JavaLayerException e) {
+						e.printStackTrace();
+					}
 
-            public void handle(ActionEvent event) {
-              setMainPaneTop(null);
-            }
-          });
-        }
-	    
+				}
+			});
+			videoRingingThread.start();
+		} catch (JavaLayerException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	/*
+	 * FRIENDLIST
+	 */
+
+	public void showFriendSearchResultPane() {
+		rightPane.setTop(friendsearchResultPane);
+	}
+
+	public void showChatPane() {
+		rightPane.setBottom(chatPane);
+	}
+
+	public void askFriend(FriendRequest request) {
+		final FriendRequest r = request;
+		Platform.runLater(new Runnable() {
+			public void run() {
+
+				mainPane.setTop(requestPane);
+				requestWindowLabel
+						.setText("Do you want to be friends with " + r.getSenderName() + "?");
+			}
+		});
+		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+			public void handle(ActionEvent event) {
+				try {
+					friendlistPaneController.acceptFriendship(r);
+				} catch (Exception e) {
+					log.error("Cannot accept friendship request: " + e);
+				}
+			}
+		});
+		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+			public void handle(ActionEvent event) {
+				try {
+					friendlistPaneController.rejectFriendship(r);
+				} catch (Exception e) {
+					log.error("Cannot reject friendship request: " + e);
+				}
+			}
+		});
+	}
+
+	public void friendshipAccepted(final String username) {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				// TODO: InformationPane with only OK as button
+				mainPane.setTop(infoPane);
+				requestWindowLabel.setText(username + " accepted your friendship request.");
+			}
+		});
+		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+			public void handle(ActionEvent event) {
+				setMainPaneTop(null);
+			}
+		});
+	}
+
+	public void friendshipRejected(final String username) {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				// TODO: InformationPane with only OK as button
+				mainPane.setTop(infoPane);
+				requestWindowLabel.setText(username + " rejected your friendship request.");
+			}
+		});
+		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+			public void handle(ActionEvent event) {
+				setMainPaneTop(null);
+			}
+		});
+	}
+
 	/*
 	 * shows buttons list for which pane (chat, audio, video), null for not show buttons somewhere
 	 */

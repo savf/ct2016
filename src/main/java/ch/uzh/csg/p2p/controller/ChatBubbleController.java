@@ -21,6 +21,9 @@ public class ChatBubbleController {
 	
 	public void setMessage(String message, double maxWidth) {
 		messageLbl.setText(message);
+		if(maxWidth == 0){
+			maxWidth = 648.0;
+		}
 		bubbleContainerAnchorPane.setMinWidth(maxWidth * 0.75);
 	}
 	
