@@ -1,7 +1,6 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -10,9 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.helper.VideoUtils;
-import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;

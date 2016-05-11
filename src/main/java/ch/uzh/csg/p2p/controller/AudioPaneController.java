@@ -3,7 +3,6 @@ package ch.uzh.csg.p2p.controller;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
@@ -139,6 +137,7 @@ public class AudioPaneController {
 	
 	public void acceptAudioCall(String username)
 			throws ClassNotFoundException, IOException, LineUnavailableException {
+		// TODO: Send list of people to send audio to, instead of only one username
 		mainWindowController.setMainPaneTop(null);
 		mainWindowController.addChatPartner(username);
 		
@@ -146,15 +145,13 @@ public class AudioPaneController {
 		audioUserWrapper.getChildren().clear();
 		audioUtils.endAudio();
 		
-		for(String chatPartner: mainWindowController.currentChatPartners) {
-			addChatPartner(chatPartner, "");
-		}
-		
 		AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, node.getFriend(username).getPeerAddress(), username, 
 				node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
+		addChatPartner(username, "");
 		startAudioCall();
+		mainWindowController.chatPaneController.startChatSessionWith(username);
 		
 		mainWindowController.showAudioAndChatPanes();
 		microphoneMuted = false;

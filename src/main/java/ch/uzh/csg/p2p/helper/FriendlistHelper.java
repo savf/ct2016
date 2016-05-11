@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 
 public class FriendlistHelper {

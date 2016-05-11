@@ -1,13 +1,9 @@
 package ch.uzh.csg.p2p.model;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 
 public class User implements Serializable {

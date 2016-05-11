@@ -2,7 +2,6 @@ package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +17,6 @@ import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
-import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestStatus;
-import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -28,12 +24,8 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 

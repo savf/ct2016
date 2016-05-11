@@ -18,7 +18,7 @@
                               <Label fx:id="messageLbl" maxWidth="350.0" styleClass="chatBubbleText" text="Message" wrapText="true" />
                            </children>
                         </VBox>
-                        <Region maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="chatBubbleMe" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Region fx:id="chatBubbleCorner" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
                   </AnchorPane>
                </children>

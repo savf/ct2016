@@ -5,8 +5,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,15 +12,11 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.LineUnavailableException;
 
-import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamLockException;
-import com.sun.prism.Image;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.Friend;

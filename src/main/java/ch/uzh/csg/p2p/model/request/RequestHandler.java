@@ -3,19 +3,8 @@ package ch.uzh.csg.p2p.model.request;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
-
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.FuturePut;
-import net.tomp2p.dht.FutureRemove;
-import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.futures.FutureDiscover;
-import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.storage.Data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +21,15 @@ import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.VideoMessage;
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
+import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
 
 
 public class RequestHandler {

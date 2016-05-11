@@ -1,6 +1,6 @@
 package ch.uzh.csg.p2p.model;
-import java.util.Date;
 import java.io.Serializable;
+import java.util.Date;
 
 import net.tomp2p.peers.PeerAddress;
 

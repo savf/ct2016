@@ -1,13 +1,9 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -15,21 +11,16 @@ import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.ChatHelper;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
-import javafx.beans.property.adapter.JavaBeanBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -141,6 +132,7 @@ public class ChatPaneController {
 				}
 
 				chatBubbleController.setMessage(message, messagesScrollPane.getWidth());
+				chatBubbleController.setBackground(fromMe);
 				if (!fromMe) {
 					chatBubbleController.setSender(sender);
 				}

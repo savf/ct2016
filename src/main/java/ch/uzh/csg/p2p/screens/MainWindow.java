@@ -10,7 +10,6 @@ import ch.uzh.csg.p2p.controller.ChatPaneController;
 import ch.uzh.csg.p2p.controller.FriendlistPaneController;
 import ch.uzh.csg.p2p.controller.MainWindowController;
 import ch.uzh.csg.p2p.controller.VideoPaneController;
-import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;

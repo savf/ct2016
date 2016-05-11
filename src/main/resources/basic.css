@@ -72,18 +72,6 @@
 	-fx-padding: 10 0 0 0;
 }
 
-.chatBubbleMe{
-	-fx-background-image:url("bubble_me.png");
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: bottom right;
-}
-
-.chatBubblePeer{
-	-fx-background-image:url("bubble_peer.png");
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: bottom left;
-}
-
 .audioUser{
 	-fx-pref-height:100;
 	-fx-pref-width:100;
