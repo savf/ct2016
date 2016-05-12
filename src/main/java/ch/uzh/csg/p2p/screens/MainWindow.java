@@ -14,6 +14,7 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -41,6 +42,8 @@ public class MainWindow {
 	private BorderPane rightPane;
 	private AnchorPane infoPane;
 	private AnchorPane chatPane;
+	private AnchorPane chat;
+	private AnchorPane chatPaneTabs;
 	private AnchorPane audioPane;
 	private AnchorPane videoPane;
 	private AnchorPane friendlistPane;
@@ -114,6 +117,8 @@ public class MainWindow {
 		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
 		stage.centerOnScreen();
+		stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
+        
 		//stage.setFullScreen(true);
 
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -154,7 +159,7 @@ public class MainWindow {
 	}
 
 	private void initializeChatPane() throws IOException {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatPane.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatPaneTabs.fxml"));
 		loader.setController(chatPaneController);
 		chatPane = loader.load();
 	}

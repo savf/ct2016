@@ -7,14 +7,16 @@
 
 <AnchorPane prefWidth="200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <VBox spacing="20.0" AnchorPane.topAnchor="0.0">
+      <VBox spacing="10.0" AnchorPane.topAnchor="0.0">
          <children>
+            <Label text="Search for new friends:" />
             <HBox spacing="10.0">
                <children>
-                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" styleClass="input" />
+                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Enter an email address..." styleClass="input" />
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
             </HBox>
+            <Label text="Your friends:" />
             <VBox id="friendlist" fx:id="friendlist" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
