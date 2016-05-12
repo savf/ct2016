@@ -33,7 +33,6 @@
 .friendlistLabel{
 	-fx-padding: 10;
 	-fx-border-width: 3;
-	-fx-border-color: #2E8DEF;
 	-fx-border-insets: 2 0 2 0;	
 	-fx-background-color: #ace7f9;
 }
@@ -50,6 +49,13 @@
 	-fx-border-radius:0;
 	-fx-background-radius:0;
 	-fx-pref-height:30;
+}
+
+.text-input, .text-input:focused {
+	-fx-border-radius:0;
+	-fx-background-radius:0;
+	-fx-pref-height:30;
+    -fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);
 }
 
 .audioPane{
