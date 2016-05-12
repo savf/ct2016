@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
@@ -11,11 +12,14 @@
          <children>
             <HBox spacing="10.0">
                <children>
-                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" styleClass="input" />
+                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Enter an email address..." styleClass="text-input" />
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
             </HBox>
-            <VBox id="friendlist" fx:id="friendlist" />
+            <VBox id="friendlist" fx:id="friendlist" spacing="10.0">
+               <padding>
+                  <Insets top="10.0" />
+               </padding></VBox>
          </children>
       </VBox>
    </children>

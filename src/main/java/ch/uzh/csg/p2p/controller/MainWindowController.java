@@ -419,4 +419,8 @@ public class MainWindowController {
 		}
 	}
 
+  public void deleteChatPartners() {
+    currentChatPartners = new ArrayList<String>();
+  }
+
 }

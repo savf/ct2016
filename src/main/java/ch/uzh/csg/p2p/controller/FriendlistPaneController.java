@@ -1,5 +1,6 @@
 package ch.uzh.csg.p2p.controller;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -15,6 +16,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import ch.uzh.csg.p2p.Node;
@@ -38,10 +41,13 @@ public class FriendlistPaneController {
   private VBox friendlist;
   @FXML
   private VBox searchResultList;
+  
+  private Label currentChatLabel;
 
   public FriendlistPaneController(Node node, MainWindowController mainWindowController) {
     this.node = node;
     this.mainWindowController = mainWindowController;
+    currentChatLabel = null;
   }
 
   public void sendFriendRequest(User user, Node node) {
@@ -116,15 +122,24 @@ public class FriendlistPaneController {
     hBox.setSpacing(40);
 
     Label label = new Label(f.getName());
-    label.getStyleClass().add("label");
+    label.getStyleClass().add("friendLabel");
     label.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
       public void handle(MouseEvent event) {
+        if(currentChatLabel != null){
+          currentChatLabel.getStyleClass().remove("friendLabelBright");
+          currentChatLabel.getStyleClass().add("friendLabel");
+          mainWindowController.deleteChatPartners();
+        }
         Label label = (Label) event.getSource();
+        label.getStyleClass().remove("friendLabel");
+        label.getStyleClass().add("friendLabelBright");
+        currentChatLabel = label;
         mainWindowController.addChatPartner(label.getText());
         mainWindowController.showChatPane();
-      }
+        }
     });
+    
     hBox.getChildren().add(label);
 
     friendlist.getChildren().add(label);
@@ -206,6 +221,10 @@ public class FriendlistPaneController {
   public void leaveChatHandler() throws ClassNotFoundException, IOException,
       LineUnavailableException {
     mainWindowController.showInfoPane();
+  }
+  
+  public void selectChatPartner(){
+    
   }
 
 

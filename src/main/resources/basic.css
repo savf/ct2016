@@ -90,3 +90,29 @@
 	-fx-text-fill: #FFFFFF;
 	-fx-alignment:center;
 }
+
+.text-input, .text-input:focused {
+	-fx-border-radius:0;
+	-fx-background-radius:0;
+	-fx-pref-height:30;
+    -fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);
+}
+
+.friendLabel {
+	-fx-background-insets: 12;
+	-fx-border-insets: 10; 
+	-fx-border-radius: 6; 
+	-fx-background-radius: 6; 
+	-fx-alignment: bottom_left; 
+	-fx-background-color: #63D1F4;
+	}
+	
+.friendLabelBright {
+	-fx-background-insets: 12;
+	-fx-border-insets: 10; 
+	-fx-border-radius: 6; 
+	-fx-background-radius: 6; 
+	-fx-alignment: bottom_left; 
+	-fx-background-color: #ace7f9;
+	}
+}

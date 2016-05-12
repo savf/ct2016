@@ -194,7 +194,6 @@ public class RequestHandler {
         futureBootstrap.awaitUninterruptibly();
         System.out.println(node.getUser().getUsername()+" knows: " + node.getPeer().peerBean().peerMap().all() + " unverified: "
             + node.getPeer().peerBean().peerMap().allOverflow());
-        System.out.println("wait for maintenance ping");
       }      
       if(request instanceof AudioRequest){
         // TODO: remove retrieveUser!

@@ -6,6 +6,7 @@ import ch.uzh.csg.p2p.controller.LoginWindowController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -35,6 +36,7 @@ public class LoginWindow extends Application {
 
 		stage.setScene(scene);
 		stage.setTitle(TITLE);
+		stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
 		stage.show();
 	}
 
