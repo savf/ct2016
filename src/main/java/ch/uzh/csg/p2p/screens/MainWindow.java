@@ -159,7 +159,7 @@ public class MainWindow {
 	}
 
 	private void initializeChatPane() throws IOException {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatPaneTabs.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatPane.fxml"));
 		loader.setController(chatPaneController);
 		chatPane = loader.load();
 	}

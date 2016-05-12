@@ -34,7 +34,8 @@
 	-fx-padding: 10;
 	-fx-border-width: 3;
 	-fx-border-color: #2E8DEF;
-	-fx-border-insets: 2 0 2 0;
+	-fx-border-insets: 2 0 2 0;	
+	-fx-background-color: #ace7f9;
 }
 
 #messageText{
