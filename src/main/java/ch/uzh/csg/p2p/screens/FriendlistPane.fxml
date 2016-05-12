@@ -12,7 +12,7 @@
             <Label text="Search for new friends:" />
             <HBox spacing="10.0">
                <children>
-                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Enter an email address..." styleClass="input" />
+                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Enter an email address..." styleClass="text-input" />
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
             </HBox>
