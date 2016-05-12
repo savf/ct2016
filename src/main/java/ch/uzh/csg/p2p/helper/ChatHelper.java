@@ -5,12 +5,12 @@ import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
-import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import net.tomp2p.peers.PeerAddress;
 
 public class ChatHelper {
 

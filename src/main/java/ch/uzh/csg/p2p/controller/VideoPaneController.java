@@ -1,7 +1,6 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -10,9 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.helper.VideoUtils;
-import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
@@ -100,6 +97,7 @@ public class VideoPaneController {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
 					node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
+			videoUtils.addReceiver(node.getFriend(chatPartner));
 		}
 		
 	}
@@ -172,7 +170,7 @@ public class VideoPaneController {
 		mainWindowController.makeVideoCallDialog(videoRequest.getSenderName());
 	}
 
-	public void startVideoCall() throws LineUnavailableException {
+	public void startVideoCall() throws LineUnavailableException, IOException {
 		/*Platform.runLater(new Runnable() {
 			public void run() {
 				videoUserWrapper.getChildren().clear();
@@ -184,6 +182,7 @@ public class VideoPaneController {
 			}
 		});*/
 		
+		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 	}
 
@@ -232,6 +231,7 @@ public class VideoPaneController {
 		RequestHandler.handleRequest(request, node);
 		
 		audioUtils.startAudio();
+		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 
 		log.info("Accept audio call with: " + username);

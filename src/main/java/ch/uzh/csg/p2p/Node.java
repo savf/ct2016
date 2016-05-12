@@ -2,12 +2,9 @@ package ch.uzh.csg.p2p;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
@@ -15,38 +12,24 @@ import javax.sound.sampled.LineUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.uzh.csg.p2p.controller.MainWindowController;
-import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.model.AudioMessage;
-import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
-import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.Request;
-import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 import net.tomp2p.connection.Bindings;
-import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
-import net.tomp2p.futures.BaseFutureListener;
-import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.futures.FutureDiscover;
-import net.tomp2p.message.Buffer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
-import net.tomp2p.rpc.RawDataReply;
-import net.tomp2p.storage.Data;
 
 public class Node {
 

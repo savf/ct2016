@@ -1,14 +1,13 @@
 package ch.uzh.csg.p2p.helper;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 
 public class LoginHelper {

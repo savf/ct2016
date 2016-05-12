@@ -3,19 +3,8 @@ package ch.uzh.csg.p2p.model.request;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.util.Date;
 
 import javax.sound.sampled.LineUnavailableException;
-
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.FuturePut;
-import net.tomp2p.dht.FutureRemove;
-import net.tomp2p.futures.BaseFutureAdapter;
-import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.futures.FutureDiscover;
-import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.storage.Data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +21,15 @@ import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.VideoMessage;
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
+import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
 
 
 public class RequestHandler {
@@ -291,7 +289,10 @@ public class RequestHandler {
   }
 
   private static Message handleReceive(Request request, Node node) throws IOException, LineUnavailableException, ClassNotFoundException {
-    if(request instanceof MessageRequest){
+    
+	  System.out.println("handleReceive");
+	  
+	  if(request instanceof MessageRequest){
       MessageRequest r = (MessageRequest) request;      
       Message message = r.getMessage();
       if(message instanceof AudioMessage) {
@@ -307,6 +308,7 @@ public class RequestHandler {
 		  mainWindowController.chatPaneController.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
       }
       else if(message instanceof VideoMessage) {
+    	  System.out.println("handleReceive VideoMessage");
         VideoMessage videoMessage = (VideoMessage) message;
         VideoUtils.playVideo(videoMessage.getData());
       }

@@ -4,6 +4,8 @@ import net.tomp2p.peers.PeerAddress;
 
 public class VideoRequest extends Request {
 
+	private static final long serialVersionUID = 1L;
+
 	public VideoRequest() {
 		super();
 	}
