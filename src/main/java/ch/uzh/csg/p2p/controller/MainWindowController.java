@@ -17,6 +17,7 @@ import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
+import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -87,7 +88,8 @@ public class MainWindowController {
 
 	public void setUser(String username)
 			throws ClassNotFoundException, IOException, LineUnavailableException {
-		user = LoginHelper.retrieveUser(username, node);
+		RequestListener<User> requestListener = new RequestListener<User>(user);
+		LoginHelper.retrieveUser(username, node, requestListener);
 	}
 
 	public void setChatPaneController(ChatPaneController chatPaneController) {

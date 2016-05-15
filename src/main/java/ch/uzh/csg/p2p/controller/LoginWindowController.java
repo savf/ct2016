@@ -12,11 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.screens.LoginWindow;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import net.tomp2p.dht.FutureGet;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -82,53 +85,54 @@ public class LoginWindowController {
 	private void startMainWindow(int id, String ip) throws Exception {
 		String password = getPassword();
 		String username = usernameText.getText();
-		if(checkUserExists(username, password, id, ip)){
-		  if (checkUsernamePassword(username, password, id, ip)) {
-		    //TODO: change the process when user already exists!!
-			MainWindow mainWindow = new MainWindow();
-			mainWindow.start(loginWindow.getStage(), id, ip, username, password);
-		  } else {
+		
+		if(username.equals("") || password.equals("")){
 			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Wrong username/password");
-			String s = "Username password combination not correct";
+			alert.setTitle("Username or password empty");
+			String s = "Username or password cannot be empty.";
 			alert.setContentText(s);
 			alert.showAndWait();
-		  }
 		}
-		else{
-		  MainWindow mainWindow = new MainWindow();
-          mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+		else {
+			if (ip != null) {
+				Node node = new Node(getId(), ip, LOGINNODENAME, "");
+				RequestListener<User> userExistsListener = new RequestListener<User>(node){
+					@Override
+					public void operationComplete(FutureGet futureGet) throws Exception {
+						if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
+							if(futureGet.data().object() instanceof User) {
+								User user = (User) futureGet.data().object();
+								if (user.getPassword().equals(password)) {
+									MainWindow mainWindow = new MainWindow();
+									mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+								} else {
+									Alert alert = new Alert(AlertType.ERROR);
+									alert.setTitle("Wrong username/password");
+									String s = "Username/password combination is not correct";
+									alert.setContentText(s);
+									alert.showAndWait();
+								}
+								shutdownNode();
+							}
+						}
+						if(futureGet.isSuccess()) {
+							//  FutureGet was successful, but user does not yet exist
+							MainWindow mainWindow = new MainWindow();
+							mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+						}
+					}
+				};
+				LoginHelper.retrieveUser(username, node, userExistsListener);
+			} else {
+				//  ip null means bootstrap node, no user check needed
+				MainWindow mainWindow = new MainWindow();
+				mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+			}
 		}
-	}
-	
-	private Boolean checkUserExists(String username, String password, int id, String ip) throws ClassNotFoundException, IOException, LineUnavailableException{
-	  Boolean isCorrect = true;
-      if (username.equals("") || password.equals("")) {
-          isCorrect = false;
-      } else if (ip != null) {
-          // if ip is null -> is first node in network --> no user exists       
-          Node node = new Node(getId(), ip, LOGINNODENAME, "");
-          isCorrect = LoginHelper.userExists(node, username);
-          node.shutdown();
-      }
-      return isCorrect;
-	}
-
-	private Boolean checkUsernamePassword(String username, String password, int id, String ip)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		Boolean isCorrect = true;
-		if (username.equals("") || password.equals("")) {
-			isCorrect = false;
-		} else if (ip != null) {
-			// if ip is null -> is first node in network --> no user exists		  
-			Node node = new Node(getId(), ip, LOGINNODENAME, "");
-			isCorrect = LoginHelper.usernamePasswordCorrect(node, username, password);
-			node.shutdown();
-		}
-		return isCorrect;
 	}
 
 	private String getPassword() throws NoSuchAlgorithmException {
+		// TODO: Add hash function
 		if (!passwordText.getText().equals("")) {
 			return passwordText.getText();
 		} else {
