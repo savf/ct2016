@@ -46,7 +46,6 @@ public class MainWindowController {
 
 
 	public Node node;
-	public User user;
 	private ChatHelper chatHelper;
 	private FriendlistHelper friendlistHelper;
 	public List<String> currentChatPartners;
@@ -76,21 +75,9 @@ public class MainWindowController {
 		this.friendlistHelper = new FriendlistHelper(this.node);
 	}
 
-	public void initialiseFriendlist(Node node) {
-		for (Friend f : node.getFriendList()) {
-			friendlistPaneController.addUserToFriendList(f);
-		}
-	}
-
 	/*
 	 * SETUP
 	 */
-
-	public void setUser(String username)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		RequestListener<User> requestListener = new RequestListener<User>(user);
-		LoginHelper.retrieveUser(username, node, requestListener);
-	}
 
 	public void setChatPaneController(ChatPaneController chatPaneController) {
 		this.chatPaneController = chatPaneController;

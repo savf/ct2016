@@ -46,7 +46,7 @@ public class AudioPaneController {
 	public AudioPaneController(Node node, MainWindowController mainWindowController) {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
-		audioUtils = new AudioUtils(node, mainWindowController.user);
+		audioUtils = new AudioUtils(node, node.getUser());
 	}
 	
 	@FXML

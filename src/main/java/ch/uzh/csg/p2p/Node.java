@@ -23,6 +23,9 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserRequest;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
@@ -41,7 +44,7 @@ public class Node {
 
 	private Logger log;
 	private User user;
-	private List<Friend> friendList = new ArrayList<Friend>();
+	private ObservableList<Friend> friendList = FXCollections.observableList(new ArrayList<Friend>());
 
 	protected PeerDHT peer;
 
@@ -58,10 +61,10 @@ public class Node {
 			createPeer(nodeId, username, password, true);
 		}
 		initiateUser(username, password);
-		loadStoredDataFromDHT();
 	}
 
-	private void loadStoredDataFromDHT() throws UnsupportedEncodingException, LineUnavailableException {
+	private void loadStoredDataFromDHT()
+			throws UnsupportedEncodingException, LineUnavailableException {
 		// TODO load messages, calls, friendrequests...
 		loadFriendlistFromDHT();
 	}
@@ -74,38 +77,42 @@ public class Node {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 					// user already exist --> only update address
 					LoginHelper.updatePeerAddress(this.node, username);
-
-					RequestListener<User> listener = new RequestListener<User>(user);
-					LoginHelper.retrieveUser(username, this.node, listener);
-				
+					this.node.setUser();
 				} else {
-					// user not exist --> add user
+					// user does not exist --> add user
 					LoginHelper.saveUsernamePassword(this.node, username, password);
-					user = new User(username, password, peer.peerAddress());
+					User newUser = new User(username, password, this.node.getPeer().peerAddress());
+					this.node.setUser(newUser);
 				}
+				loadStoredDataFromDHT();
 			}
 		};
 		
 		LoginHelper.retrieveUser(username, this, userExistsListener);	
 	}
 
-	private void loadFriendlistFromDHT() throws UnsupportedEncodingException, LineUnavailableException {
-		
+	private void loadFriendlistFromDHT()
+			throws UnsupportedEncodingException, LineUnavailableException {
+
 		for (String friendName : user.getFriendStorage()) {
 			User user = new User(friendName, null, null);
 			RequestListener<User> requestListener = new RequestListener<User>(this) {
 				@Override
 				public void operationComplete(FutureGet futureGet) throws Exception {
-					if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
+					if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 						User user = (User) futureGet.data().object();
 						Friend friend = new Friend(user.getPeerAddress(), user.getUsername());
 						this.node.friendList.add(friend);
 					}
 				}
 			};
-			
+
 			LoginHelper.retrieveUser(friendName, this, requestListener);
 		}
+	}
+	
+	public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
+		friendList.addListener(listener);
 	}
 
 	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
@@ -195,6 +202,20 @@ public class Node {
 
 	public User getUser() {
 		return user;
+	}
+
+	public void setUser() {
+		setUser(null);
+	}
+	
+	public void setUser(User user) {
+		if (user != null) {
+			this.user = user;
+		} else {
+			User newUser = new User(this.user.getUsername(), this.user.getPassword(),
+					this.getPeer().peerAddress());
+			this.user = newUser;
+		}
 	}
 
 	public List<Friend> getFriendList() {

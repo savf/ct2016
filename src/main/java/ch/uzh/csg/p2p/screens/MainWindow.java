@@ -71,7 +71,6 @@ public class MainWindow {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
 		startNode(id, ip, username, password);
 		mainWindowController = new MainWindowController(node);
-		mainWindowController.setUser(username);
 		
 		chatPaneController = new ChatPaneController(node, mainWindowController);
 		mainWindowController.setChatPaneController(chatPaneController);
@@ -107,8 +106,6 @@ public class MainWindow {
 		mainWindowController.setFriendlistPane(friendlistPane);
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
-
-	    mainWindowController.initialiseFriendlist(node);
 		
 		Scene scene = new Scene(mainPane);
 

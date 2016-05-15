@@ -15,6 +15,7 @@ import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -31,6 +32,7 @@ public class FriendlistPaneController {
 	private Node node;
 	private MainWindowController mainWindowController;
 	private FriendlistHelper friendlistHelper;
+	private ListChangeListener<Friend> listChangeListener;
 
 	@FXML
 	private TextField friendSearchText;
@@ -43,6 +45,13 @@ public class FriendlistPaneController {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
 		this.friendlistHelper = new FriendlistHelper(this.node);
+		listChangeListener = new ListChangeListener<Friend>() {
+            @Override
+            public void onChanged(ListChangeListener.Change change) {
+                initializeFriendlist(node);
+            }
+		};
+		node.registerForFriendListUpdates(listChangeListener);
 	}
 
 	public void sendFriendRequest(User user, Node node) {
@@ -105,6 +114,17 @@ public class FriendlistPaneController {
 				}
 			}
 		});
+	}
+	
+	public void initializeFriendlist(Node node) {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				friendlist.getChildren().clear();
+				for (Friend f : node.getFriendList()) {
+					addUserToFriendList(f);
+				}
+			}
+		});	
 	}
 
 	public void addUserToFriendList(Friend friend) {

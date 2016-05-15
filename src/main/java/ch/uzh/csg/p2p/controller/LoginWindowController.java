@@ -103,6 +103,7 @@ public class LoginWindowController {
 							if(futureGet.data().object() instanceof User) {
 								User user = (User) futureGet.data().object();
 								if (user.getPassword().equals(password)) {
+									shutdownNode();
 									MainWindow mainWindow = new MainWindow();
 									mainWindow.start(loginWindow.getStage(), id, ip, username, password);
 								} else {
@@ -112,11 +113,12 @@ public class LoginWindowController {
 									alert.setContentText(s);
 									alert.showAndWait();
 								}
-								shutdownNode();
+								
 							}
 						}
 						if(futureGet.isSuccess()) {
 							//  FutureGet was successful, but user does not yet exist
+							shutdownNode();
 							MainWindow mainWindow = new MainWindow();
 							mainWindow.start(loginWindow.getStage(), id, ip, username, password);
 						}
