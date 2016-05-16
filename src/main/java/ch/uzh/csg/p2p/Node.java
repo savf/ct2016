@@ -54,7 +54,7 @@ public class Node extends Observable{
 
 	public Node(int nodeId, String ip, String username, String password, Observer nodeReadyObserver)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		log = LoggerFactory.getLogger("Node from user: " + username);
+		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
 
 		if(nodeReadyObserver != null) {

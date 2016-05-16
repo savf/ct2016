@@ -108,7 +108,7 @@ public class LoginWindowController implements Observer{
 			if (ip != null) {
 				// start a new node and check if the user already exists with the observer
 				// update() method
-				Node node = new Node(getId(), ip, LOGINNODENAME, "", this);
+				new Node(getId(), ip, LOGINNODENAME, "", this);
 			} else {
 				// ip null means bootstrap node, no user check needed
 				MainWindow mainWindow = new MainWindow();
@@ -151,7 +151,7 @@ public class LoginWindowController implements Observer{
 									public void run() {
 										Alert alert = new Alert(AlertType.ERROR);
 										alert.setTitle("Wrong username/password");
-										String s = "Username/password combination is not correct";
+										String s = "Username/password combination is incorrect";
 										alert.setContentText(s);
 										alert.showAndWait();
 									}

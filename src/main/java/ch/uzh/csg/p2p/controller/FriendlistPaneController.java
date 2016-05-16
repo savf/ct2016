@@ -74,7 +74,7 @@ public class FriendlistPaneController {
 								final User user = (User) futureGet.data().object();
 								//  Only show user in search results, if it's not myself
 								if(!user.getPeerAddress().equals(node.getPeer().peerAddress())) {
-									HBox hBox = new HBox();
+									final HBox hBox = new HBox();
 									hBox.setSpacing(40);
 	
 									Label label = new Label(user.getUsername());
@@ -98,8 +98,14 @@ public class FriendlistPaneController {
 										button.setVisible(false);
 									}
 									hBox.getChildren().add(button);
-	
-									searchResultList.getChildren().add(hBox);
+									Platform.runLater(new Runnable() {
+
+										public void run() {
+											searchResultList.getChildren().add(hBox);
+										}
+										
+									});
+									
 								}
 								friendSearchText.setText("");
 							}
