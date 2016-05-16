@@ -56,8 +56,8 @@ public class VideoPaneController {
 	public VideoPaneController(Node node, MainWindowController mainWindowController) {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
-		this.audioUtils = new AudioUtils(node, mainWindowController.user);
-		this.videoUtils = new VideoUtils(node, mainWindowController.user);
+		this.audioUtils = new AudioUtils(node, node.getUser());
+		this.videoUtils = new VideoUtils(node, node.getUser());
 	}
 	
 	@FXML
@@ -88,10 +88,10 @@ public class VideoPaneController {
 		hideMyselfBtn.setText("Hide myself");
 
 		if (audioUtils == null) {
-			audioUtils = new AudioUtils(node, mainWindowController.user);
+			audioUtils = new AudioUtils(node, node.getUser());
 		}
 
-		videoUtils = new VideoUtils(node, mainWindowController.user);
+		videoUtils = new VideoUtils(node, node.getUser());
 
 		for(String chatPartner: mainWindowController.currentChatPartners) {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,

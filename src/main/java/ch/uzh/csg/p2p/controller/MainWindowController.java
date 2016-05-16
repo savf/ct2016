@@ -17,6 +17,7 @@ import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
+import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -45,7 +46,6 @@ public class MainWindowController {
 
 
 	public Node node;
-	public User user;
 	private ChatHelper chatHelper;
 	private FriendlistHelper friendlistHelper;
 	public List<String> currentChatPartners;
@@ -75,20 +75,9 @@ public class MainWindowController {
 		this.friendlistHelper = new FriendlistHelper(this.node);
 	}
 
-	public void initialiseFriendlist(Node node) {
-		for (Friend f : node.getFriendList()) {
-			friendlistPaneController.addUserToFriendList(f);
-		}
-	}
-
 	/*
 	 * SETUP
 	 */
-
-	public void setUser(String username)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		user = LoginHelper.retrieveUser(username, node);
-	}
 
 	public void setChatPaneController(ChatPaneController chatPaneController) {
 		this.chatPaneController = chatPaneController;
@@ -111,7 +100,6 @@ public class MainWindowController {
 	}
 
 	public void setMainPane(BorderPane mainPane) {
-		System.out.println("setMainPane");
 		this.mainPane = mainPane;
 	}
 

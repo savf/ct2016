@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -12,20 +14,29 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.screens.LoginWindow;
 import ch.uzh.csg.p2p.screens.MainWindow;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import net.tomp2p.dht.FutureGet;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-public class LoginWindowController {
+public class LoginWindowController implements Observer {
 
 	private final String LOGINNODENAME = "loginnode";
 	private Logger log = LoggerFactory.getLogger(getClass());
+
+	private String username;
+	private String password;
+	private int nodeId;
+	private String nodeIP;
 
 	@FXML
 	private Label title;
@@ -49,12 +60,12 @@ public class LoginWindowController {
 		int id = getId();
 		// check if ip not set --> is bootstrapnode
 		if (bootstrapCB.isSelected()) {
-			startMainWindow(id, null);
+			login(id, null);
 		} else {
 			String ip = ipText.getText();
 			if (!ip.equals("")) {
-				startMainWindow(id, ip);
-			}else{
+				login(id, ip);
+			} else {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setTitle("IP address is missing");
 				String s = "Set IP address of bootstrap node or start as bootstrap";
@@ -63,12 +74,14 @@ public class LoginWindowController {
 			}
 		}
 	}
-	
-	@FXML public void handleBootstrapCB() throws UnknownHostException{
-		if(bootstrapCB.isSelected()){
-			ipText.setText("The local IP address is: "+InetAddress.getLocalHost().getHostAddress());
+
+	@FXML
+	public void handleBootstrapCB() throws UnknownHostException {
+		if (bootstrapCB.isSelected()) {
+			ipText.setText(
+					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());
 			ipText.setDisable(true);
-		}else{
+		} else {
 			ipText.setText("");
 			ipText.setDisable(false);
 		}
@@ -79,60 +92,104 @@ public class LoginWindowController {
 		return id;
 	}
 
-	private void startMainWindow(int id, String ip) throws Exception {
-		String password = getPassword();
-		String username = usernameText.getText();
-		if(checkUserExists(username, password, id, ip)){
-		  if (checkUsernamePassword(username, password, id, ip)) {
-		    //TODO: change the process when user already exists!!
-			MainWindow mainWindow = new MainWindow();
-			mainWindow.start(loginWindow.getStage(), id, ip, username, password);
-		  } else {
+	private void login(final int id, final String ip) throws Exception {
+		password = getPassword();
+		username = usernameText.getText();
+		this.nodeIP = ip;
+		this.nodeId = id;
+
+		if (username.equals("") || password.equals("")) {
 			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Wrong username/password");
-			String s = "Username password combination not correct";
+			alert.setTitle("Username or password empty");
+			String s = "Username or password cannot be empty.";
 			alert.setContentText(s);
 			alert.showAndWait();
-		  }
+		} else {
+			if (ip != null) {
+				// start a new node and check if the user already exists with the observer
+				// update() method
+				new Node(getId(), ip, LOGINNODENAME, "", this);
+			} else {
+				// ip null means bootstrap node, no user check needed
+				MainWindow mainWindow = new MainWindow();
+				mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+			}
 		}
-		else{
-		  MainWindow mainWindow = new MainWindow();
-          mainWindow.start(loginWindow.getStage(), id, ip, username, password);
-		}
-	}
-	
-	private Boolean checkUserExists(String username, String password, int id, String ip) throws ClassNotFoundException, IOException, LineUnavailableException{
-	  Boolean isCorrect = true;
-      if (username.equals("") || password.equals("")) {
-          isCorrect = false;
-      } else if (ip != null) {
-          // if ip is null -> is first node in network --> no user exists       
-          Node node = new Node(getId(), ip, LOGINNODENAME, "");
-          isCorrect = LoginHelper.userExists(node, username);
-          node.shutdown();
-      }
-      return isCorrect;
-	}
-
-	private Boolean checkUsernamePassword(String username, String password, int id, String ip)
-			throws ClassNotFoundException, IOException, LineUnavailableException {
-		Boolean isCorrect = true;
-		if (username.equals("") || password.equals("")) {
-			isCorrect = false;
-		} else if (ip != null) {
-			// if ip is null -> is first node in network --> no user exists		  
-			Node node = new Node(getId(), ip, LOGINNODENAME, "");
-			isCorrect = LoginHelper.usernamePasswordCorrect(node, username, password);
-			node.shutdown();
-		}
-		return isCorrect;
 	}
 
 	private String getPassword() throws NoSuchAlgorithmException {
+		// TODO: Add hash function
 		if (!passwordText.getText().equals("")) {
 			return passwordText.getText();
 		} else {
 			return "";
+		}
+	}
+
+	public void update(Observable o, Object arg) {
+		Node node = (Node) arg;
+
+		RequestListener<User> userExistsListener = new RequestListener<User>(node) {
+			@Override
+			public void operationComplete(FutureGet futureGet)
+					throws ClassNotFoundException, IOException {
+				if (futureGet.isSuccess()) {
+					if (futureGet != null && futureGet.data() != null) {
+						if (futureGet.data().object() instanceof User) {
+							User user = (User) futureGet.data().object();
+							if (user.getPassword().equals(password)) {
+								shutdownNode();
+								futureGet.removeListener(this);
+								Platform.runLater(new Runnable() {
+									public void run() {
+										try {
+											MainWindow mainWindow = new MainWindow();
+											mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
+													username, password);
+										} catch (Exception e) {
+											e.printStackTrace();
+										}
+									}
+								});
+							} else {
+								Platform.runLater(new Runnable() {
+									public void run() {
+										Alert alert = new Alert(AlertType.ERROR);
+										alert.setTitle("Wrong username/password");
+										String s = "Username/password combination is incorrect";
+										alert.setContentText(s);
+										alert.showAndWait();
+									}
+								});
+							}
+
+						}
+					} else {
+						// FutureGet was successful, but user does not yet exist
+						shutdownNode();
+						futureGet.removeListener(this);
+						Platform.runLater(new Runnable() {
+							public void run() {
+								try {
+									MainWindow mainWindow = new MainWindow();
+									mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
+											username, password);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
+					}
+				}
+			}
+		};
+
+		try {
+			LoginHelper.retrieveUser(username, node, userExistsListener);
+
+		} catch (LineUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
