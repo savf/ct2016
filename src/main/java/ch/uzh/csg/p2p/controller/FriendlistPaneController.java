@@ -189,7 +189,6 @@ public class FriendlistPaneController {
 				RequestHandler.handleRequest(request, node);
 				Friend friend = new Friend(req.getSenderPeerAddress(), req.getSenderName());
 				friendlistHelper.storeFriend(friend);
-				addUserToFriendList(friend);
 				node.addFriend(friend);
 			}
 		});
@@ -210,7 +209,6 @@ public class FriendlistPaneController {
 			public void run() {
 				mainWindowController.setMainPaneTop(null);
 				friendlistHelper.storeFriend(friend);
-				addUserToFriendList(friend);
 				node.addFriend(friend);
 			}
 		});

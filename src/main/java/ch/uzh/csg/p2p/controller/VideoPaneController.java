@@ -216,8 +216,8 @@ public class VideoPaneController {
 
 		mainWindowController.showVideoAndChatPanes();
 		
-		videoUtils = new VideoUtils(node, mainWindowController.user);
-		audioUtils = new AudioUtils(node, mainWindowController.user);
+		videoUtils = new VideoUtils(node, node.getUser());
+		audioUtils = new AudioUtils(node, node.getUser());
 
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
 		    node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
