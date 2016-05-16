@@ -56,13 +56,14 @@ public class Node extends Observable{
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
-
+		int id = ((Long) System.currentTimeMillis()).intValue();
+		
 		if(nodeReadyObserver != null) {
 			addObserver(nodeReadyObserver);
 		}
 		// if not a BootstrapNode
 		if (ip != null) {
-			createPeer(nodeId, username, password, false);
+			createPeer(id, username, password, false);
 			connectToNode(ip);
 		} else {
 			createPeer(nodeId, username, password, true);

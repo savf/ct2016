@@ -100,7 +100,6 @@ public class MainWindowController {
 	}
 
 	public void setMainPane(BorderPane mainPane) {
-		System.out.println("setMainPane");
 		this.mainPane = mainPane;
 	}
 

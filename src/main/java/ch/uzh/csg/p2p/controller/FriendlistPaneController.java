@@ -1,6 +1,8 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -33,6 +35,7 @@ public class FriendlistPaneController {
 	private MainWindowController mainWindowController;
 	private FriendlistHelper friendlistHelper;
 	private ListChangeListener<Friend> listChangeListener;
+	private List<Friend> friendList;
 
 	@FXML
 	private TextField friendSearchText;
@@ -45,6 +48,7 @@ public class FriendlistPaneController {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
 		this.friendlistHelper = new FriendlistHelper(this.node);
+		this.friendList = new ArrayList<Friend>();
 		listChangeListener = new ListChangeListener<Friend>() {
             public void onChanged(ListChangeListener.Change change) {
                 initializeFriendlist(node);
@@ -124,9 +128,11 @@ public class FriendlistPaneController {
 	public void initializeFriendlist(final Node node) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				friendlist.getChildren().clear();
 				for (Friend f : node.getFriendList()) {
-					addUserToFriendList(f);
+					if(!friendList.contains(f)) {
+						friendList.add(f);
+						addUserToFriendList(f);
+					}
 				}
 			}
 		});	
@@ -153,7 +159,7 @@ public class FriendlistPaneController {
 				});
 				hBox.getChildren().add(label);
 
-				friendlist.getChildren().add(label);
+				friendlist.getChildren().add(hBox);
 			}
 		});
 	}

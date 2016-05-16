@@ -28,11 +28,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-public class LoginWindowController implements Observer{
+public class LoginWindowController implements Observer {
 
 	private final String LOGINNODENAME = "loginnode";
 	private Logger log = LoggerFactory.getLogger(getClass());
-	
+
 	private String username;
 	private String password;
 	private int nodeId;
@@ -117,12 +117,6 @@ public class LoginWindowController implements Observer{
 		}
 	}
 
-	public void checkUserAndStart(final Node node, final int id, final String ip,
-			final String username, final String password) throws LineUnavailableException {
-
-		
-	}
-
 	private String getPassword() throws NoSuchAlgorithmException {
 		// TODO: Add hash function
 		if (!passwordText.getText().equals("")) {
@@ -134,20 +128,31 @@ public class LoginWindowController implements Observer{
 
 	public void update(Observable o, Object arg) {
 		Node node = (Node) arg;
-		
+
 		RequestListener<User> userExistsListener = new RequestListener<User>(node) {
 			@Override
-			public void operationComplete(FutureGet futureGet) throws Exception {
-				if(futureGet.isSuccess()) {
+			public void operationComplete(FutureGet futureGet)
+					throws ClassNotFoundException, IOException {
+				if (futureGet.isSuccess()) {
 					if (futureGet != null && futureGet.data() != null) {
 						if (futureGet.data().object() instanceof User) {
 							User user = (User) futureGet.data().object();
 							if (user.getPassword().equals(password)) {
 								shutdownNode();
-								MainWindow mainWindow = new MainWindow();
-								mainWindow.start(loginWindow.getStage(), nodeId, nodeIP, username, password);
+								futureGet.removeListener(this);
+								Platform.runLater(new Runnable() {
+									public void run() {
+										try {
+											MainWindow mainWindow = new MainWindow();
+											mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
+													username, password);
+										} catch (Exception e) {
+											e.printStackTrace();
+										}
+									}
+								});
 							} else {
-								Platform.runLater(new Runnable(){
+								Platform.runLater(new Runnable() {
 									public void run() {
 										Alert alert = new Alert(AlertType.ERROR);
 										alert.setTitle("Wrong username/password");
@@ -157,20 +162,31 @@ public class LoginWindowController implements Observer{
 									}
 								});
 							}
-	
+
 						}
 					} else {
 						// FutureGet was successful, but user does not yet exist
 						shutdownNode();
-						MainWindow mainWindow = new MainWindow();
-						mainWindow.start(loginWindow.getStage(), nodeId, nodeIP, username, password);
+						futureGet.removeListener(this);
+						Platform.runLater(new Runnable() {
+							public void run() {
+								try {
+									MainWindow mainWindow = new MainWindow();
+									mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
+											username, password);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
 					}
 				}
 			}
 		};
-		
+
 		try {
 			LoginHelper.retrieveUser(username, node, userExistsListener);
+
 		} catch (LineUnavailableException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

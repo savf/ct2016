@@ -147,8 +147,7 @@ public class RequestHandler {
 					.data(new Data(user)).start();
 			futurePut.addListener(new BaseFutureAdapter<FuturePut>() {
 				public void operationComplete(FuturePut future) throws Exception {
-					System.out.println(username + " put into DHT friend " + r.getSenderName());
-					System.out.println("With success: " + future.isSuccess());
+					log.info("User " + username + " put " + r.getSenderName() + " into DHT as friend, with success: " + future.isSuccess());
 					// User user = new User(username, null, null);
 					// User result = retrieveUser(user,node1);
 					/*
@@ -212,11 +211,10 @@ public class RequestHandler {
 			FutureBootstrap futureBootstrap =
 					n.getPeer().peer().bootstrap().inetAddress(address).ports(DEFAULTPORT).start();
 			futureBootstrap.awaitUninterruptibly();
-			//  TODO: Possible performance problem with awaitUninterruptibly
-			System.out.println(node.getUser().getUsername() + " knows: "
+			log.info(node.getUser().getUsername() + " knows: "
 					+ node.getPeer().peerBean().peerMap().all() + " unverified: "
 					+ node.getPeer().peerBean().peerMap().allOverflow());
-			System.out.println("wait for maintenance ping");
+			log.info("Waiting for maintenance ping");
 		}
 		if (request instanceof AudioRequest) {
 			// TODO: remove retrieveUser!
@@ -329,8 +327,6 @@ public class RequestHandler {
 	private static Message handleReceive(Request request, Node node)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 
-		System.out.println("handleReceive");
-
 		if (request instanceof MessageRequest) {
 			MessageRequest r = (MessageRequest) request;
 			Message message = r.getMessage();
@@ -347,7 +343,7 @@ public class RequestHandler {
 				mainWindowController.chatPaneController
 						.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
 			} else if (message instanceof VideoMessage) {
-				System.out.println("handleReceive VideoMessage");
+				log.info("handleReceive VideoMessage");
 				VideoMessage videoMessage = (VideoMessage) message;
 				VideoUtils.playVideo(videoMessage.getData());
 			}
