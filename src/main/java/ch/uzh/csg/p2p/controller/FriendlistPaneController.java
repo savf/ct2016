@@ -41,12 +41,11 @@ public class FriendlistPaneController {
 	@FXML
 	private VBox searchResultList;
 
-	public FriendlistPaneController(Node node, MainWindowController mainWindowController) {
+	public FriendlistPaneController(final Node node, MainWindowController mainWindowController) {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
 		this.friendlistHelper = new FriendlistHelper(this.node);
 		listChangeListener = new ListChangeListener<Friend>() {
-            @Override
             public void onChanged(ListChangeListener.Change change) {
                 initializeFriendlist(node);
             }
@@ -72,7 +71,7 @@ public class FriendlistPaneController {
 						@Override
 						public void operationComplete(FutureGet futureGet) throws Exception {
 							if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
-								User user = (User) futureGet.data().object();
+								final User user = (User) futureGet.data().object();
 								//  Only show user in search results, if it's not myself
 								if(!user.getPeerAddress().equals(node.getPeer().peerAddress())) {
 									HBox hBox = new HBox();
@@ -116,7 +115,7 @@ public class FriendlistPaneController {
 		});
 	}
 	
-	public void initializeFriendlist(Node node) {
+	public void initializeFriendlist(final Node node) {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				friendlist.getChildren().clear();

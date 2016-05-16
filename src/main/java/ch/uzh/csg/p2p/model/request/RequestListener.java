@@ -20,7 +20,6 @@ public class RequestListener<Type> implements BaseFutureListener<FutureGet>{
 	public RequestListener() {
 	}
 	
-	@Override
 	public void operationComplete(FutureGet futureGet) throws Exception {
 		if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 			this.variableToSet = (Type) futureGet.data().object();
@@ -30,7 +29,6 @@ public class RequestListener<Type> implements BaseFutureListener<FutureGet>{
 		}
 	}
 
-	@Override
 	public void exceptionCaught(Throwable t) throws Exception {
 		// TODO Auto-generated method stub
 		

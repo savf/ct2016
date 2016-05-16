@@ -25,7 +25,7 @@ public class MainWindow {
 	private final String TITLE = "Quack! - ";
 
 	private Node node;
-	
+
 	private Stage stage;
 	private int id;
 	private String ip;
@@ -63,15 +63,15 @@ public class MainWindow {
 
 	public void startNode(int id, String ip, String username, String password)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-			node = new Node(id, ip, username, password);  
+		node = new Node(id, ip, username, password, null);
 	}
-	
+
 	private void initialiseWindow()
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
 		startNode(id, ip, username, password);
 		mainWindowController = new MainWindowController(node);
-		
+
 		chatPaneController = new ChatPaneController(node, mainWindowController);
 		mainWindowController.setChatPaneController(chatPaneController);
 		audioPaneController = new AudioPaneController(node, mainWindowController);
@@ -106,7 +106,7 @@ public class MainWindow {
 		mainWindowController.setFriendlistPane(friendlistPane);
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
-		
+
 		Scene scene = new Scene(mainPane);
 
 		scene.getStylesheets().add("basic.css");
@@ -114,29 +114,30 @@ public class MainWindow {
 		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
 		stage.centerOnScreen();
-		stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
-        
-		//stage.setFullScreen(true);
+		stage.getIcons()
+				.add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
+
+		// stage.setFullScreen(true);
 
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
 			public void handle(WindowEvent event) {
-				if(node != null) {
+				if (node != null) {
 					node.shutdown();
 				}
-				if(mainWindowController.audioRingingThread != null) {
+				if (mainWindowController.audioRingingThread != null) {
 					mainWindowController.audioRingingThread.stop();
 				}
-				if(mainWindowController.videoRingingThread != null) {
+				if (mainWindowController.videoRingingThread != null) {
 					mainWindowController.videoRingingThread.stop();
 				}
-				
+
 				stage.close();
 				System.exit(0);
 			}
 		});
-		
-	      RequestHandler.setMainWindowController(mainWindowController);
+
+		RequestHandler.setMainWindowController(mainWindowController);
 	}
 
 	public void showSearchResults() {
@@ -166,7 +167,7 @@ public class MainWindow {
 		loader.setController(audioPaneController);
 		audioPane = loader.load();
 	}
-	
+
 	private void initializeVideoPane() throws IOException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("VideoPane.fxml"));
 		loader.setController(videoPaneController);
@@ -180,8 +181,7 @@ public class MainWindow {
 	}
 
 	private void initializeFriendsearchResultPane() throws IOException {
-		FXMLLoader loader =
-				new FXMLLoader(getClass().getResource("FriendsearchResultPane.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("FriendsearchResultPane.fxml"));
 		loader.setController(friendlistPaneController);
 		friendsearchResultPane = loader.load();
 	}

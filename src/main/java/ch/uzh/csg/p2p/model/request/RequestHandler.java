@@ -220,7 +220,7 @@ public class RequestHandler {
 		}
 		if (request instanceof AudioRequest) {
 			// TODO: remove retrieveUser!
-			AudioRequest r = (AudioRequest) request;
+			final AudioRequest r = (AudioRequest) request;
 			PeerAddress peerAddress = null;
 			if (r.getReceiverAddress() != null) {
 				peerAddress = r.getReceiverAddress();
@@ -245,7 +245,7 @@ public class RequestHandler {
 		}
 		if (request instanceof VideoRequest) {
 			// TODO: remove retrieveUser!
-			VideoRequest videoRequest = (VideoRequest) request;
+			final VideoRequest videoRequest = (VideoRequest) request;
 			PeerAddress peerAddress = null;
 			if (videoRequest.getReceiverAddress() != null) {
 				peerAddress = videoRequest.getReceiverAddress();
@@ -272,7 +272,7 @@ public class RequestHandler {
 
 		if (request instanceof FriendRequest) {
 			// TODO: remove retrieveUser!
-			FriendRequest r = (FriendRequest) request;
+			final FriendRequest r = (FriendRequest) request;
 			PeerAddress peerAddress = null;
 			if (r.getReceiverAddress() != null) {
 				peerAddress = r.getReceiverAddress();

@@ -23,7 +23,7 @@ public class LoginHelper {
 		storeUser(user, node);
 	}
 
-	public static void updatePeerAddress(Node node, String username)
+	public static void updatePeerAddress(Node node, final String username)
 			throws ClassNotFoundException, LineUnavailableException {
 		RequestListener<User> requestListener = new RequestListener<User>(node){
 			@Override
@@ -37,6 +37,8 @@ public class LoginHelper {
 				}
 				user.setPeerAddress(this.node.getPeer().peerAddress());
 				LoginHelper.storeUser(user, this.node);
+				node.setUser(user);
+				node.loadStoredDataFromDHT();
 			}
 		};
 		retrieveUser(username, node, requestListener);

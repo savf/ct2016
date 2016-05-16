@@ -6,12 +6,15 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.uzh.csg.p2p.controller.LoginWindowController;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
@@ -37,7 +40,7 @@ import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
 
-public class Node {
+public class Node extends Observable{
 
 	protected final String BOOTSTRAPNODE = "Bootstrapnode";
 	private final int DEFAULTPORT = 54000;
@@ -47,12 +50,16 @@ public class Node {
 	private ObservableList<Friend> friendList = FXCollections.observableList(new ArrayList<Friend>());
 
 	protected PeerDHT peer;
+	
 
-	public Node(int nodeId, String ip, String username, String password)
+	public Node(int nodeId, String ip, String username, String password, Observer nodeReadyObserver)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node from user: " + username);
 		user = new User(username, password, null);
 
+		if(nodeReadyObserver != null) {
+			addObserver(nodeReadyObserver);
+		}
 		// if not a BootstrapNode
 		if (ip != null) {
 			createPeer(nodeId, username, password, false);
@@ -62,29 +69,37 @@ public class Node {
 		}
 		initiateUser(username, password);
 	}
+	
+	private void nodeReady() {
+		setChanged();
+		notifyObservers(this);
+	}
 
-	private void loadStoredDataFromDHT()
+	public void loadStoredDataFromDHT()
 			throws UnsupportedEncodingException, LineUnavailableException {
 		// TODO load messages, calls, friendrequests...
 		loadFriendlistFromDHT();
 	}
 
-	private void initiateUser(String username, String password)
+	private void initiateUser(final String username, final String password)
 			throws ClassNotFoundException, LineUnavailableException, IOException {
 		RequestListener<User> userExistsListener = new RequestListener<User>(this) {
 			@Override
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 					// user already exist --> only update address
-					LoginHelper.updatePeerAddress(this.node, username);
-					this.node.setUser();
+					if(!username.equals("loginnode")) {
+						LoginHelper.updatePeerAddress(this.node, username);
+					}
+					else {
+						nodeReady();
+					}
 				} else {
 					// user does not exist --> add user
 					LoginHelper.saveUsernamePassword(this.node, username, password);
 					User newUser = new User(username, password, this.node.getPeer().peerAddress());
 					this.node.setUser(newUser);
 				}
-				loadStoredDataFromDHT();
 			}
 		};
 		
@@ -204,10 +219,6 @@ public class Node {
 		return user;
 	}
 
-	public void setUser() {
-		setUser(null);
-	}
-	
 	public void setUser(User user) {
 		if (user != null) {
 			this.user = user;
