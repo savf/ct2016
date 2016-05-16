@@ -98,6 +98,7 @@ public class VideoPaneController {
 					node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 			videoUtils.addReceiver(node.getFriend(chatPartner));
+			audioUtils.addReceiver(node.getFriend(chatPartner));
 		}
 		
 	}
@@ -171,17 +172,6 @@ public class VideoPaneController {
 	}
 
 	public void startVideoCall() throws LineUnavailableException, IOException {
-		/*Platform.runLater(new Runnable() {
-			public void run() {
-				videoUserWrapper.getChildren().clear();
-				
-				for(Map.Entry<String, Label> audioUser: audioUsersMap.entrySet()) {
-					audioUser.getValue().setText(audioUser.getKey());
-					videoUserWrapper.getChildren().add(audioUser.getValue());
-				}
-			}
-		});*/
-		
 		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 	}
@@ -218,19 +208,28 @@ public class VideoPaneController {
 		cameraOff = false;
 		Image image = new Image(getClass().getResourceAsStream("/camera.png"));
 		cameraLbl.setGraphic(new ImageView(image));
-		muteVideoBtn.setText("Mute camera");
+		muteVideoBtn.setText("Turn camera off");
 		microphoneMuted = false;
 		Image imageMicrophone = new Image(getClass().getResourceAsStream("/microphone.png"));
 		microphoneLbl.setGraphic(new ImageView(imageMicrophone));
 		muteMicrophoneBtn.setText("Mute microphone");
 
 		mainWindowController.showVideoAndChatPanes();
+		
+		videoUtils = new VideoUtils(node, mainWindowController.user);
+		audioUtils = new AudioUtils(node, mainWindowController.user);
 
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
 		    node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
 		audioUtils.startAudio();
+
+		for(String chatPartner: mainWindowController.currentChatPartners) {
+			videoUtils.addReceiver(node.getFriend(chatPartner));
+			audioUtils.addReceiver(node.getFriend(chatPartner));
+		}
+		
 		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 
