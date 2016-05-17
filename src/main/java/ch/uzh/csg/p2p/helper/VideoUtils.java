@@ -32,7 +32,6 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import net.tomp2p.audiovideowrapper.H264Wrapper;
 import net.tomp2p.audiovideowrapper.VideoData;
-import net.tomp2p.futures.FutureDirect;
 
 public class VideoUtils {
 	private static Logger log = LoggerFactory.getLogger(VideoUtils.class);
@@ -76,9 +75,10 @@ public class VideoUtils {
 		
 		while(running){
 			List<byte[]> byteBufferList = new ArrayList<byte[]>();
+			log.debug(IMG+"");
+			log.debug(IMG != null ? IMG.getImage()+"" : "");
 			if(IMG != null && IMG.getImage() != null){
 				javafx.scene.image.Image image = IMG.getImage();
-				System.out.println(image);
 				BufferedImage bImage = new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 				SwingFXUtils.fromFXImage(IMG.getImage(), bImage);
 				ByteArrayOutputStream s = new ByteArrayOutputStream();
@@ -87,8 +87,6 @@ public class VideoUtils {
 				s.close();
 				byteBufferList.add(res);
 				sendVideoData(byteBufferList);
-			}else{
-				System.out.println("IMG or IMG is null");
 			}
 		}
 		}catch (WebcamLockException e){
@@ -99,14 +97,12 @@ public class VideoUtils {
 	private void sendVideoData(List<byte[]> byteBufferList) {
 		if (!mute) {
 			Date date = new Date();
-			System.out.println(receiverList.size());
 			for (Friend receiver : receiverList) {
 				VideoMessage videoMessage =
 						new VideoMessage(sender.getUsername(), receiver.getName(), receiver.getPeerAddress(), date,
 								byteBufferList);
-				FutureDirect futi = node.getPeer().peer().sendDirect(receiver.getPeerAddress()).object(videoMessage)
+				node.getPeer().peer().sendDirect(receiver.getPeerAddress()).object(videoMessage)
 						.start();
-				System.out.println(futi.failedReason());
 			}
 		}
 	}
@@ -128,8 +124,6 @@ public class VideoUtils {
                 }
             }
         }
- 
-        System.out.println("received Video Data and add it now to IV");
         partnerImageView.setImage(wr);
 	}
 
@@ -142,6 +136,10 @@ public class VideoUtils {
 				RequestHandler.handleRequest(request, node);
 			}
 		}
+	}
+	
+	public boolean videoIsRunning(){
+		return running;
 	}
 
 	public void mute() {

@@ -168,12 +168,15 @@ public class VideoPaneController {
 	}
 
 	public void askVideoCall(VideoRequest videoRequest) throws IOException {
+		System.out.println("askVideoCall");
 		mainWindowController.makeVideoCallDialog(videoRequest.getSenderName());
 	}
 
 	public void startVideoCall() throws LineUnavailableException, IOException {
 		videoUtils.setPartnerImageView(videoUser1);
-		videoUtils.startVideo(meImageView);
+		if(!videoUtils.videoIsRunning()){
+			videoUtils.startVideo(meImageView);
+		}
 	}
 
 	public void videoCallRejected(final VideoRequest videoRequest) throws LineUnavailableException {

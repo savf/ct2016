@@ -149,7 +149,7 @@ public class MainWindowController {
 			currentChatPartners.add(username);
 		}
 	}
-	
+
 	public void clearChatPartners() {
 		currentChatPartners.clear();
 	}
@@ -259,9 +259,31 @@ public class MainWindowController {
 	public void makeVideoCallDialog(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				mainPane.setTop(requestPane);
-				requestWindowLabel
-						.setText("Do you want to start a video call with " + username + "?");
+				if (mainPane.getTop() == null) {
+					mainPane.setTop(requestPane);
+					requestWindowLabel
+							.setText("Do you want to start a video call with " + username + "?");
+					InputStream inputStream =
+							getClass().getClassLoader().getResourceAsStream("ring.mp3");
+					final Player player;
+					try {
+						player = new Player(inputStream);
+
+						videoRingingThread = new Thread(new Runnable() {
+							public void run() {
+								try {
+									player.play();
+								} catch (JavaLayerException e) {
+									e.printStackTrace();
+								}
+
+							}
+						});
+						videoRingingThread.start();
+					} catch (JavaLayerException e1) {
+						e1.printStackTrace();
+					}
+				}
 			}
 		});
 		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -287,26 +309,6 @@ public class MainWindowController {
 				}
 			}
 		});
-
-		InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ring.mp3");
-		final Player player;
-		try {
-			player = new Player(inputStream);
-
-			videoRingingThread = new Thread(new Runnable() {
-				public void run() {
-					try {
-						player.play();
-					} catch (JavaLayerException e) {
-						e.printStackTrace();
-					}
-
-				}
-			});
-			videoRingingThread.start();
-		} catch (JavaLayerException e1) {
-			e1.printStackTrace();
-		}
 	}
 
 	/*
