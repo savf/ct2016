@@ -89,22 +89,14 @@ public class Node extends Observable{
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 					// user already exist --> only update address
-					if(username.equals("loginnode")) {
-						nodeReady();
-					}
-					else {
-						LoginHelper.updatePeerAddress(this.node, username);
-					}
+					LoginHelper.updatePeerAddress(this.node, username);
 				} else {
 					// user does not exist --> add user
 					LoginHelper.saveUsernamePassword(this.node, username, password);
 					User newUser = new User(username, password, this.node.getPeer().peerAddress());
 					this.node.setUser(newUser);
-					
-					if(username.equals("loginnode")) {
-						nodeReady();
-					}
 				}
+				nodeReady();
 			}
 		};
 		
