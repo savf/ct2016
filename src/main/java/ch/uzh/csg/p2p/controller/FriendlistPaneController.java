@@ -3,6 +3,7 @@ package ch.uzh.csg.p2p.controller;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +61,7 @@ public class FriendlistPaneController {
     this.mainWindowController = mainWindowController;
     currentChatLabel = null;
     this.friendlistHelper = new FriendlistHelper(this.node);
+    controllerList = new HashMap<String, FriendController>();
     this.friendList = new ArrayList<Friend>();
     listChangeListener = new ListChangeListener<Friend>() {
         public void onChanged(ListChangeListener.Change change) {
@@ -174,6 +176,7 @@ public class FriendlistPaneController {
 				//TODO: set width automatically
 				controller.friendName.setMinWidth(255.0);
 				friendlist.getChildren().add(friend);
+				controllerList.put(f.getName(), controller);
 			}
 		});
 	}

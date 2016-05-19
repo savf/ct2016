@@ -45,6 +45,7 @@ public class FriendController {
   public void setName(String name){
     friendName.setText(name);
   }
+  
   @FXML
   public void handleClickOnFriend(){
     String username = friendName.getText();
