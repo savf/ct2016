@@ -122,12 +122,14 @@ public class AudioUtils {
 	}
 
 	public void endAudio() throws ClassNotFoundException, IOException, LineUnavailableException {
-		if(running) {
+		if (running) {
 			running = false;
 			for (Friend receiver : receiverList) {
-		  	AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
-		  	RequestHandler.handleRequest(request, node);
+				AudioRequest request = new AudioRequest(RequestType.SEND, RequestStatus.ABORTED,
+						receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
+				RequestHandler.handleRequest(request, node);
 			}
+			receiverList.clear();
 		}
 	}
 

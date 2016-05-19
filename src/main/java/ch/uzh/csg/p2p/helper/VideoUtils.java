@@ -3,9 +3,8 @@ package ch.uzh.csg.p2p.helper;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,13 +12,11 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.LineUnavailableException;
 
-import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamLockException;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.Friend;
@@ -29,12 +26,12 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.VideoRequest;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import net.tomp2p.audiovideowrapper.H264Wrapper;
 import net.tomp2p.audiovideowrapper.VideoData;
-import net.tomp2p.futures.FutureDirect;
 
 public class VideoUtils {
 	private static Logger log = LoggerFactory.getLogger(VideoUtils.class);
@@ -47,7 +44,8 @@ public class VideoUtils {
 
 	private Webcam webcam;
 	private VideoData frameVideo;
-	private ImageView IMG;
+	private ImageView IMG;	
+	private static ImageView partnerImageView;
 
 	public VideoUtils(Node node, User sender, Friend receiver) {
 		this.node = node;
@@ -62,7 +60,7 @@ public class VideoUtils {
 		receiverList = new ArrayList<Friend>();
 	}
 
-	public void startVideo(ImageView imageView) throws LineUnavailableException {
+	public void startVideo(ImageView imageView) throws LineUnavailableException, IOException {
 		running = true;
 		mute = false;
 		IMG = imageView;
@@ -72,32 +70,37 @@ public class VideoUtils {
 		webcam.setViewSize(d[d.length - 1]);
 
 		frameVideo = H264Wrapper.decodeAndPlay(IMG);
+		try{
 		H264Wrapper.recordAndEncode(webcam, frameVideo);
-
-		H264Encoder encoder = new H264Encoder();
-		BufferedImage rgb = webcam.getImage();
-		Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
-		ByteBuffer buffer =
-				encoder.encodeFrame(yuv, ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3));
-		List<ByteBuffer> byteBufferList = new ArrayList<ByteBuffer>();
-
-		while (running) {
-			frameVideo.created(buffer, 1000, H264Wrapper.getW(), H264Wrapper.getH());
-			byteBufferList.add(buffer);
-			if (byteBufferList.size() > 1) {
+		
+		while(running){
+			List<byte[]> byteBufferList = new ArrayList<byte[]>();
+			log.debug(IMG+"");
+			log.debug(IMG != null ? IMG.getImage()+"" : "");
+			if(IMG != null && IMG.getImage() != null){
+				javafx.scene.image.Image image = IMG.getImage();
+				BufferedImage bImage = new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+				SwingFXUtils.fromFXImage(IMG.getImage(), bImage);
+				ByteArrayOutputStream s = new ByteArrayOutputStream();
+				ImageIO.write(bImage, "png", s);
+				byte[] res  = s.toByteArray();
+				s.close();
+				byteBufferList.add(res);
 				sendVideoData(byteBufferList);
-				byteBufferList.clear();
 			}
+		}
+		}catch (WebcamLockException e){
+			log.warn("Webcam HD WebCam 0 has already been locked");
 		}
 	}
 
-	private void sendVideoData(List<ByteBuffer> byteBufferList) {
+	private void sendVideoData(List<byte[]> byteBufferList) {
 		if (!mute) {
 			Date date = new Date();
 			for (Friend receiver : receiverList) {
 				VideoMessage videoMessage =
 						new VideoMessage(sender.getUsername(), receiver.getName(), receiver.getPeerAddress(), date,
-								EncoderUtils.byteBufferToByteArray(byteBufferList));
+								byteBufferList);
 				node.getPeer().peer().sendDirect(receiver.getPeerAddress()).object(videoMessage)
 						.start();
 			}
@@ -121,10 +124,7 @@ public class VideoUtils {
                 }
             }
         }
- 
-        //ImageView imView = new ImageView(wr);
-
-		// TODO
+        partnerImageView.setImage(wr);
 	}
 
 	public void endVideo() throws ClassNotFoundException, IOException, LineUnavailableException {
@@ -136,6 +136,10 @@ public class VideoUtils {
 				RequestHandler.handleRequest(request, node);
 			}
 		}
+	}
+	
+	public boolean videoIsRunning(){
+		return running;
 	}
 
 	public void mute() {
@@ -152,5 +156,9 @@ public class VideoUtils {
 
 	public void removeReceiver(Friend receiver) {
 		receiverList.remove(receiver);
+	}
+	
+	public void setPartnerImageView(ImageView partnerImageView){
+		this.partnerImageView = partnerImageView;
 	}
 }

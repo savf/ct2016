@@ -25,21 +25,34 @@
                   <Button fx:id="startVideoBtn" alignment="CENTER_RIGHT" mnemonicParsing="false" onAction="#startVideoHandler" styleClass="btn" text="Start video chat" />
                </children>
             </HBox>
-            <HBox alignment="CENTER">
-               <VBox.margin>
-                  <Insets top="50.0" />
-               </VBox.margin>
+            <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
-                  <ScrollPane fx:id="messagesScrollPane" hbarPolicy="NEVER" maxHeight="300.0" minHeight="300.0" pannable="true" vbarPolicy="ALWAYS" vvalue="1.0" HBox.hgrow="ALWAYS">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label text="You are talking to:">
+                           <HBox.margin>
+                              <Insets right="5.0" />
+                           </HBox.margin>
+                           <font>
+                              <Font name="System Bold" size="13.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="chatPartnerLbl" text="chatPartner" />
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <ScrollPane fx:id="messagesScrollPane" hbarPolicy="NEVER" maxHeight="300.0" minHeight="300.0" pannable="true" styleClass="messageScrollPane" vbarPolicy="ALWAYS" vvalue="1.0">
                      <content>
-                        <VBox fx:id="messagesVBox" alignment="TOP_RIGHT" />
+                        <VBox fx:id="messagesVBox" alignment="TOP_RIGHT" styleClass="messageScrollPane" />
                      </content>
                   </ScrollPane>
                </children>
-            </HBox>
+            </VBox>
             <HBox alignment="CENTER" spacing="5.0">
                <children>
-                  <TextField id="messageText" fx:id="messageText" onAction="#enterKeyHandler" HBox.hgrow="ALWAYS" />
+                  <TextField id="messageText" fx:id="messageText" onAction="#handleSendMessage" HBox.hgrow="ALWAYS" />
                   <Button id="sendMessage" fx:id="sendMessage" mnemonicParsing="false" onAction="#handleSendMessage" text="Send">
                      <styleClass>
                         <String fx:value="btn" />

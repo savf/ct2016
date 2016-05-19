@@ -1,7 +1,6 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -10,9 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.helper.VideoUtils;
-import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
@@ -59,8 +56,8 @@ public class VideoPaneController {
 	public VideoPaneController(Node node, MainWindowController mainWindowController) {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
-		this.audioUtils = new AudioUtils(node, mainWindowController.user);
-		this.videoUtils = new VideoUtils(node, mainWindowController.user);
+		this.audioUtils = new AudioUtils(node, node.getUser());
+		this.videoUtils = new VideoUtils(node, node.getUser());
 	}
 	
 	@FXML
@@ -91,15 +88,17 @@ public class VideoPaneController {
 		hideMyselfBtn.setText("Hide myself");
 
 		if (audioUtils == null) {
-			audioUtils = new AudioUtils(node, mainWindowController.user);
+			audioUtils = new AudioUtils(node, node.getUser());
 		}
 
-		videoUtils = new VideoUtils(node, mainWindowController.user);
+		videoUtils = new VideoUtils(node, node.getUser());
 
 		for(String chatPartner: mainWindowController.currentChatPartners) {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
 					node.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
+			videoUtils.addReceiver(node.getFriend(chatPartner));
+			audioUtils.addReceiver(node.getFriend(chatPartner));
 		}
 		
 	}
@@ -169,22 +168,15 @@ public class VideoPaneController {
 	}
 
 	public void askVideoCall(VideoRequest videoRequest) throws IOException {
+		System.out.println("askVideoCall");
 		mainWindowController.makeVideoCallDialog(videoRequest.getSenderName());
 	}
 
-	public void startVideoCall() throws LineUnavailableException {
-		/*Platform.runLater(new Runnable() {
-			public void run() {
-				videoUserWrapper.getChildren().clear();
-				
-				for(Map.Entry<String, Label> audioUser: audioUsersMap.entrySet()) {
-					audioUser.getValue().setText(audioUser.getKey());
-					videoUserWrapper.getChildren().add(audioUser.getValue());
-				}
-			}
-		});*/
-		
-		videoUtils.startVideo(meImageView);
+	public void startVideoCall() throws LineUnavailableException, IOException {
+		videoUtils.setPartnerImageView(videoUser1);
+		if(!videoUtils.videoIsRunning()){
+			videoUtils.startVideo(meImageView);
+		}
 	}
 
 	public void videoCallRejected(final VideoRequest videoRequest) throws LineUnavailableException {
@@ -219,19 +211,29 @@ public class VideoPaneController {
 		cameraOff = false;
 		Image image = new Image(getClass().getResourceAsStream("/camera.png"));
 		cameraLbl.setGraphic(new ImageView(image));
-		muteVideoBtn.setText("Mute camera");
+		muteVideoBtn.setText("Turn camera off");
 		microphoneMuted = false;
 		Image imageMicrophone = new Image(getClass().getResourceAsStream("/microphone.png"));
 		microphoneLbl.setGraphic(new ImageView(imageMicrophone));
 		muteMicrophoneBtn.setText("Mute microphone");
 
 		mainWindowController.showVideoAndChatPanes();
+		
+		videoUtils = new VideoUtils(node, node.getUser());
+		audioUtils = new AudioUtils(node, node.getUser());
 
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
 		    node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 		
 		audioUtils.startAudio();
+
+		for(String chatPartner: mainWindowController.currentChatPartners) {
+			videoUtils.addReceiver(node.getFriend(chatPartner));
+			audioUtils.addReceiver(node.getFriend(chatPartner));
+		}
+		
+		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
 
 		log.info("Accept audio call with: " + username);

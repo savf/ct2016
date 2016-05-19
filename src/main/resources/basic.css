@@ -30,8 +30,21 @@
 	-fx-padding: 10 10;
 }
 
+.friendlistLabel{
+	-fx-padding: 10;
+	-fx-border-width: 3;
+	-fx-border-insets: 10; 
+	-fx-border-radius: 6; 
+	-fx-background-radius: 6; 
+	-fx-background-color: #ace7f9;
+}
+
 #messageText{
 	-fx-pref-height:39;
+}
+
+.messageScrollPane > .viewport{
+	-fx-background-color: #c0f5fa;
 }
 
 .input{
@@ -40,13 +53,20 @@
 	-fx-pref-height:30;
 }
 
+.text-input, .text-input:focused {
+	-fx-border-radius:0;
+	-fx-background-radius:0;
+	-fx-pref-height:30;
+    -fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);
+}
+
 .audioPane{
 	-fx-background-color: #000000;
 }
 
 .chatBubble{
 	-fx-border-radius: 20;
-	-fx-border-color: #c1c1c1;
+	-fx-border-color: #FFFFFF;
 	-fx-padding: 10;
 	-fx-background-color: #FFFFFF;
 	-fx-background-radius: 20;
@@ -59,18 +79,6 @@
 
 .chatBubbleText{
 	-fx-padding: 10 0 0 0;
-}
-
-.chatBubbleMe{
-	-fx-background-image:url("bubble_me.png");
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: bottom right;
-}
-
-.chatBubblePeer{
-	-fx-background-image:url("bubble_peer.png");
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: bottom left;
 }
 
 .audioUser{
