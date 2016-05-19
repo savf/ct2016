@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -17,11 +18,14 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -30,6 +34,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.AnchorPane;
 import net.tomp2p.dht.FutureGet;
 
 public class FriendlistPaneController {
@@ -39,6 +44,7 @@ public class FriendlistPaneController {
 	private FriendlistHelper friendlistHelper;
 	private ListChangeListener<Friend> listChangeListener;
 	private List<Friend> friendList;
+	private Map<String, FriendController> controllerList;
 
 	@FXML
 	private TextField friendSearchText;
@@ -148,24 +154,26 @@ public class FriendlistPaneController {
 		final Friend f = friend;
 		Platform.runLater(new Runnable() {
 			public void run() {
-				HBox hBox = new HBox();
-				hBox.setSpacing(40);
-
-				Label label = new Label(f.getName());
-				label.getStyleClass().add("friendlistLabel");
-				label.setMinWidth(friendlist.getWidth());
-				label.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-
-					public void handle(MouseEvent event) {
-						String username = ((Label)event.getSource()).getText();
-						
-						mainWindowController.chatPaneController.startChatSessionWith(username);
-						mainWindowController.showChatPane();
-					}
-				});
-				hBox.getChildren().add(label);
-
-				friendlist.getChildren().add(hBox);
+			    FXMLLoader loader;
+			    loader = new FXMLLoader(MainWindow.class.getResource("FriendPane.fxml"));
+			    
+			    FriendController controller = new FriendController(mainWindowController);
+			    loader.setController(controller);
+			    
+			    AnchorPane friend = new AnchorPane();			   
+			    try {
+			      friend = loader.load();
+              } catch (IOException e) {
+                  e.printStackTrace();
+              }
+				controller.setName(f.getName());
+				// TODO: Task erstellen, der immer wieder online status abfragt
+				controller.setOnline();
+				
+				friend.getStyleClass().add("friendlistLabel");
+				//TODO: set width automatically
+				controller.friendName.setMinWidth(255.0);
+				friendlist.getChildren().add(friend);
 			}
 		});
 	}

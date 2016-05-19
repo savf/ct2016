@@ -205,9 +205,13 @@ public class VideoPaneController {
 			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.setMainPaneTop(null);
 		mainWindowController.addChatPartner(username);
-		audioUtils.endAudio();
-		videoUtils.endVideo();
-
+		if(audioUtils!=null){
+		  audioUtils.endAudio();
+		}
+		if(videoUtils!=null){
+		  videoUtils.endVideo();
+		}
+		
 		cameraOff = false;
 		Image image = new Image(getClass().getResourceAsStream("/camera.png"));
 		cameraLbl.setGraphic(new ImageView(image));

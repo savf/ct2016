@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox fx:id="friendWrapper" alignment="CENTER" onMouseClicked="#handleClickOnFriend" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <Label fx:id="friendName" maxWidth="350.0" text="Name" wrapText="true" />
+            <Region maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" />
+            <Circle fx:id="onlineStatus" fill="#0cb920" radius="7.0" stroke="BLACK" strokeType="INSIDE" />
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>

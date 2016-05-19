@@ -39,6 +39,8 @@ public class RequestHandler {
 	private final static int DEFAULTPORT = 54000;
 	private final static String BOOTSTRAPNODE = "Bootstrapnode";
 	private static final String FRIEND_PREFIX = "Friend";
+	private static String USER_PREFIX = "user_";
+	private final static String ADDRESS_PREFIX = "address_";
 
 	public RequestHandler() {}
 
@@ -120,7 +122,7 @@ public class RequestHandler {
 			 */
 
 			node.getPeer()
-					.put(Number160.createHash(LoginHelper.USER_PREFIX + r.getUser().getUsername()))
+					.put(Number160.createHash(USER_PREFIX + r.getUser().getUsername()))
 					.data(new Data(user)).start();
 			return true;
 		}
@@ -137,13 +139,13 @@ public class RequestHandler {
 			FutureRemove futureRemove =
 					node.getPeer()
 							.remove(Number160
-									.createHash(LoginHelper.USER_PREFIX + user.getUsername()))
+									.createHash(USER_PREFIX + user.getUsername()))
 							.start();
 			futureRemove.await();
 			// TODO: Could be possible point to improve, because an await happens
 
 			FuturePut futurePut = node.getPeer()
-					.put(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername()))
+					.put(Number160.createHash(USER_PREFIX + user.getUsername()))
 					.data(new Data(user)).start();
 			futurePut.addListener(new BaseFutureAdapter<FuturePut>() {
 				public void operationComplete(FuturePut future) throws Exception {
@@ -176,6 +178,7 @@ public class RequestHandler {
 			PeerAddress peerAddress = null;
 			if (r.getMessage() != null && r.getMessage().getReceiverAddress() != null) {
 				peerAddress = r.getMessage().getReceiverAddress();
+				
 				n.getPeer().peer().sendDirect(peerAddress).object(r.getMessage()).start();
 			} else {
 				RequestListener<User> requestListener = new RequestListener<User>(node) {
@@ -430,7 +433,7 @@ public class RequestHandler {
 	private static void retrieveUser(User user, Node node, RequestListener<User> requestListener)
 			throws ClassNotFoundException, IOException {
 		FutureGet futureGet = node.getPeer()
-				.get(Number160.createHash(LoginHelper.USER_PREFIX + user.getUsername())).start();
+				.get(Number160.createHash(USER_PREFIX + user.getUsername())).start();
 		futureGet.addListener(requestListener);
 	}
 

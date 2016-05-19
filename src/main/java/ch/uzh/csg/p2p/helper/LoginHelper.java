@@ -14,9 +14,6 @@ import net.tomp2p.dht.FutureGet;
 
 public class LoginHelper {
 
-	public final static String USER_PREFIX = "user_";
-	public final static String ADDRESS_PREFIX = "address_";
-
 	public static void saveUsernamePassword(Node node, String username, String password)
 			throws IOException, LineUnavailableException {
 		User user = new User(username, password, node.getPeer().peerAddress());

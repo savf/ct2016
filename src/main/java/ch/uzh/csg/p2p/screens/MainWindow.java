@@ -112,7 +112,6 @@ public class MainWindow {
 		scene.getStylesheets().add("basic.css");
 
 		stage.setTitle(TITLE + username);
-		stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
 		stage.setScene(scene);
 		stage.centerOnScreen();
 		stage.getIcons()
