@@ -45,19 +45,15 @@ public class ChatBubbleController {
 			BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, backgroundPositionBottomLeft,
 			BackgroundSize.DEFAULT);
 
-	public void setMessage(String message, double maxWidth) {
+	public void setMessage(String message) {
 		messageLbl.setText(message);
-		if (maxWidth == 0) {
-			maxWidth = 648.0;
-		}
-		bubbleContainerAnchorPane.setMinWidth(maxWidth * 0.75);
 	}
 
 	public void setSender(String sender) {
 		chatBubbleCorner.setBackground(new Background(bubblePeerBackgroundImage));
 		senderLbl.setText(sender);
 	}
-	
+
 	public void setBackground(boolean fromMe) {
 		if (fromMe) {
 			chatBubbleCorner.setBackground(new Background(bubbleMeBackgroundImage));

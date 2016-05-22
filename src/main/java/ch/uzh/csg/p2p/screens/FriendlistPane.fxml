@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefWidth="200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <VBox spacing="10.0" AnchorPane.topAnchor="0.0">
+      <VBox spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label text="Search for new friends:" />
             <HBox spacing="10.0">
                <children>
-                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Enter an email address..." styleClass="text-input" />
+                  <TextField id="friendSearchText" fx:id="friendSearchText" onAction="#searchFriendHandler" promptText="Search new friends" styleClass="text-input" HBox.hgrow="ALWAYS" />
                   <Button id="searchFriendBtn" fx:id="searchFriendBtn" mnemonicParsing="false" onAction="#searchFriendHandler" styleClass="btn" text="Search" />
                </children>
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin>
             </HBox>
             <Label text="Your friends:" />
-            <VBox id="friendlist" fx:id="friendlist" VBox.vgrow="ALWAYS" />
+            <VBox id="friendlist" fx:id="friendlistVBox" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
    </children>
+   <padding>
+      <Insets left="5.0" right="5.0" />
+   </padding>
 </AnchorPane>

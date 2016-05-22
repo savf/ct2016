@@ -8,14 +8,14 @@
 
 <AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <VBox spacing="40.0">
+      <VBox spacing="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
          <children>
             <Label text="Search results">
                <font>
                   <Font size="22.0" />
                </font>
             </Label>
-            <VBox id="searchResultList" fx:id="searchResultList" />
+            <VBox id="searchResultList" fx:id="searchResultList" minHeight="100.0" minWidth="400.0" />
          </children>
       </VBox>
    </children>

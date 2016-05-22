@@ -46,24 +46,24 @@ public class ChatPaneController {
 		this.mainWindowController = mainWindowController;
 		this.chatHistories = new HashMap<String, List<AnchorPane>>();
 	}
-	
+
 	@FXML
 	public void initialize() {
-		messagesVBox.heightProperty().addListener(new ChangeListener<Number>(){
+		messagesVBox.heightProperty().addListener(new ChangeListener<Number>() {
 
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue,
 					Number newValue) {
-				messagesScrollPane.setVvalue( 1.0d );
+				messagesScrollPane.setVvalue(1.0d);
 			}
-			
+
 		});
 	}
 
 	@FXML
 	public void leaveChatHandler()
 			throws ClassNotFoundException, IOException, LineUnavailableException {
-		mainWindowController.showInfoPane();
-		
+		mainWindowController.showNotificationPane();
+
 		chatPartnerLbl.setText("Nobody");
 		messagesVBox.getChildren().clear();
 		messageText.clear();
@@ -96,19 +96,22 @@ public class ChatPaneController {
 			alert.setContentText(s);
 			alert.showAndWait();
 		} else {
-			ChatHelper.sendMessage(this.node, messageText.getText(),
-					mainWindowController.currentChatPartners);
-			addChatBubble(messageText.getText(), "", true);
+			String message = messageText.getText();
+			ChatHelper.sendMessage(this.node, message, mainWindowController.currentChatPartners);
+			addChatBubble(message, "", true);
+			messageText.setText("");
 		}
 	}
-	
+
 	public void startChatSessionWith(String username) {
 		mainWindowController.clearChatPartners();
 		mainWindowController.addChatPartner(username);
+		mainWindowController.friendlistPaneController.friendlistItemControllerList.get(username)
+				.clearUnreadMessages();
 		chatPartnerLbl.setText(username);
 		List<AnchorPane> chatHistory = this.chatHistories.get(username);
 		messagesVBox.getChildren().clear();
-		if(chatHistory != null) {
+		if (chatHistory != null) {
 			messagesVBox.getChildren().addAll(chatHistory);
 		}
 	}
@@ -131,25 +134,27 @@ public class ChatPaneController {
 					e.printStackTrace();
 				}
 
-				chatBubbleController.setMessage(message, messagesScrollPane.getWidth());
+				chatBubbleController.setMessage(message);
 				chatBubbleController.setBackground(fromMe);
 				if (!fromMe) {
 					chatBubbleController.setSender(sender);
 				}
 				chatBubbleController.setDateTime();
-				
-				if(mainWindowController.currentChatPartners.size() <= 1) {
+
+				if (mainWindowController.currentChatPartners.size() <= 1) {
 					String currentChatPartner =
 							fromMe ? mainWindowController.currentChatPartners.get(0) : sender;
-					if(!chatHistories.containsKey(currentChatPartner)) {
+					if (!chatHistories.containsKey(currentChatPartner)) {
 						chatHistories.put(currentChatPartner, new ArrayList<AnchorPane>());
 					}
 					chatHistories.get(currentChatPartner).add(chatBubble);
 				}
-				
-				if(fromMe || mainWindowController.currentChatPartners.contains(sender)) {
+
+				if (fromMe || mainWindowController.currentChatPartners.contains(sender)) {
 					messagesVBox.getChildren().add(chatBubble);
-					messageText.setText("");
+				} else {
+					mainWindowController.friendlistPaneController.friendlistItemControllerList
+							.get(sender).newUnreadMessage();
 				}
 			}
 		});

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane minHeight="300.0" minWidth="500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <Label fx:id="welcomeLabel" text="Welcome,">
+               <font>
+                  <Font size="24.0" />
+               </font>
+            </Label>
+            <Label text="while you were away, you received:">
+               <font>
+                  <Font size="24.0" />
+               </font>
+            </Label>
+            <HBox>
+               <children>
+                  <Label fx:id="awayMessageCountLabel" text="0">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets right="4.0" />
+                     </padding>
+                  </Label>
+                  <Label text="chat messages:">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <VBox fx:id="awayMessageVBox" />
+            <HBox>
+               <children>
+                  <Label fx:id="awayCallCountLabel" text="0">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets right="4.0" />
+                     </padding>
+                  </Label>
+                  <Label text="missed calls:">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <VBox fx:id="awayMissedCallVBox" />
+            <HBox>
+               <children>
+                  <Label fx:id="awayFriendRequestCountLabel" text="0">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets right="4.0" />
+                     </padding>
+                  </Label>
+                  <Label text="friend requests:">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <VBox fx:id="awayFriendRequestVBox" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
