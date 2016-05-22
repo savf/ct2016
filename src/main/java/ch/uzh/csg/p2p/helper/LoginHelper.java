@@ -6,50 +6,51 @@ import javax.sound.sampled.LineUnavailableException;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import ch.uzh.csg.p2p.model.request.UserRequest;
+import ch.uzh.csg.p2p.model.request.UserInfoRequest;
 import net.tomp2p.dht.FutureGet;
 
 public class LoginHelper {
 
 	public static void saveUsernamePassword(Node node, String username, String password)
 			throws IOException, LineUnavailableException {
-		User user = new User(username, password, node.getPeer().peerAddress());
-		storeUser(user, node);
+		UserInfo user = new UserInfo(node.getPeer().peerAddress(), username, password);
+		storeUserInfo(user, node);
 	}
 
 	public static void updatePeerAddress(Node node, final String username)
 			throws ClassNotFoundException, LineUnavailableException {
-		FutureGetListener<User> requestListener = new FutureGetListener<User>(node){
+		FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node){
 			@Override
 			public void operationComplete(FutureGet futureGet) throws Exception {
-				User user;
+				UserInfo userInfo;
 				if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
-					user = (User) futureGet.data().object();
+					userInfo = (UserInfo) futureGet.data().object();
 				}
 				else {
-					user = new User(username, "", null);
+					userInfo = new UserInfo(null, username, "");
 				}
-				user.setPeerAddress(this.node.getPeer().peerAddress());
-				LoginHelper.storeUser(user, this.node);
-				node.setUser(user);
+				userInfo.setPeerAddress(this.node.getPeer().peerAddress());
+				LoginHelper.storeUserInfo(userInfo, this.node);
+				node.setUserInfo(userInfo);
 				node.loadStoredDataFromDHT();
 			}
 		};
-		retrieveUser(username, node, requestListener);
+		retrieveUserInfo(username, node, requestListener);
 	}
 
-	public static void retrieveUser(String username, Node node,
-			FutureGetListener<User> requestListener) throws LineUnavailableException {
-		User userToRetrieve = new User(username, "", null);
-		UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
+	public static void retrieveUserInfo(String username, Node node,
+			FutureGetListener<UserInfo> requestListener) throws LineUnavailableException {
+		UserInfo userToRetrieve = new UserInfo(null, username, "");
+		UserInfoRequest requestRetrieve = new UserInfoRequest(userToRetrieve, RequestType.RETRIEVE);
 		RequestHandler.handleRequest(requestRetrieve, node, requestListener);
 	}
 
-	private static void storeUser(User user, Node node) throws LineUnavailableException {
-		UserRequest requestStore = new UserRequest(user, RequestType.STORE);
+	private static void storeUserInfo(UserInfo user, Node node) throws LineUnavailableException {
+		UserInfoRequest requestStore = new UserInfoRequest(user, RequestType.STORE);
 		RequestHandler.handleRequest(requestStore, node);
 	}
 

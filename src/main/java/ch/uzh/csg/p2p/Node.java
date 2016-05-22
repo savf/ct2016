@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -21,7 +22,9 @@ import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.OnlineStatusTask;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
 import ch.uzh.csg.p2p.model.request.Request;
@@ -29,7 +32,7 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import ch.uzh.csg.p2p.model.request.UserRequest;
+import ch.uzh.csg.p2p.model.request.UserInfoRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -48,6 +51,7 @@ import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
+import net.tomp2p.storage.Data;
 
 public class Node extends Observable {
 
@@ -86,11 +90,16 @@ public class Node extends Observable {
 			throws UnsupportedEncodingException, LineUnavailableException {
 		// TODO load messages, calls, friendrequests...
 		loadFriendlistFromDHTAndAnnounceOnlineStatus();
+		loadMessagesFromDHT();
 	}
 
-	private void initiateUser(final String username, final String password)
+	private void loadMessagesFromDHT() {
+    // TODO Auto-generated method stub   
+  }
+
+  private void initiateUser(final String username, final String password)
 			throws ClassNotFoundException, LineUnavailableException, IOException {
-		FutureGetListener<User> userExistsListener = new FutureGetListener<User>(this) {
+		FutureGetListener<UserInfo> userExistsListener = new FutureGetListener<UserInfo>(this) {
 			@Override
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
@@ -99,35 +108,45 @@ public class Node extends Observable {
 				} else {
 					// user does not exist --> add user
 					LoginHelper.saveUsernamePassword(this.node, username, password);
-					User newUser = new User(username, password, this.node.getPeer().peerAddress());
-					this.node.setUser(newUser);
+					UserInfo newUser = new UserInfo(this.node.getPeer().peerAddress(), username, password);
+					this.node.setUserInfo(newUser);
 				}
 				nodeReady();
 			}
 		};
 
-		LoginHelper.retrieveUser(username, this, userExistsListener);
+		LoginHelper.retrieveUserInfo(username, this, userExistsListener);
 	}
 
 	private void loadFriendlistFromDHTAndAnnounceOnlineStatus()
 			throws UnsupportedEncodingException, LineUnavailableException {
+	  FriendRequest request = new FriendRequest();
+	  request.setType(RequestType.RETRIEVE);
+	  request.setSenderName(user.getUsername());
+	  
+	  FutureGetListener<Friend> listener = new FutureGetListener<Friend>() {
 
-		for (String friendName : user.getFriendStorage()) {
-			User user = new User(friendName, null, null);
-			FutureGetListener<User> requestListener = new FutureGetListener<User>(this) {
-				@Override
-				public void operationComplete(FutureGet futureGet) throws Exception {
-					if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
-						User user = (User) futureGet.data().object();
-						Friend friend = new Friend(user.getPeerAddress(), user.getUsername());
-						this.node.friendList.add(friend);
-					}
-					announceChangedToOnlineStatus();
-				}
-			};
+      @Override
+      public void operationComplete(FutureGet future) throws Exception {
+       if(!future.isEmpty() && future.isSuccess()){
+        Iterator<Data> i = future.dataMap().values().iterator();
+        while(i.hasNext()){
+        Friend f = (Friend) i.next().object();
+        if(f!= null){
+        friendList.add(f);
+        }
+        }
+        announceChangedToOnlineStatus();
+       }
+      }
 
-			LoginHelper.retrieveUser(friendName, this, requestListener);
-		}
+      @Override
+      public void exceptionCaught(Throwable t) throws Exception {
+        log.error(t.getMessage());       
+      }
+	    
+	  };
+	  RequestHandler.handleRequest(request, this, listener);
 	}
 
 	protected void startOnlineStatusTask() {
@@ -279,9 +298,11 @@ public class Node extends Observable {
 		return user;
 	}
 
-	public void setUser(User user) {
-		if (user != null) {
-			this.user = user;
+	public void setUserInfo(UserInfo info) {
+		if (user != null && info != null) {
+			user.setUsername(info.getUserName());
+			user.setPassword(info.getPassword());
+			user.setPeerAddress(info.getPeerAddress());
 		} else {
 			User newUser = new User(this.user.getUsername(), this.user.getPassword(),
 					this.getPeer().peerAddress());

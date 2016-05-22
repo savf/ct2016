@@ -19,9 +19,12 @@ import ch.uzh.csg.p2p.helper.VideoUtils;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.FriendlistInfo;
 import ch.uzh.csg.p2p.model.Message;
+import ch.uzh.csg.p2p.model.MessageStorageInfo;
 import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.VideoMessage;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
@@ -44,7 +47,13 @@ public class RequestHandler {
 	private final static String BOOTSTRAPNODE = "Bootstrapnode";
 	private static final String FRIEND_PREFIX = "Friend";
 	private static String USER_PREFIX = "user_";
-	private final static String ADDRESS_PREFIX = "address_";
+	
+	private static Number160 USER_DOMAIN = Number160.createHash("user");
+	private static Number160 FRIEND_DOMAIN = Number160.createHash("friend");
+	private static Number160 MESSAGE_DOMAIN =Number160.createHash("message");
+	private static Number160 AUDIO_DOMAIN = Number160.createHash("audio");
+	
+	
 
 	public RequestHandler() {}
 
@@ -118,10 +127,13 @@ public class RequestHandler {
 
 	private static Boolean handleStore(Request request, Node node, BaseFutureListener genericListener)
 			throws IOException, ClassNotFoundException, InterruptedException {
-		if (request instanceof UserRequest) {
-			UserRequest r = (UserRequest) request;
-			final User user = r.getUser();
+		if (request instanceof UserInfoRequest) {
+			UserInfoRequest r = (UserInfoRequest) request;
 
+			final UserInfo info = r.getUserInfo();
+			FuturePut future = node.getPeer()
+                .put(Number160.createHash(info.getUserName()))
+                .data(new Data(info)).domainKey(USER_DOMAIN).start();
 			// TODO: Direct replication if wanted.. should look somewhat like this
 			/*
 			 * PutBuilder putBuilder =
@@ -136,51 +148,54 @@ public class RequestHandler {
 			 * replication.shutdown().awaitUninterruptibly();
 			 */
 
-			FuturePut future = node.getPeer()
-					.put(Number160.createHash(USER_PREFIX + r.getUser().getUsername()))
-					.data(new Data(user)).start();
-			future.addListener(new BaseFutureAdapter<FuturePut>() {
-	          public void operationComplete(FuturePut future) throws Exception {
-	              log.info("User " + user.getUsername() + " put into DHT, with success: " + future.isSuccess());
-	          }
-	      });
 			return true;
 		}
 		if (request instanceof MessageRequest) {
 			MessageRequest r = (MessageRequest) request;
+			if(r.getMessage() instanceof ChatMessage){
+			  ChatMessage m = (ChatMessage) r.getMessage();
+	          FuturePut future3 = node.getPeer().put(Number160.createHash(r.getReceiverName()))
+	                  .data(new Data(m)).domainKey(MESSAGE_DOMAIN).start();
+			}			
+			
 		}
 		if (request instanceof FriendRequest) {
-			final FriendRequest r = (FriendRequest) request;
-			final Node node1 = node;
-			User user = node.getUser();
-			final String username = user.getUsername();
-			user.addFriend(r.getSenderName());
-			// TODO: necessary?
-			FutureRemove futureRemove =
-					node.getPeer()
-							.remove(Number160
-									.createHash(USER_PREFIX + user.getUsername()))
-							.start();
-			futureRemove.addListener(new BaseFutureListener<FutureRemove>(){
+		  // this store operation is only used if a User gets a new friend and wants to save it in the dht for future use
+		  // if a request is sent to an offline user, this has to be handled with sendDirect.putIfAbsent()
+		  // the sender is the one who wants to store the info
+		  final FriendRequest r = (FriendRequest) request;
+		  if(r.getStatus().equals(RequestStatus.ACCEPTED)){
+		  Friend friend = new Friend(r.getReceiverAddress(), r.getReceiverName());
+		  node.getUser().addFriend(friend);
+	  
+		  FutureRemove futureRemove =
+          node.getPeer().remove(Number160
+                              .createHash(node.getUser().getUsername())).domainKey(FRIEND_DOMAIN)
+                      .start();
+          futureRemove.addListener(new BaseFutureListener<FutureRemove>(){
 
-        @Override
-        public void operationComplete(FutureRemove future) throws Exception {
-          FuturePut futurePut = node.getPeer()
-              .put(Number160.createHash(USER_PREFIX + user.getUsername()))
-              .data(new Data(user)).start();
-      futurePut.addListener(new BaseFutureAdapter<FuturePut>() {
-          public void operationComplete(FuturePut future) throws Exception {
-              log.info("User " + username + " put " + r.getSenderName() + " into DHT as friend, with success: " + future.isSuccess());
-          }
-      });
-          
-        }
+            @Override
+            public void operationComplete(FutureRemove future) throws Exception {
+              FuturePut future2 = node.getPeer().put(Number160.createHash(node.getUser().getUsername()))
+                  .data(new Data(friend)).domainKey(FRIEND_DOMAIN).start();
+              future2.addListener(new BaseFutureAdapter<FuturePut>() {
+                public void operationComplete(FuturePut future) throws Exception {
+                  log.info("User " + node.getUser().getUsername() + " put " + friend.getName() + 
+                      " into DHT as friend, with success: " + future.isSuccess());
+                }
+              });
+    
+            }
 
-        @Override
-        public void exceptionCaught(Throwable t) throws Exception {
-          log.error(t.getMessage()); 
-        }		  
-			});
+            @Override
+            public void exceptionCaught(Throwable t) throws Exception {
+              log.error(t.getMessage()); 
+            }         
+          });
+		  }
+		  else{
+		    //TODO
+		  }
 		}
 		if (request instanceof BootstrapRequest) {
 		  BootstrapRequest req = (BootstrapRequest) request;
@@ -206,16 +221,16 @@ public class RequestHandler {
 				
 				n.getPeer().peer().sendDirect(peerAddress).object(r.getMessage()).start();
 			} else {
-				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
+				FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
 								&& futureGet.data() != null) {
-							User user = (User) futureGet.data().object();
+						  UserInfo userInfo = (UserInfo) futureGet.data().object();
 							log.info(r.getMessage().getSenderID() + "sent Message of type "
 									+ r.getMessage().getClass() + " " + r.getType().toString()
-									+ "to: " + user.getPeerAddress().toString());
-							node.getPeer().peer().sendDirect(user.getPeerAddress()).object(r.getMessage())
+									+ "to: " + userInfo.getPeerAddress().toString());
+							node.getPeer().peer().sendDirect(userInfo.getPeerAddress()).object(r.getMessage())
 									.start();
 						} else {
 							log.error("FutureGet for user {} was successful, but data is null!",
@@ -223,7 +238,7 @@ public class RequestHandler {
 						}
 					}
 				};
-				LoginHelper.retrieveUser(r.getMessage().getReceiverID(), node, requestListener);
+				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
 			}
 
 		}
@@ -262,18 +277,18 @@ public class RequestHandler {
 				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
 			} else {
 
-				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
+				FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
 								&& futureGet.data() != null) {
-							User user = (User) futureGet.data().object();
+						  UserInfo user = (UserInfo) futureGet.data().object();
 							node.getPeer().peer().sendDirect(user.getPeerAddress()).object(r)
 									.start();
 						}
 					}
 				};
-				LoginHelper.retrieveUser(r.getReceiverName(), node, requestListener);
+				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
 			}
 
 			return true;
@@ -285,19 +300,19 @@ public class RequestHandler {
 				peerAddress = videoRequest.getReceiverAddress();
 				n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
 			} else {
-				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
+				FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
 								&& futureGet.data() != null) {
-							User user = (User) futureGet.data().object();
+						  UserInfo user = (UserInfo) futureGet.data().object();
 							node.getPeer().peer().sendDirect(user.getPeerAddress())
 									.object(videoRequest).start();
 						}
 					}
 				};
 
-				LoginHelper.retrieveUser(videoRequest.getReceiverName(), node, requestListener);
+				LoginHelper.retrieveUserInfo(videoRequest.getReceiverName(), node, requestListener);
 			}
 
 			n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
@@ -311,17 +326,16 @@ public class RequestHandler {
 				peerAddress = r.getReceiverAddress();
 				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
 			} else {
-				FutureGetListener<User> requestListener = new FutureGetListener<User>(node){
+				FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node){
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
-							User user = (User) futureGet.data().object();
+						  UserInfo user = (UserInfo) futureGet.data().object();
 							node.getPeer().peer().sendDirect(user.getPeerAddress()).object(r).start();
 						}
 					}
-				};
-				
-				LoginHelper.retrieveUser(r.getReceiverName(), node, requestListener);
+				};				
+				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
 			}
 			
 			return true;
@@ -341,16 +355,16 @@ public class RequestHandler {
 	private static Object handleRetrieve(Request request, Node node,
 			FutureGetListener requestListener)
 			throws ClassNotFoundException, IOException, InterruptedException {
-		if (request instanceof UserRequest) {
-			UserRequest r = (UserRequest) request;
-			retrieveUser(r.getUser(), node, requestListener);
+		if (request instanceof UserInfoRequest) {
+			UserInfoRequest r = (UserInfoRequest) request;
+			retrieveUserInfo(r.getUserInfo(), node, requestListener);
 		}
 		if (request instanceof MessageRequest) {
 			MessageRequest r = (MessageRequest) request;
 		}
 		if (request instanceof FriendRequest) {
 			FriendRequest r = (FriendRequest) request;
-			retrieveFriend(r.getSenderName(), node, requestListener);
+			retrieveFriends(r.getSenderName(), node, requestListener);
 		}
 		if (request instanceof BootstrapRequest) {
 			FutureGet futureGet = node.getPeer().get(Number160.createHash(BOOTSTRAPNODE)).start();
@@ -359,10 +373,10 @@ public class RequestHandler {
 		return null;
 	}
 
-	private static void retrieveFriend(String senderName, Node node,
+	private static void retrieveFriends(String senderName, Node node,
 			FutureGetListener<Friend> requestListener) throws ClassNotFoundException, IOException {
 		FutureGet futureGet =
-				node.getPeer().get(Number160.createHash(FRIEND_PREFIX + senderName)).start();
+				node.getPeer().get(Number160.createHash(senderName)).domainKey(FRIEND_DOMAIN).start();
 		futureGet.addListener(requestListener);
 	}
 
@@ -511,11 +525,10 @@ public class RequestHandler {
 		return null;
 	}
 
-	private static void retrieveUser(User user, Node node, FutureGetListener<User> requestListener)
+	private static void retrieveUserInfo(UserInfo info, Node node, FutureGetListener<User> requestListener)
 			throws ClassNotFoundException, IOException {
-	  // try out with a not fast get
 		FutureGet futureGet = node.getPeer()
-				.get(Number160.createHash(USER_PREFIX + user.getUsername())).start();
+				.get(Number160.createHash(info.getUserName())).domainKey(USER_DOMAIN).start();
 		futureGet.addListener(requestListener);
 	}
 

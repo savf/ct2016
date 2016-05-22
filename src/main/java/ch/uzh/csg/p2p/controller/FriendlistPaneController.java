@@ -14,6 +14,7 @@ import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.FutureGetListener;
@@ -32,9 +33,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import net.tomp2p.connection.PeerBean;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.message.DataMap;
 import net.tomp2p.peers.Number640;
+import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
 public class FriendlistPaneController {
@@ -70,9 +73,9 @@ public class FriendlistPaneController {
 		node.registerForFriendListUpdates(listChangeListener);
 	}
 
-	public void sendFriendRequest(User user, Node node) {
+	public void sendFriendRequest(UserInfo user, Node node) {
 		FriendRequest request = new FriendRequest(node.getUser().getPeerAddress(),
-				node.getUser().getUsername(), user.getUsername(), RequestType.SEND);
+				node.getUser().getUsername(), user.getUserName(), RequestType.SEND);
 		RequestHandler.handleRequest(request, node);
 	}
 
@@ -84,17 +87,20 @@ public class FriendlistPaneController {
 				mainWindowController.showFriendSearchResultPane();
 				searchResultList.getChildren().clear();
 				try {
-					FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
+					FutureGetListener<UserInfo> requestListener = new FutureGetListener<UserInfo>(node) {
 						@Override
 						public void operationComplete(FutureGet futureGet) throws Exception {
 							if (futureGet != null && futureGet.isSuccess()
 									&& futureGet.data() != null) {
-							  if(futureGet.isCompleted()){
-							    Object o = new User();
-							     // Iterator<Data> i= futureGet.dataMap().values().iterator();
-							     // o = i.next().object();
-							      o=futureGet.data().object();
-							    final User user = (User) o;
+							    Object o = new UserInfo();
+							    try{
+							    Iterator<Data> i= futureGet.dataMap().values().iterator();
+	                            o = i.next().object();
+							    }
+							    catch(Exception e){
+							      e.printStackTrace();
+							    }
+							    final UserInfo user = (UserInfo) o;
 							  
 								//final User user = (User) futureGet.data().object();
 								// Only show user in search results, if it's not myself
@@ -102,12 +108,12 @@ public class FriendlistPaneController {
 									final HBox hBox = new HBox();
 									hBox.setSpacing(40);
 
-									Label label = new Label(user.getUsername());
+									Label label = new Label(user.getUserName());
 									label.getStyleClass().add("label");
 									hBox.getChildren().add(label);
 									boolean alreadyFriend = true;
 									alreadyFriend =
-											friendlistHelper.checkAlreadyFriend(user.getUsername());
+											friendlistHelper.checkAlreadyFriend(user.getUserName());
 									Button button = new Button("Send friend request");
 									button.getStyleClass().add("btn");
 									button.getStyleClass().add("friendRequestBtn");
@@ -135,15 +141,11 @@ public class FriendlistPaneController {
 								}
 								friendSearchText.setText("");
 							}
-							  else{
-							    //TODO
-							  }
-							}
 				
 						}
 					};
 					if (!friendSearchText.getText().equals("")) {
-						LoginHelper.retrieveUser(friendSearchText.getText(), node, requestListener);
+						LoginHelper.retrieveUserInfo(friendSearchText.getText(), node, requestListener);
 					} else {
 						mainWindowController.alertWidthHeight();
 					}

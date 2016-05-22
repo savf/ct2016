@@ -12,9 +12,9 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
-	private List<String> friendStorage;
-	private List<String> audioMessageStorage;
-	private List<String> chatMessageStorage;
+	private List<Friend> friendList;
+	private List<AudioInfo> audioMessageStorage;
+	private List<ChatMessage> chatMessageStorage;
 
 	public User(String username, String password, PeerAddress peerAddress) {
 		this();
@@ -28,32 +28,32 @@ public class User implements Serializable {
 	  username = new String();
 	  password = new String();
 	  peerAddress = null;
-	  setFriendStorage(new ArrayList<String>());
-      setAudioMessageStorage(new ArrayList<String>());
-      setChatMessageStorage(new ArrayList<String>());
+	  setFriendList(new ArrayList<Friend>());
+      setAudioMessageStorage(new ArrayList<AudioInfo>());
+      setChatMessageStorage(new ArrayList<ChatMessage>());
   }
 
-  public List<String> getFriendStorage() {
-		return friendStorage;
+  public List<Friend> getFriendList() {
+		return friendList;
 	}
 
-	public void setFriendStorage(List<String> friendStorage) {
-		this.friendStorage = friendStorage;
+	public void setFriendList(List<Friend> friendStorage) {
+		this.friendList = friendStorage;
 	}
 
-	public List<String> getAudioMessageStorage() {
+	public List<AudioInfo> getAudioMessageStorage() {
 		return audioMessageStorage;
 	}
 
-	public void setAudioMessageStorage(List<String> audioMessageStorage) {
+	public void setAudioMessageStorage(List<AudioInfo> audioMessageStorage) {
 		this.audioMessageStorage = audioMessageStorage;
 	}
 
-	public List<String> getChatMessageStorage() {
+	public List<ChatMessage> getChatMessageStorage() {
 		return chatMessageStorage;
 	}
 
-	public void setChatMessageStorage(List<String> chatMessageStorage) {
+	public void setChatMessageStorage(List<ChatMessage> chatMessageStorage) {
 		this.chatMessageStorage = chatMessageStorage;
 	}
 
@@ -81,8 +81,8 @@ public class User implements Serializable {
 		this.peerAddress = peerAddress;
 	}
 
-	public void addFriend(String username) {
-		friendStorage.add(username);
+	public void addFriend(Friend friend) {
+		friendList.add(friend);
 	}
 
 	@Override

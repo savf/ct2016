@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.screens.LoginWindow;
 import ch.uzh.csg.p2p.screens.MainWindow;
@@ -130,14 +131,14 @@ public class LoginWindowController implements Observer {
 	public void update(Observable o, Object arg) {
 		Node node = (Node) arg;
 
-		FutureGetListener<User> userExistsListener = new FutureGetListener<User>(node) {
+		FutureGetListener<UserInfo> userExistsListener = new FutureGetListener<UserInfo>(node) {
 			@Override
 			public void operationComplete(FutureGet futureGet)
 					throws ClassNotFoundException, IOException {
 				if (futureGet.isSuccess()) {
 					if (futureGet != null && futureGet.data() != null) {
 						if (futureGet.data().object() instanceof User) {
-							User user = (User) futureGet.data().object();
+						  UserInfo user = (UserInfo) futureGet.data().object();
 							if (user.getPassword().equals(password)) {
 								shutdownNode();
 								futureGet.removeListener(this);
@@ -186,7 +187,7 @@ public class LoginWindowController implements Observer {
 		};
 
 		try {
-			LoginHelper.retrieveUser(username, node, userExistsListener);
+			LoginHelper.retrieveUserInfo(username, node, userExistsListener);
 
 		} catch (LineUnavailableException e) {
 			// TODO Auto-generated catch block

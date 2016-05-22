@@ -19,11 +19,11 @@ public class FriendlistHelper {
 	}
 
 	public boolean checkAlreadyFriend(String username) {
-	  if(node.getUser().getFriendStorage()==null){
+	  if(node.getUser().getFriendList()==null){
 	    return false;
 	  }
-		for (String n : node.getUser().getFriendStorage()) {
-			if ((username).equals(n)) {
+		for (Friend f : node.getUser().getFriendList()) {
+			if ((username).equals(f.getName())) {
 				return true;
 			}
 		}
@@ -32,7 +32,8 @@ public class FriendlistHelper {
 
 	public void storeFriend(Friend f) {
 		FriendRequest r =
-				new FriendRequest(f.getPeerAddress(), f.getName(), null, RequestType.STORE);
+				new FriendRequest(node.getUser().getPeerAddress(), node.getUser().getUsername(), f.getName(), RequestType.STORE);
+		r.setReceiverAddress(f.getPeerAddress());
 		RequestHandler.handleRequest(r, node);
 	}
 }
