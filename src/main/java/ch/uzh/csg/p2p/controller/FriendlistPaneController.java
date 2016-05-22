@@ -148,6 +148,8 @@ public class FriendlistPaneController {
                     addUserToFriendList(f);
                 }
             }
+            // TODO: add asynchronous task to look for status changes
+            
         }
     }); 
 }
@@ -176,6 +178,7 @@ public class FriendlistPaneController {
 				//TODO: set width automatically
 				controller.friendName.setMinWidth(255.0);
 				friendlist.getChildren().add(friend);
+				f.addObserver(controller);
 				controllerList.put(f.getName(), controller);
 			}
 		});

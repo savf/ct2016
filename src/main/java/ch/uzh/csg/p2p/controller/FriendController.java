@@ -1,5 +1,10 @@
 package ch.uzh.csg.p2p.controller;
 
+import java.util.Observable;
+import java.util.Observer;
+
+import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.OnlineStatus;
 import javafx.scene.paint.Color;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -17,7 +22,7 @@ import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.HBox;
 
-public class FriendController {
+public class FriendController implements Observer{
   
   private MainWindowController mainWindowController;
   
@@ -32,6 +37,19 @@ public class FriendController {
   
   public FriendController(MainWindowController mwc) {
     mainWindowController = mwc;
+  }
+  
+  private void setStatus(OnlineStatus status){
+    switch (status){
+      case OFFLINE:
+        setOffline();
+        break;
+      case ONLINE:
+         setOnline();
+        break;
+       default:
+         break;
+    }   
   }
   
   public void setOnline(){
@@ -51,6 +69,15 @@ public class FriendController {
     String username = friendName.getText();
     mainWindowController.chatPaneController.startChatSessionWith(username);
     mainWindowController.showChatPane();
+  }
+
+  @Override
+  public void update(Observable o, Object arg) {
+    if(o instanceof Friend){
+      Friend f = (Friend) o;
+      OnlineStatus status = (OnlineStatus) arg;
+      setStatus(status);
+    }
   }
   
 }

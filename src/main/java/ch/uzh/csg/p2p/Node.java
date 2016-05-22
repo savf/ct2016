@@ -18,13 +18,17 @@ import ch.uzh.csg.p2p.controller.LoginWindowController;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
+import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
 import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.StatusListener;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -34,6 +38,7 @@ import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFutureListener;
+import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -79,7 +84,7 @@ public class Node extends Observable{
 	public void loadStoredDataFromDHT()
 			throws UnsupportedEncodingException, LineUnavailableException {
 		// TODO load messages, calls, friendrequests...
-		loadFriendlistFromDHT();
+		loadFriendlistFromDHTAndAnnounceOnlineStatus();
 	}
 
 	private void initiateUser(final String username, final String password)
@@ -103,7 +108,7 @@ public class Node extends Observable{
 		LoginHelper.retrieveUser(username, this, userExistsListener);	
 	}
 
-	private void loadFriendlistFromDHT()
+	private void loadFriendlistFromDHTAndAnnounceOnlineStatus()
 			throws UnsupportedEncodingException, LineUnavailableException {
 
 		for (String friendName : user.getFriendStorage()) {
@@ -116,6 +121,7 @@ public class Node extends Observable{
 						Friend friend = new Friend(user.getPeerAddress(), user.getUsername());
 						this.node.friendList.add(friend);
 					}
+					announceChangedToOnlineStatus();
 				}
 			};
 
@@ -233,11 +239,64 @@ public class Node extends Observable{
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
 		if (peer != null) {
-			peer.shutdown();
+		    try {
+		      announceChangedToOfflineStatus();
+        } catch (LineUnavailableException e) {
+          e.printStackTrace();
+        }
 		}
 	}
 
-	public Friend getFriend(String currentChatPartner) {
+	public void announceChangedToOnlineStatus() throws LineUnavailableException{
+	  for(Friend f : friendList){
+	      OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
+	          peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
+	   // send new OnlineRequest, act like this is an answer to a request, and send a positive answer so status goes online
+	      request.setOnlineStatus(OnlineStatus.ONLINE);
+	      request.setStatus(RequestStatus.ACCEPTED);
+	      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+	        @Override
+	        public void operationComplete(FutureDirect future) throws Exception {
+	          if(future != null && future.isSuccess()) {
+	              f.setStatus(OnlineStatus.ONLINE);
+	          }
+	          else {
+	          f.setStatus(OnlineStatus.OFFLINE);  
+	          }
+	      }
+	  };
+	      RequestHandler.handleRequest(request, this, null, statusListener);
+	  }
+	}
+	
+	private void announceChangedToOfflineStatus() throws LineUnavailableException {
+	  if(friendList.isEmpty()){
+	    peer.shutdown();
+	  }
+	  else{
+	    int i = 1;
+	  for(Friend f : friendList){
+      OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
+          peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
+   // act like we received an OnlineStatusRequest and answer with Aborted so Status goes to offline
+      request.setOnlineStatus(OnlineStatus.OFFLINE);
+      request.setStatus(RequestStatus.ABORTED);
+      boolean lastInLine = (i == friendList.size());
+      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+        @Override
+        public void operationComplete(FutureDirect future) throws Exception {
+          if(lastInLine){
+            peer.shutdown();
+          }
+      }
+  };
+      RequestHandler.handleRequest(request, this, null, statusListener);
+      i++;
+	    }
+	  }
+  }
+
+  public Friend getFriend(String currentChatPartner) {
 		for (Friend f : friendList) {
 			if (f.getName().equals(currentChatPartner)) {
 				return f;

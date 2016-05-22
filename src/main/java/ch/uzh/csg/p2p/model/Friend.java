@@ -1,8 +1,15 @@
 package ch.uzh.csg.p2p.model;
 
-import net.tomp2p.peers.PeerAddress;
+import java.util.Observable;
+import java.util.Observer;
 
-public class Friend {
+import net.tomp2p.connection.PeerConnection;
+import net.tomp2p.connection.PeerException;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.peers.PeerStatusListener;
+import net.tomp2p.peers.RTT;
+
+public class Friend extends Observable {
 
   private PeerAddress peerAddress;
   private String name;
@@ -20,6 +27,7 @@ public class Friend {
     setPeerAddress(peerAddress);
     setName(name);
     setStatus(OnlineStatus.OFFLINE);
+    //onlineStatus = OnlineStatus.OFFLINE;
   //  friendshipStatus = FriendshipStatus.WAITING;
   }
   
@@ -34,22 +42,9 @@ public class Friend {
   }
   public void setStatus(OnlineStatus status) {
     this.onlineStatus = status;
+    setChanged();
+    notifyObservers(status);
   }
-  /*public FriendshipStatus getFriendStatus() {
-    return friendshipStatus;
-  }
-  
-  public void forRequest(){
-    friendshipStatus = FriendshipStatus.RECEIVED;
-  }
-  
-  public void hasRejected(){
-    friendshipStatus = FriendshipStatus.REJECTED;
-  }
-  
-  public void hasAccepted(){
-    friendshipStatus = FriendshipStatus.ACCEPTED;
-  }*/
 
   public PeerAddress getPeerAddress() {
     return peerAddress;
@@ -58,4 +53,5 @@ public class Friend {
   public void setPeerAddress(PeerAddress peerAddress) {
     this.peerAddress = peerAddress;
   }
+  
 }

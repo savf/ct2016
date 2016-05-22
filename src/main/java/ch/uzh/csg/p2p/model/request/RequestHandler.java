@@ -19,13 +19,16 @@ import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
+import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.VideoMessage;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.dht.FutureRemove;
 import net.tomp2p.futures.BaseFutureAdapter;
+import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.futures.FutureDiscover;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -46,7 +49,7 @@ public class RequestHandler {
 
 	public static Object handleRequest(Request request, Node node) {
 		try {
-			return handleRequest(request, node, null);
+			return handleRequest(request, node, null, null);
 		} catch (LineUnavailableException e) {
 			e.printStackTrace();
 		}
@@ -55,51 +58,62 @@ public class RequestHandler {
 
 	public static Object handleRequest(Request request, Node node,
 			RequestListener requestListener) throws LineUnavailableException {
-		switch (request.getType()) {
-			case RECEIVE:
-				try {
-					return handleReceive(request, node);
-				} catch (ClassNotFoundException e2) {
-					e2.printStackTrace();
-				} catch (IOException e2) {
-					e2.printStackTrace();
-				} catch (LineUnavailableException e2) {
-					e2.printStackTrace();
-				}
-			case RETRIEVE:
-				try {
-					return handleRetrieve(request, node, requestListener);
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			case SEND:
-				try {
-					return handleSend(request, node);
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			case STORE:
-				try {
-					return handleStore(request, node);
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			default:
-				return null;
+		try{
+		  return handleRequest(request, node, requestListener, null);
 		}
+		catch (LineUnavailableException e) {
+          e.printStackTrace();
+      }
+      return null;
 	}
+	
+	public static Object handleRequest(Request request, Node node,
+        RequestListener requestListener, StatusListener statusListener) throws LineUnavailableException {
+    switch (request.getType()) {
+        case RECEIVE:
+            try {
+                return handleReceive(request, node);
+            } catch (ClassNotFoundException e2) {
+                e2.printStackTrace();
+            } catch (IOException e2) {
+                e2.printStackTrace();
+            } catch (LineUnavailableException e2) {
+                e2.printStackTrace();
+            }
+        case RETRIEVE:
+            try {
+                return handleRetrieve(request, node, requestListener);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        case SEND:
+            try {
+                return handleSend(request, node, statusListener);
+            } catch (ClassNotFoundException e1) {
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        case STORE:
+            try {
+                return handleStore(request, node);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        default:
+            return null;
+    }
+}
 
 	private static Boolean handleStore(Request request, Node node)
 			throws IOException, ClassNotFoundException, InterruptedException {
@@ -170,7 +184,7 @@ public class RequestHandler {
 		return false;
 	}
 
-	private static Boolean handleSend(Request request, Node node)
+	private static Boolean handleSend(Request request, Node node, StatusListener statusListener)
 			throws ClassNotFoundException, IOException, InterruptedException, LineUnavailableException {
 		final Node n = node;
 		if (request instanceof MessageRequest) {
@@ -294,8 +308,11 @@ public class RequestHandler {
 			
 			return true;
 		}
-
-		// d.h. Operation ausgeführt, sonst nichts
+		if(request instanceof OnlineStatusRequest){
+		  final OnlineStatusRequest r = (OnlineStatusRequest) request;
+		  FutureDirect future = n.getPeer().peer().sendDirect(r.getReceiverAddress()).idleTCPMillis(5000).idleUDPMillis(5000).object(r).start();
+		  future.addListener(statusListener);
+		}
 		return true;
 	}
 
@@ -425,6 +442,43 @@ public class RequestHandler {
 				default:
 					break;
 			}
+		}
+		if(request instanceof OnlineStatusRequest){
+		  OnlineStatusRequest r = (OnlineStatusRequest) request;
+		  switch (r.getStatus()){
+		    case WAITING:
+		      OnlineStatusRequest req;
+		      if(r.getReceiverName() != node.getUser().getUsername()){
+		        // then, the peerAddress of the friend has changed and been reassigned to this node
+		        req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(), r.getSenderName(), RequestType.SEND);
+		        req.setStatus(RequestStatus.REJECTED);
+		        
+		      }
+		      else{
+		      node.getFriend(r.getSenderName()).setStatus(OnlineStatus.ONLINE);
+		      req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(), r.getSenderName(), RequestType.SEND);
+		      req.setStatus(RequestStatus.ACCEPTED);
+		      }
+		      handleRequest(req, node);
+		      break;
+		    case ACCEPTED:
+		      if(node.getFriend(r.getSenderName())!= null){
+		      node.getFriend(r.getSenderName()).setStatus(r.getOnlineStatus());
+		      }
+		      break;
+		    case REJECTED:
+		      if(node.getFriend(r.getSenderName())!= null){
+		      node.getFriend(r.getSenderName()).setStatus(OnlineStatus.OFFLINE);
+		      }
+		      break;
+		    case ABORTED:
+		      if(node.getFriend(r.getSenderName())!= null){
+		      node.getFriend(r.getSenderName()).setStatus(OnlineStatus.OFFLINE);
+		      }
+		      break;
+		    default:
+		      break;
+		  }
 		}
 
 		return null;
