@@ -14,8 +14,6 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javazoom.jl.decoder.JavaLayerException;
@@ -353,15 +351,6 @@ public class MainWindowController {
 
 	public void showFriendSearchResultPane() {
 		setRightTopPane(friendsearchResultPane);
-	}
-
-	public void alertWidthHeight() {
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.setTitle("Width and height of stage");
-		String s = "The current width is: " + stage.getWidth() + " and the height is: "
-				+ stage.getHeight();
-		alert.setContentText(s);
-		alert.showAndWait();
 	}
 
 	public void showChatPane() {
