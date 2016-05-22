@@ -9,6 +9,7 @@ import ch.uzh.csg.p2p.controller.AudioPaneController;
 import ch.uzh.csg.p2p.controller.ChatPaneController;
 import ch.uzh.csg.p2p.controller.FriendlistPaneController;
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.controller.RequestPaneController;
 import ch.uzh.csg.p2p.controller.VideoPaneController;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import javafx.event.EventHandler;
@@ -16,7 +17,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -37,18 +37,17 @@ public class MainWindow {
 	private AudioPaneController audioPaneController;
 	private VideoPaneController videoPaneController;
 	private FriendlistPaneController friendlistPaneController;
+	private RequestPaneController requestPaneController;
 
-	private BorderPane mainPane;
-	private BorderPane rightPane;
-	private AnchorPane infoPane;
+	private AnchorPane mainPane;
+	private AnchorPane notificationPane;
 	private AnchorPane chatPane;
-	private AnchorPane chat;
-	private AnchorPane chatPaneTabs;
 	private AnchorPane audioPane;
 	private AnchorPane videoPane;
 	private AnchorPane friendlistPane;
 	private AnchorPane friendsearchResultPane;
 	private AnchorPane requestPane;
+	private AnchorPane informPane;
 
 	public void start(Stage stage, int id, String ip, String username, String password)
 			throws Exception {
@@ -70,7 +69,7 @@ public class MainWindow {
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
 		startNode(id, ip, username, password);
-		mainWindowController = new MainWindowController(node);
+		mainWindowController = new MainWindowController(node, stage);
 
 		chatPaneController = new ChatPaneController(node, mainWindowController);
 		mainWindowController.setChatPaneController(chatPaneController);
@@ -80,32 +79,31 @@ public class MainWindow {
 		mainWindowController.setVideoPaneController(videoPaneController);
 		friendlistPaneController = new FriendlistPaneController(node, mainWindowController);
 		mainWindowController.setFriendlistPaneController(friendlistPaneController);
+		requestPaneController = new RequestPaneController(mainWindowController);
+		mainWindowController.setRequestPaneController(requestPaneController);
 		loader.setController(mainWindowController);
 		mainPane = loader.load();
 
-		initializeRightPane();
-		initializeInfoPane();
+		initializeNotificationPane();
 		initializeChatPane();
 		initializeAudioPane();
 		initializeVideoPane();
 		initializeFriendlistPane();
 		initializeFriendsearchResultPane();
 		initializeRequestPane();
+		initializeInformPane();
 
-		mainPane.setLeft(friendlistPane);
-		mainPane.setRight(rightPane);
-		rightPane.setTop(infoPane);
-
-		mainWindowController.setMainWindow(this);
-		mainWindowController.setMainPane(mainPane);
-		mainWindowController.setRightPane(rightPane);
-		mainWindowController.setInfoPane(infoPane);
+		mainWindowController.setNotificationPane(notificationPane);
 		mainWindowController.setChatPane(chatPane);
 		mainWindowController.setAudioPane(audioPane);
 		mainWindowController.setVideoPane(videoPane);
 		mainWindowController.setFriendlistPane(friendlistPane);
 		mainWindowController.setFriendsearchResultPane(friendsearchResultPane);
 		mainWindowController.setRequestPane(requestPane);
+		mainWindowController.setInformPane(informPane);
+
+		mainWindowController.setLeftPane(friendlistPane);
+		mainWindowController.setRightTopPane(notificationPane);
 
 		Scene scene = new Scene(mainPane);
 
@@ -113,11 +111,12 @@ public class MainWindow {
 
 		stage.setTitle(TITLE + username);
 		stage.setScene(scene);
-		stage.centerOnScreen();
 		stage.getIcons()
 				.add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
 
-		// stage.setFullScreen(true);
+		stage.setMinWidth(800);
+		stage.setMinHeight(480);
+		stage.centerOnScreen();
 
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
@@ -140,20 +139,10 @@ public class MainWindow {
 		RequestHandler.setMainWindowController(mainWindowController);
 	}
 
-	public void showSearchResults() {
-		mainPane.setRight(friendsearchResultPane);
-	}
-
-	private void initializeRightPane() throws IOException {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("RightPane.fxml"));
+	private void initializeNotificationPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("NotificationPane.fxml"));
 		loader.setController(mainWindowController);
-		rightPane = loader.load();
-	}
-
-	private void initializeInfoPane() throws IOException {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("InfoPane.fxml"));
-		loader.setController(mainWindowController);
-		infoPane = loader.load();
+		notificationPane = loader.load();
 	}
 
 	private void initializeChatPane() throws IOException {
@@ -187,9 +176,15 @@ public class MainWindow {
 	}
 
 	private void initializeRequestPane() throws IOException {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("RequestWindow.fxml"));
-		loader.setController(mainWindowController);
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("RequestPane.fxml"));
+		loader.setController(requestPaneController);
 		requestPane = loader.load();
+	}
+
+	private void initializeInformPane() throws IOException {
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("InformPane.fxml"));
+		loader.setController(requestPaneController);
+		informPane = loader.load();
 	}
 
 }

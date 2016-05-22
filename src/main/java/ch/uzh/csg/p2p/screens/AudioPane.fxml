@@ -6,11 +6,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane styleClass="audioPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane styleClass="audioPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" GridPane.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <children>
-            <HBox id="btnWrapperAudiot" fx:id="btnWrapperAudio" alignment="TOP_RIGHT" spacing="10.0" styleClass="btnWrapper" VBox.vgrow="ALWAYS">
+            <HBox id="btnWrapperAudiot" fx:id="btnWrapperAudio" alignment="TOP_RIGHT" spacing="20.0" styleClass="btnWrapper" VBox.vgrow="ALWAYS">
                <children>
                   <Button fx:id="leaveChatBtn" mnemonicParsing="false" onAction="#leaveChatHandler" styleClass="btn" text="Leave Chat" />
                   <Region HBox.hgrow="ALWAYS" />
@@ -25,19 +25,33 @@
             </HBox>
             <HBox fx:id="audioUserWrapper" alignment="CENTER">
                <VBox.margin>
-                  <Insets bottom="20.0" top="20.0" />
+                  <Insets bottom="20.0" right="20.0" top="20.0" />
                </VBox.margin></HBox>
-            <HBox alignment="CENTER" spacing="40.0" VBox.vgrow="ALWAYS">
+            <GridPane>
+              <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" />
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="170.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="20.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="170.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints vgrow="SOMETIMES" />
+              </rowConstraints>
                <children>
-                  <Button fx:id="endAudioBtn" mnemonicParsing="false" onAction="#endAudioHandler" text="End audio chat">
+                  <Button fx:id="endAudioBtn" minWidth="170.0" mnemonicParsing="false" onAction="#endAudioHandler" text="End audio chat" GridPane.columnIndex="1">
                      <styleClass>
                         <String fx:value="btn" />
                         <String fx:value="redBtn" />
                      </styleClass>
                   </Button>
-                  <Button fx:id="muteBtn" mnemonicParsing="false" onAction="#muteHandler" styleClass="btn" text="Mute Microphone" />
-                  <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel" />
-               </children></HBox>
+                  <Button fx:id="muteBtn" minWidth="170.0" mnemonicParsing="false" onAction="#muteHandler" styleClass="btn" text="Mute Microphone" GridPane.columnIndex="3" />
+                  <Label id="microphoneLbl" fx:id="microphoneLbl" styleClass="imageLabel" GridPane.columnIndex="4">
+                     <GridPane.margin>
+                        <Insets left="20.0" right="-40.0" />
+                     </GridPane.margin></Label>
+               </children>
+            </GridPane>
          </children>
       </VBox>
    </children>

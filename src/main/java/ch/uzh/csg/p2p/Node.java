@@ -14,7 +14,6 @@ import javax.sound.sampled.LineUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.uzh.csg.p2p.controller.LoginWindowController;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
@@ -45,25 +44,25 @@ import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
 
-public class Node extends Observable{
+public class Node extends Observable {
 
 	protected final String BOOTSTRAPNODE = "Bootstrapnode";
 	private final int DEFAULTPORT = 54000;
 
 	private Logger log;
 	private User user;
-	private ObservableList<Friend> friendList = FXCollections.observableList(new ArrayList<Friend>());
+	private ObservableList<Friend> friendList =
+			FXCollections.observableList(new ArrayList<Friend>());
 
 	protected PeerDHT peer;
-	
 
 	public Node(int nodeId, String ip, String username, String password, Observer nodeReadyObserver)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
 		int id = ((Long) System.currentTimeMillis()).intValue();
-		
-		if(nodeReadyObserver != null) {
+
+		if (nodeReadyObserver != null) {
 			addObserver(nodeReadyObserver);
 		}
 		// if not a BootstrapNode
@@ -75,7 +74,7 @@ public class Node extends Observable{
 		}
 		initiateUser(username, password);
 	}
-	
+
 	private void nodeReady() {
 		setChanged();
 		notifyObservers(this);
@@ -104,8 +103,8 @@ public class Node extends Observable{
 				nodeReady();
 			}
 		};
-		
-		LoginHelper.retrieveUser(username, this, userExistsListener);	
+
+		LoginHelper.retrieveUser(username, this, userExistsListener);
 	}
 
 	private void loadFriendlistFromDHTAndAnnounceOnlineStatus()
@@ -128,7 +127,7 @@ public class Node extends Observable{
 			LoginHelper.retrieveUser(friendName, this, requestListener);
 		}
 	}
-	
+
 	public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
 		friendList.addListener(listener);
 	}

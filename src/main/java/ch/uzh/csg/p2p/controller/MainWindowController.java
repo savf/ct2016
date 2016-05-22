@@ -1,32 +1,23 @@
 package ch.uzh.csg.p2p.controller;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.helper.ChatHelper;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
-import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.model.Friend;
-import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
-import ch.uzh.csg.p2p.model.request.RequestListener;
-import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
@@ -34,43 +25,40 @@ public class MainWindowController {
 
 	private Logger log = LoggerFactory.getLogger(MainWindowController.class);
 
-	/*
-	 * Audio request dialog
-	 */
 	@FXML
-	private Label requestWindowLabel;
+	private AnchorPane leftPane;
 	@FXML
-	private Button requestWindowAcceptBtn;
+	private AnchorPane rightTopPane;
 	@FXML
-	private Button requestWindowRejectBtn;
-
+	private AnchorPane rightBottomPane;
+	@FXML
+	private AnchorPane modalOverlayPane;
 
 	public Node node;
-	private ChatHelper chatHelper;
+	private Stage stage;
 	private FriendlistHelper friendlistHelper;
 	public List<String> currentChatPartners;
 	public Thread audioRingingThread;
 	public Thread videoRingingThread;
 
-	private MainWindow mainWindow;
-	private BorderPane mainPane;
-	private BorderPane rightPane;
-	private AnchorPane infoPane;
+	private AnchorPane notificationPane;
 	private AnchorPane chatPane;
 	private AnchorPane audioPane;
 	private AnchorPane videoPane;
 	private AnchorPane friendlistPane;
 	private AnchorPane friendsearchResultPane;
 	private AnchorPane requestPane;
+	private AnchorPane informPane;
 
 	public ChatPaneController chatPaneController;
 	public AudioPaneController audioPaneController;
 	public VideoPaneController videoPaneController;
 	public FriendlistPaneController friendlistPaneController;
+	public RequestPaneController requestPaneController;
 
-	public MainWindowController(Node node) {
+	public MainWindowController(Node node, Stage stage) {
 		this.node = node;
-		this.chatHelper = new ChatHelper();
+		this.stage = stage;
 		this.currentChatPartners = new ArrayList<String>();
 		this.friendlistHelper = new FriendlistHelper(this.node);
 	}
@@ -95,28 +83,33 @@ public class MainWindowController {
 		this.friendlistPaneController = friendlistPaneController;
 	}
 
-	public void setMainWindow(MainWindow mainWindow) {
-		this.mainWindow = mainWindow;
+	public void setRequestPaneController(RequestPaneController requestPaneController) {
+		this.requestPaneController = requestPaneController;
 	}
 
-	public void setMainPane(BorderPane mainPane) {
-		this.mainPane = mainPane;
+	public void setLeftPane(AnchorPane anchorPane) {
+		leftPane.getChildren().clear();
+		if (anchorPane != null) {
+			leftPane.getChildren().add(anchorPane);
+		}
 	}
 
-	public void setMainPaneTop(AnchorPane anchorPane) {
-		mainPane.setTop(anchorPane);
+	public void setRightTopPane(AnchorPane anchorPane) {
+		rightTopPane.getChildren().clear();
+		if (anchorPane != null) {
+			rightTopPane.getChildren().add(anchorPane);
+		}
 	}
 
-	public void setRightPane(BorderPane rightPane) {
-		this.rightPane = rightPane;
+	public void setRightBottomPane(AnchorPane anchorPane) {
+		rightBottomPane.getChildren().clear();
+		if (anchorPane != null) {
+			rightBottomPane.getChildren().add(anchorPane);
+		}
 	}
 
-	public void setRightPaneTop(AnchorPane anchorPane) {
-		rightPane.setTop(anchorPane);
-	}
-
-	public void setInfoPane(AnchorPane infoPane) {
-		this.infoPane = infoPane;
+	public void setNotificationPane(AnchorPane infoPane) {
+		this.notificationPane = infoPane;
 	}
 
 	public void setChatPane(AnchorPane chatPane) {
@@ -143,6 +136,10 @@ public class MainWindowController {
 		this.requestPane = requestPane;
 	}
 
+	public void setInformPane(AnchorPane informPane) {
+		this.informPane = informPane;
+	}
+
 	public void addChatPartner(String username) {
 		if (!currentChatPartners.contains(username)
 				&& friendlistHelper.checkAlreadyFriend(username)) {
@@ -155,63 +152,94 @@ public class MainWindowController {
 	}
 
 	/*
+	 * REQUEST DIALOG
+	 */
+
+	public void showRequestOverlay() {
+		modalOverlayPane.setVisible(true);
+		modalOverlayPane.getChildren().clear();
+		modalOverlayPane.getChildren().add(requestPane);
+	}
+
+	public void showInformOverlay() {
+		modalOverlayPane.setVisible(true);
+		modalOverlayPane.getChildren().clear();
+		modalOverlayPane.getChildren().add(informPane);
+	}
+
+	public void hideRequestOverlay() {
+		modalOverlayPane.setVisible(false);
+	}
+
+	public void hideInformOverlay() {
+		modalOverlayPane.setVisible(false);
+	}
+
+	/*
 	 * NOTIFICATIONS
 	 */
 
-	public void showInfoPane() {
-		rightPane.setTop(infoPane);
-		rightPane.setBottom(null);
+	public void showNotificationPane() {
+		setRightTopPane(notificationPane);
+		rightBottomPane.getChildren().clear();
 	}
 
 
 	/*
-	 * AUDIO PART
+	 * AUDIO
 	 */
 
 	public void showAudioPane() {
-		rightPane.setTop(audioPane);
+		setRightTopPane(audioPane);
 		showChatBtns("audio");
+		stage.setWidth(1024);
+		stage.setHeight(685);
+		stage.centerOnScreen();
 	}
 
 	public void hideAudioPane() {
-		rightPane.setTop(null);
+		rightTopPane.getChildren().clear();
 		showChatBtns("chat");
+		stage.setWidth(1024);
+		stage.setHeight(640);
+		stage.centerOnScreen();
 	}
 
 	public void showAudioAndChatPanes() {
-		rightPane.setBottom(chatPane);
-		rightPane.setTop(audioPane);
+		setRightTopPane(audioPane);
+		setRightBottomPane(chatPane);
 		showChatBtns("audio");
+		stage.setWidth(1024);
+		stage.setHeight(685);
+		stage.centerOnScreen();
 	}
 
 	public void makeAudioCallDialog(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				mainPane.setTop(requestPane);
-				requestWindowLabel
-						.setText("Do you want to start an audio call with " + username + "?");
-			}
-		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+				requestPaneController.makeDialog(
+						"Do you want to start an audio call with " + username + "?",
+						new EventHandler<ActionEvent>() {
 
-			public void handle(ActionEvent event) {
-				try {
-					audioPaneController.acceptAudioCall(username);
-				} catch (Exception e) {
-					log.error("Cannot accept audio call: " + e);
-				}
-				audioRingingThread.stop();
-			}
-		});
-		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+							public void handle(ActionEvent event) {
+								try {
+									audioPaneController.acceptAudioCall(username);
+								} catch (Exception e) {
+									log.error("Cannot accept audio call: " + e);
+								}
+								audioRingingThread.stop();
+							}
+						}, new EventHandler<ActionEvent>() {
 
-			public void handle(ActionEvent event) {
-				try {
-					audioPaneController.rejectAudioCall(username);
-				} catch (Exception e) {
-					log.error("Cannot reject audio call: " + e);
-				}
-				audioRingingThread.stop();
+							public void handle(ActionEvent event) {
+								try {
+									audioPaneController.rejectAudioCall(username);
+								} catch (Exception e) {
+									log.error("Cannot reject audio call: " + e);
+								}
+								audioRingingThread.stop();
+							}
+						});
 			}
 		});
 
@@ -237,32 +265,63 @@ public class MainWindowController {
 	}
 
 	/*
-	 * VIDEO PART
+	 * VIDEO
 	 */
 
 	public void showVideoPane() {
-		rightPane.setTop(videoPane);
+		setRightTopPane(videoPane);
 		showChatBtns("video");
+		stage.setWidth(1333);
+		stage.setHeight(768);
+		stage.centerOnScreen();
 	}
 
 	public void hideVideoPane() {
-		rightPane.setTop(null);
+		rightTopPane.getChildren().clear();
 		showChatBtns("chat");
+		stage.setWidth(1024);
+		stage.setHeight(640);
+		stage.centerOnScreen();
 	}
 
 	public void showVideoAndChatPanes() {
-		rightPane.setBottom(chatPane);
-		rightPane.setTop(videoPane);
+		setRightTopPane(videoPane);
+		setRightBottomPane(chatPane);
 		showChatBtns("video");
+		stage.setWidth(1333);
+		stage.setHeight(768);
+		stage.centerOnScreen();
 	}
 
 	public void makeVideoCallDialog(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				if (mainPane.getTop() == null) {
-					mainPane.setTop(requestPane);
-					requestWindowLabel
-							.setText("Do you want to start a video call with " + username + "?");
+				if (!modalOverlayPane.isVisible()) {
+					requestPaneController.makeDialog(
+							"Do you want to start a video call with " + username + "?",
+							new EventHandler<ActionEvent>() {
+
+								public void handle(ActionEvent event) {
+									try {
+										videoPaneController.acceptVideoCall(username);
+										videoRingingThread.stop();
+									} catch (Exception e) {
+										log.error("Cannot accept video call: " + e);
+										e.printStackTrace();
+									}
+								}
+							}, new EventHandler<ActionEvent>() {
+
+								public void handle(ActionEvent event) {
+									try {
+										videoPaneController.rejectVideoCall(username);
+										videoRingingThread.stop();
+									} catch (Exception e) {
+										log.error("Cannot reject video call: " + e);
+									}
+								}
+							});
+
 					InputStream inputStream =
 							getClass().getClassLoader().getResourceAsStream("ring.mp3");
 					final Player player;
@@ -286,29 +345,6 @@ public class MainWindowController {
 				}
 			}
 		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				try {
-					videoPaneController.acceptVideoCall(username);
-					videoRingingThread.stop();
-				} catch (Exception e) {
-					log.error("Cannot accept video call: " + e);
-					e.printStackTrace();
-				}
-			}
-		});
-		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				try {
-					videoPaneController.rejectVideoCall(username);
-					videoRingingThread.stop();
-				} catch (Exception e) {
-					log.error("Cannot reject video call: " + e);
-				}
-			}
-		});
 	}
 
 	/*
@@ -316,11 +352,24 @@ public class MainWindowController {
 	 */
 
 	public void showFriendSearchResultPane() {
-		rightPane.setTop(friendsearchResultPane);
+		setRightTopPane(friendsearchResultPane);
+	}
+
+	public void alertWidthHeight() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle("Width and height of stage");
+		String s = "The current width is: " + stage.getWidth() + " and the height is: "
+				+ stage.getHeight();
+		alert.setContentText(s);
+		alert.showAndWait();
 	}
 
 	public void showChatPane() {
-		rightPane.setBottom(chatPane);
+		setRightTopPane(null);
+		setRightBottomPane(chatPane);
+		stage.setMinWidth(1024);
+		stage.setMinHeight(640);
+		stage.centerOnScreen();
 	}
 
 	public void askFriend(FriendRequest request) {
@@ -328,29 +377,27 @@ public class MainWindowController {
 		Platform.runLater(new Runnable() {
 			public void run() {
 
-				mainPane.setTop(requestPane);
-				requestWindowLabel
-						.setText("Do you want to be friends with " + r.getSenderName() + "?");
-			}
-		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
+				requestPaneController.makeDialog(
+						"Do you want to be friends with " + r.getSenderName() + "?",
+						new EventHandler<ActionEvent>() {
 
-			public void handle(ActionEvent event) {
-				try {
-					friendlistPaneController.acceptFriendship(r);
-				} catch (Exception e) {
-					log.error("Cannot accept friendship request: " + e);
-				}
-			}
-		});
-		requestWindowRejectBtn.setOnAction(new EventHandler<ActionEvent>() {
+							public void handle(ActionEvent event) {
+								try {
+									friendlistPaneController.acceptFriendship(r);
+								} catch (Exception e) {
+									log.error("Cannot accept friendship request: " + e);
+								}
+							}
+						}, new EventHandler<ActionEvent>() {
 
-			public void handle(ActionEvent event) {
-				try {
-					friendlistPaneController.rejectFriendship(r);
-				} catch (Exception e) {
-					log.error("Cannot reject friendship request: " + e);
-				}
+							public void handle(ActionEvent event) {
+								try {
+									friendlistPaneController.rejectFriendship(r);
+								} catch (Exception e) {
+									log.error("Cannot reject friendship request: " + e);
+								}
+							}
+						});
 			}
 		});
 	}
@@ -358,15 +405,7 @@ public class MainWindowController {
 	public void friendshipAccepted(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				// TODO: InformationPane with only OK as button
-				mainPane.setTop(infoPane);
-				requestWindowLabel.setText(username + " accepted your friendship request.");
-			}
-		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				setMainPaneTop(null);
+				requestPaneController.inform(username + " accepted your friendship request.");
 			}
 		});
 	}
@@ -374,15 +413,7 @@ public class MainWindowController {
 	public void friendshipRejected(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				// TODO: InformationPane with only OK as button
-				mainPane.setTop(infoPane);
-				requestWindowLabel.setText(username + " rejected your friendship request.");
-			}
-		});
-		requestWindowAcceptBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-			public void handle(ActionEvent event) {
-				setMainPaneTop(null);
+				requestPaneController.inform(username + " rejected your friendship request.");
 			}
 		});
 	}
@@ -409,9 +440,5 @@ public class MainWindowController {
 			videoPaneController.btnWrapperVideo.setVisible(true);
 		}
 	}
-
-  public void deleteChatPartners() {
-    currentChatPartners = new ArrayList<String>();
-  }
 
 }
