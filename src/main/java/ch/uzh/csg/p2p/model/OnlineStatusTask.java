@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.peers.PeerAddress;
@@ -22,7 +24,7 @@ public class OnlineStatusTask extends TimerTask {
   private OnlineStatusTask(){
   }
   
-  public OnlineStatusTask(List<Friend> friendlist, Node node){
+  public OnlineStatusTask(Node node){
     setNode(node);
   }
 
@@ -34,11 +36,13 @@ public class OnlineStatusTask extends TimerTask {
   public void run() {
    try{
      OnlineStatusRequest r = new OnlineStatusRequest();
+     r.setOnlineStatus(OnlineStatus.ONLINE);
      r.setSenderName(node.getUser().getUsername());
      r.setSenderAddress(node.getPeer().peerAddress());
      List<Friend> list = node.getFriendList();
      synchronized(list){
        for(Friend f : list){
+         // only send OnlineStatusRequest when Friend was last online, since when they go offline & online again they need to announce it
          if(f.getStatus().equals(OnlineStatus.ONLINE)){
            r.setReceiverAddress(f.getPeerAddress());
            r.setReceiverName(f.getName());
@@ -48,7 +52,8 @@ public class OnlineStatusTask extends TimerTask {
              @Override
              public void operationComplete(FutureDirect future) throws Exception {
                if(future != null && future.isSuccess()) {
-                   f.setStatus(OnlineStatus.ONLINE);
+                 // TODO: maybe just leave status?
+                 //  f.setStatus(OnlineStatus.ONLINE);
                }
                else {
                f.setStatus(OnlineStatus.OFFLINE);  

@@ -32,5 +32,4 @@ public class FriendlistHelper {
 				new FriendRequest(f.getPeerAddress(), f.getName(), null, RequestType.STORE);
 		RequestHandler.handleRequest(r, node);
 	}
-
 }

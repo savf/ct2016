@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Timer;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -18,6 +19,7 @@ import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.OnlineStatus;
+import ch.uzh.csg.p2p.model.OnlineStatusTask;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
@@ -48,12 +50,14 @@ public class Node extends Observable {
 
 	protected final String BOOTSTRAPNODE = "Bootstrapnode";
 	private final int DEFAULTPORT = 54000;
+	private final long TIMERDELAY = 10000;
+	private boolean running = true;
 
 	private Logger log;
 	private User user;
 	private ObservableList<Friend> friendList =
 			FXCollections.observableList(new ArrayList<Friend>());
-
+	private Timer onlineStatusTaskTimer;
 	protected PeerDHT peer;
 
 	public Node(int nodeId, String ip, String username, String password, Observer nodeReadyObserver)
@@ -78,6 +82,7 @@ public class Node extends Observable {
 	private void nodeReady() {
 		setChanged();
 		notifyObservers(this);
+		startOnlineStatusTask();
 	}
 
 	public void loadStoredDataFromDHT()
@@ -128,7 +133,19 @@ public class Node extends Observable {
 		}
 	}
 
-	public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
+	protected void startOnlineStatusTask() {
+    OnlineStatusTask onlineStatusTask = new OnlineStatusTask(this);
+    onlineStatusTaskTimer = new Timer();
+    onlineStatusTaskTimer.scheduleAtFixedRate(onlineStatusTask, 0, TIMERDELAY);
+  }
+	
+	protected void stopOnlineStatusTask(){
+	  if(onlineStatusTaskTimer!= null){
+	  onlineStatusTaskTimer.cancel();
+	  }
+	}
+
+  public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
 		friendList.addListener(listener);
 	}
 
@@ -237,7 +254,9 @@ public class Node extends Observable {
 
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
+		running = false;
 		if (peer != null) {
+		  stopOnlineStatusTask();
 		    try {
 		      announceChangedToOfflineStatus();
         } catch (LineUnavailableException e) {
@@ -250,8 +269,9 @@ public class Node extends Observable {
 	  for(Friend f : friendList){
 	      OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
 	          peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
-	   // send new OnlineRequest, act like this is an answer to a request, and send a positive answer so status goes online
+	      request.setChangedPeerAddress(true);
 	      request.setOnlineStatus(OnlineStatus.ONLINE);
+	   // send new OnlineRequest, act like this is an answer to a request, and send a positive answer so status goes online	       
 	      request.setStatus(RequestStatus.ACCEPTED);
 	      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
 	        @Override
@@ -304,8 +324,29 @@ public class Node extends Observable {
 		return null;
 	}
 
-	public void addFriend(Friend friend) {
+	public void addFriend(Friend friend){
 		friendList.add(friend);
+		
+		OnlineStatusRequest req = new OnlineStatusRequest(friend.getPeerAddress(), 
+	          peer.peerAddress(), user.getUsername(), friend.getName(), RequestType.SEND);
+	      req.setOnlineStatus(OnlineStatus.ONLINE);
+	      req.setStatus(RequestStatus.ACCEPTED);
+	      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+	        @Override
+	        public void operationComplete(FutureDirect future) throws Exception {
+	          if(future.isCompleted() && future.isSuccess()){
+	          friend.setStatus(OnlineStatus.ONLINE);
+	          }
+	          else{
+	            friend.setStatus(OnlineStatus.OFFLINE);
+	          }
+	      }
+	  };
+	      try {
+	        RequestHandler.handleRequest(req, this, null, statusListener);
+	      } catch (LineUnavailableException e) {
+	        e.printStackTrace();
+	      }
 	}
 
 }

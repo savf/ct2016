@@ -6,10 +6,11 @@ import ch.uzh.csg.p2p.model.OnlineStatus;
 public class OnlineStatusRequest extends Request {
   private OnlineStatus onlineStatus;
   private PeerAddress senderAddress;
+  private boolean changedPeerAddress = false;
   
   public OnlineStatusRequest(){
     super();
-    setOnlineStatus(OnlineStatus.OFFLINE);
+    setOnlineStatus(OnlineStatus.ONLINE);
   }
   
   public OnlineStatusRequest(PeerAddress receiverAddress, String senderName, String receiverName, RequestType type){
@@ -35,5 +36,13 @@ public class OnlineStatusRequest extends Request {
 
   public void setSenderAddress(PeerAddress senderAddress) {
     this.senderAddress = senderAddress;
+  }
+
+  public boolean hasChangedPeerAddress() {
+    return changedPeerAddress;
+  }
+
+  public void setChangedPeerAddress(boolean changedPeerAddress) {
+    this.changedPeerAddress = changedPeerAddress;
   }
 }

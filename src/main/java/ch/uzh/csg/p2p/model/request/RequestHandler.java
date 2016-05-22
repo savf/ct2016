@@ -13,6 +13,7 @@ import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.controller.MainWindowController;
 import ch.uzh.csg.p2p.helper.AudioUtils;
 import ch.uzh.csg.p2p.helper.EncoderUtils;
+import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.helper.VideoUtils;
 import ch.uzh.csg.p2p.model.AudioMessage;
@@ -155,24 +156,35 @@ public class RequestHandler {
 							.remove(Number160
 									.createHash(USER_PREFIX + user.getUsername()))
 							.start();
-			futureRemove.await();
-			// TODO: Could be possible point to improve, because an await happens
+			futureRemove.addListener(new BaseFutureListener<FutureRemove>(){
 
-			FuturePut futurePut = node.getPeer()
-					.put(Number160.createHash(USER_PREFIX + user.getUsername()))
-					.data(new Data(user)).start();
-			futurePut.addListener(new BaseFutureAdapter<FuturePut>() {
-				public void operationComplete(FuturePut future) throws Exception {
-					log.info("User " + username + " put " + r.getSenderName() + " into DHT as friend, with success: " + future.isSuccess());
-					// User user = new User(username, null, null);
-					// User result = retrieveUser(user,node1);
-					/*
-					 * FutureGet futureGet = retrieveUser(user, node1); futureGet.await(); User
-					 * result = (User) futureGet.data().object(); System.out.println(
-					 * "Friendlist has " +result.getFriendStorage().size() + " number of friends.");
-					 */
-				}
+        @Override
+        public void operationComplete(FutureRemove future) throws Exception {
+          FuturePut futurePut = node.getPeer()
+              .put(Number160.createHash(USER_PREFIX + user.getUsername()))
+              .data(new Data(user)).start();
+      futurePut.addListener(new BaseFutureAdapter<FuturePut>() {
+          public void operationComplete(FuturePut future) throws Exception {
+              log.info("User " + username + " put " + r.getSenderName() + " into DHT as friend, with success: " + future.isSuccess());
+              // User user = new User(username, null, null);
+              // User result = retrieveUser(user,node1);
+              /*
+               * FutureGet futureGet = retrieveUser(user, node1); futureGet.await(); User
+               * result = (User) futureGet.data().object(); System.out.println(
+               * "Friendlist has " +result.getFriendStorage().size() + " number of friends.");
+               */
+          }
+      });
+          
+        }
+
+        @Override
+        public void exceptionCaught(Throwable t) throws Exception {
+          log.error(t.getMessage()); 
+        }		  
 			});
+			//futureRemove.await();
+			// TODO: Could be possible point to improve, because an await happens			
 
 		}
 		if (request instanceof BootstrapRequest) {
@@ -310,8 +322,10 @@ public class RequestHandler {
 		}
 		if(request instanceof OnlineStatusRequest){
 		  final OnlineStatusRequest r = (OnlineStatusRequest) request;
-		  FutureDirect future = n.getPeer().peer().sendDirect(r.getReceiverAddress()).idleTCPMillis(5000).idleUDPMillis(5000).object(r).start();
+		  FutureDirect future = n.getPeer().peer().sendDirect(r.getReceiverAddress()).object(r).start();
+		  if(statusListener != null){
 		  future.addListener(statusListener);
+		  }
 		}
 		return true;
 	}
@@ -448,21 +462,25 @@ public class RequestHandler {
 		  switch (r.getStatus()){
 		    case WAITING:
 		      OnlineStatusRequest req;
-		      if(r.getReceiverName() != node.getUser().getUsername()){
+		      if(!r.getReceiverName().equals(node.getUser().getUsername())){
 		        // then, the peerAddress of the friend has changed and been reassigned to this node
 		        req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(), r.getSenderName(), RequestType.SEND);
-		        req.setStatus(RequestStatus.REJECTED);
-		        
+		        req.setOnlineStatus(OnlineStatus.ONLINE);
+		        req.setStatus(RequestStatus.REJECTED);		        
 		      }
 		      else{
 		      node.getFriend(r.getSenderName()).setStatus(OnlineStatus.ONLINE);
 		      req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(), r.getSenderName(), RequestType.SEND);
+		      req.setOnlineStatus(OnlineStatus.ONLINE);
 		      req.setStatus(RequestStatus.ACCEPTED);
 		      }
 		      handleRequest(req, node);
 		      break;
 		    case ACCEPTED:
 		      if(node.getFriend(r.getSenderName())!= null){
+		        if(r.hasChangedPeerAddress()){
+		          node.getFriend(r.getSenderName()).setPeerAddress(r.getSenderAddress());
+		        }
 		      node.getFriend(r.getSenderName()).setStatus(r.getOnlineStatus());
 		      }
 		      break;

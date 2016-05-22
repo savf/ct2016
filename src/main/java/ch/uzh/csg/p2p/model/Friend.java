@@ -19,14 +19,14 @@ public class Friend extends Observable {
   public Friend(){
     setPeerAddress(null);
     setName("");
-    setStatus(OnlineStatus.OFFLINE);
+    setStatus(OnlineStatus.ONLINE);
    // friendshipStatus = FriendshipStatus.WAITING;
   }
   
   public Friend(PeerAddress peerAddress, String name){
     setPeerAddress(peerAddress);
     setName(name);
-    setStatus(OnlineStatus.OFFLINE);
+    setStatus(OnlineStatus.ONLINE);
     //onlineStatus = OnlineStatus.OFFLINE;
   //  friendshipStatus = FriendshipStatus.WAITING;
   }
@@ -43,7 +43,7 @@ public class Friend extends Observable {
   public void setStatus(OnlineStatus status) {
     this.onlineStatus = status;
     setChanged();
-    notifyObservers(status);
+    notifyObservers(onlineStatus);
   }
 
   public PeerAddress getPeerAddress() {
