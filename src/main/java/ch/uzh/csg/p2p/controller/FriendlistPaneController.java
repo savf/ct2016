@@ -81,8 +81,6 @@ public class FriendlistPaneController {
 			throws ClassNotFoundException, IOException, LineUnavailableException {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				mainWindowController.showFriendSearchResultPane();
-				searchResultList.getChildren().clear();
 				try {
 					FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
 						@Override
@@ -143,9 +141,9 @@ public class FriendlistPaneController {
 						}
 					};
 					if (!friendSearchText.getText().equals("")) {
+						mainWindowController.showFriendSearchResultPane();
+						searchResultList.getChildren().clear();
 						LoginHelper.retrieveUser(friendSearchText.getText(), node, requestListener);
-					} else {
-						mainWindowController.alertWidthHeight();
 					}
 
 				} catch (LineUnavailableException e1) {
