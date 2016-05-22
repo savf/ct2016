@@ -3,6 +3,7 @@ package ch.uzh.csg.p2p.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,9 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.message.DataMap;
+import net.tomp2p.peers.Number640;
+import net.tomp2p.storage.Data;
 
 public class FriendlistPaneController {
 
@@ -85,9 +89,16 @@ public class FriendlistPaneController {
 						public void operationComplete(FutureGet futureGet) throws Exception {
 							if (futureGet != null && futureGet.isSuccess()
 									&& futureGet.data() != null) {
-								final User user = (User) futureGet.data().object();
+							  if(futureGet.isCompleted()){
+							    Object o = new User();
+							     // Iterator<Data> i= futureGet.dataMap().values().iterator();
+							     // o = i.next().object();
+							      o=futureGet.data().object();
+							    final User user = (User) o;
+							  
+								//final User user = (User) futureGet.data().object();
 								// Only show user in search results, if it's not myself
-								if (!user.getPeerAddress().equals(node.getPeer().peerAddress())) {
+								if (user.getPeerAddress() != null && !user.getPeerAddress().equals(node.getPeer().peerAddress())) {
 									final HBox hBox = new HBox();
 									hBox.setSpacing(40);
 
@@ -124,6 +135,11 @@ public class FriendlistPaneController {
 								}
 								friendSearchText.setText("");
 							}
+							  else{
+							    //TODO
+							  }
+							}
+				
 						}
 					};
 					if (!friendSearchText.getText().equals("")) {

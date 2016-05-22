@@ -79,7 +79,7 @@ public class LoginWindowController implements Observer {
 	public void handleBootstrapCB() throws UnknownHostException {
 		if (bootstrapCB.isSelected()) {
 			ipText.setText(
-					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());
+					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());		
 			ipText.setDisable(true);
 		} else {
 			ipText.setText("");
@@ -108,11 +108,12 @@ public class LoginWindowController implements Observer {
 			if (ip != null) {
 				// start a new node and check if the user already exists with the observer
 				// update() method
-				new Node(getId(), ip, LOGINNODENAME, "", this);
+				new Node(getId(), ip, LOGINNODENAME, "", false, this);
 			} else {
 				// ip null means bootstrap node, no user check needed
+			  final String ip2 = InetAddress.getLocalHost().getHostAddress();
 				MainWindow mainWindow = new MainWindow();
-				mainWindow.start(loginWindow.getStage(), id, ip, username, password);
+				mainWindow.start(loginWindow.getStage(), id, ip2, username, password, true);
 			}
 		}
 	}
@@ -145,7 +146,7 @@ public class LoginWindowController implements Observer {
 										try {
 											MainWindow mainWindow = new MainWindow();
 											mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
-													username, password);
+													username, password, false);
 										} catch (Exception e) {
 											e.printStackTrace();
 										}
@@ -173,7 +174,7 @@ public class LoginWindowController implements Observer {
 								try {
 									MainWindow mainWindow = new MainWindow();
 									mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
-											username, password);
+											username, password, false);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

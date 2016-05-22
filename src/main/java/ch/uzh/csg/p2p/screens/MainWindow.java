@@ -31,6 +31,7 @@ public class MainWindow {
 	private String ip;
 	private String username;
 	private String password;
+	private boolean bootstrapNode;
 
 	private MainWindowController mainWindowController;
 	private ChatPaneController chatPaneController;
@@ -49,26 +50,26 @@ public class MainWindow {
 	private AnchorPane requestPane;
 	private AnchorPane informPane;
 
-	public void start(Stage stage, int id, String ip, String username, String password)
+	public void start(Stage stage, int id, String ip, String username, String password, boolean bootstrapNode)
 			throws Exception {
 		this.stage = stage;
 		this.id = id;
 		this.ip = ip;
 		this.username = username;
 		this.password = password;
-
+		this.bootstrapNode = bootstrapNode;
 		initialiseWindow();
 	}
 
-	public void startNode(int id, String ip, String username, String password)
+	public void startNode(int id, String ip, String username, String password, boolean bootstrapNode)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
-		node = new Node(id, ip, username, password, null);
+		node = new Node(id, ip, username, password, bootstrapNode, null);
 	}
 
 	private void initialiseWindow()
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
-		startNode(id, ip, username, password);
+		startNode(id, ip, username, password, bootstrapNode);
 		mainWindowController = new MainWindowController(node, stage);
 
 		chatPaneController = new ChatPaneController(node, mainWindowController);

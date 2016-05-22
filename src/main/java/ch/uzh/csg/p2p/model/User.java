@@ -17,16 +17,23 @@ public class User implements Serializable {
 	private List<String> chatMessageStorage;
 
 	public User(String username, String password, PeerAddress peerAddress) {
-		super();
+		this();
 		this.username = username;
 		this.password = password;
 		this.peerAddress = peerAddress;
-		setFriendStorage(new ArrayList<String>());
-		setAudioMessageStorage(new ArrayList<String>());
-		setChatMessageStorage(new ArrayList<String>());
 	}
 
-	public List<String> getFriendStorage() {
+	public User() {
+	  super();
+	  username = new String();
+	  password = new String();
+	  peerAddress = null;
+	  setFriendStorage(new ArrayList<String>());
+      setAudioMessageStorage(new ArrayList<String>());
+      setChatMessageStorage(new ArrayList<String>());
+  }
+
+  public List<String> getFriendStorage() {
 		return friendStorage;
 	}
 

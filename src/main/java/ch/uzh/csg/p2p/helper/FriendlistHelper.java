@@ -19,6 +19,9 @@ public class FriendlistHelper {
 	}
 
 	public boolean checkAlreadyFriend(String username) {
+	  if(node.getUser().getFriendStorage()==null){
+	    return false;
+	  }
 		for (String n : node.getUser().getFriendStorage()) {
 			if ((username).equals(n)) {
 				return true;

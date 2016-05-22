@@ -35,11 +35,14 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFutureListener;
+import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.futures.FutureDiscover;
+import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -60,7 +63,7 @@ public class Node extends Observable {
 	private Timer onlineStatusTaskTimer;
 	protected PeerDHT peer;
 
-	public Node(int nodeId, String ip, String username, String password, Observer nodeReadyObserver)
+	public Node(int nodeId, String ip, String username, String password, boolean bootstrapNode, Observer nodeReadyObserver)
 			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
@@ -70,13 +73,7 @@ public class Node extends Observable {
 			addObserver(nodeReadyObserver);
 		}
 		// if not a BootstrapNode
-		if (ip != null) {
-			createPeer(id, username, password, false);
-			connectToNode(ip);
-		} else {
-			createPeer(nodeId, username, password, true);
-		}
-		initiateUser(username, password);
+		createPeerAndInitiateUser(id, username, password, bootstrapNode, ip);
 	}
 
 	private void nodeReady() {
@@ -149,38 +146,49 @@ public class Node extends Observable {
 		friendList.addListener(listener);
 	}
 
-	protected void createPeer(int nodeId, String username, String password, Boolean isBootstrapNode)
+	protected void createPeerAndInitiateUser(int nodeId, String username, String password, boolean bootstrapNode, String ip)
 			throws IOException, ClassNotFoundException, LineUnavailableException {
 		Bindings b = new Bindings().listenAny();
 		peer = new PeerBuilderDHT(
 				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
 						.start();
 
-		if (isBootstrapNode) {
+		if (bootstrapNode) {
+		  // Bootstrapnode
 			BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
-			BaseFutureListener<FutureDiscover> discoverListener = new BaseFutureListener<FutureDiscover>(){
+			request.setBootstrapNodeIP(ip);
+			BaseFutureListener<FuturePut> futurePutListener = new BaseFutureListener<FuturePut>(){
             @Override
-            public void operationComplete(FutureDiscover future) throws Exception {
-              // TODO Auto-generated method stub
-          
+            public void operationComplete(FuturePut future) throws Exception {
+              peer.peer().objectDataReply(new ObjectDataReply() {
+                public Object reply(PeerAddress peerAddress, Object object) throws Exception {
+                    return handleReceivedData(peerAddress, object);
+                }
+            });
+            // TODO: Indirect Replication or direct? Replication factor?
+            new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();    
+            
+            initiateUser(username, password);
             }   
 
             @Override
             public void exceptionCaught(Throwable t) throws Exception {
-              // TODO Auto-generated method stub
-          
+              log.error(t.getMessage());
             }
 			  
 			};
-			RequestHandler.handleRequest(request, this, null, discoverListener);
+			RequestHandler.handleRequest(request, this, null, futurePutListener);
 		}
-		peer.peer().objectDataReply(new ObjectDataReply() {
-			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
-				return handleReceivedData(peerAddress, object);
-			}
-		});
-		// TODO: Indirect Replication or direct? Replication factor?
-		new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start();
+		else{
+		  peer.peer().objectDataReply(new ObjectDataReply() {
+            public Object reply(PeerAddress peerAddress, Object object) throws Exception {
+                return handleReceivedData(peerAddress, object);
+            }
+        });
+		  new IndirectReplication(peer).autoReplication(true).replicationFactor(3).start(); 
+		  
+		  connectToNode(ip, username, password);
+		}
 	}
 
 	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
@@ -218,10 +226,29 @@ public class Node extends Observable {
 		return 0;
 	}
 
-	private void connectToNode(String knownIP) throws ClassNotFoundException, IOException {
+	private void connectToNode(String knownIP, String username, String password) throws ClassNotFoundException, IOException, LineUnavailableException {
 		BootstrapRequest request =
 				new BootstrapRequest(RequestType.SEND, user.getPeerAddress(), knownIP);
-		RequestHandler.handleRequest(request, this);
+		BaseFutureListener<FutureBootstrap> futureBootstrapListener = new BaseFutureListener<FutureBootstrap>() {
+
+      @Override
+      public void operationComplete(FutureBootstrap future) throws Exception {
+        
+        log.info(getUser().getUsername() + " knows: "
+                + getPeer().peerBean().peerMap().all() + " unverified: "
+                + getPeer().peerBean().peerMap().allOverflow());
+        log.info("Waiting for maintenance ping");
+         
+        initiateUser(username, password);
+      }
+
+      @Override
+      public void exceptionCaught(Throwable t) throws Exception {
+        log.error(t.getMessage());
+      }
+  
+		};
+		RequestHandler.handleRequest(request, this, null, futureBootstrapListener);
 	}
 
 	private int getPort() {
