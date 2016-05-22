@@ -15,7 +15,7 @@ import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.screens.MainWindow;
@@ -80,7 +80,7 @@ public class FriendlistPaneController {
 				mainWindowController.showFriendSearchResultPane();
 				searchResultList.getChildren().clear();
 				try {
-					RequestListener<User> requestListener = new RequestListener<User>(node) {
+					FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
 						@Override
 						public void operationComplete(FutureGet futureGet) throws Exception {
 							if (futureGet != null && futureGet.isSuccess()
@@ -153,6 +153,7 @@ public class FriendlistPaneController {
 	}
 
 	public void addUserToFriendList(Friend friend) {
+	  if(!friendlistItemControllerList.containsKey(friend.getName())){
 		final Friend f = friend;
 		Platform.runLater(new Runnable() {
 			public void run() {
@@ -171,14 +172,13 @@ public class FriendlistPaneController {
 				}
 				friendlistItemController.setName(f.getName());
 				friendlistItemController.setOnline();
-				// TODO: Create task to query online status
-				friendlistItemController.setOnline();
 
 				friendlistVBox.getChildren().add(friendlistItem);
 				f.addObserver(friendlistItemController);
 				friendlistItemControllerList.put(f.getName(), friendlistItemController);
 			}
 		});
+	  }
 	}
 
 	protected void rejectFriendship(FriendRequest r) {

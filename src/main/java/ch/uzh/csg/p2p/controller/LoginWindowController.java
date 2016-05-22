@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.screens.LoginWindow;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
@@ -129,7 +129,7 @@ public class LoginWindowController implements Observer {
 	public void update(Observable o, Object arg) {
 		Node node = (Node) arg;
 
-		RequestListener<User> userExistsListener = new RequestListener<User>(node) {
+		FutureGetListener<User> userExistsListener = new FutureGetListener<User>(node) {
 			@Override
 			public void operationComplete(FutureGet futureGet)
 					throws ClassNotFoundException, IOException {

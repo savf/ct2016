@@ -58,7 +58,7 @@ public class RequestHandler {
 	}
 
 	public static Object handleRequest(Request request, Node node,
-			RequestListener requestListener) throws LineUnavailableException {
+			FutureGetListener requestListener) throws LineUnavailableException {
 		try{
 		  return handleRequest(request, node, requestListener, null);
 		}
@@ -69,7 +69,7 @@ public class RequestHandler {
 	}
 	
 	public static Object handleRequest(Request request, Node node,
-        RequestListener requestListener, StatusListener statusListener) throws LineUnavailableException {
+        FutureGetListener requestListener, BaseFutureListener genericListener) throws LineUnavailableException {
     switch (request.getType()) {
         case RECEIVE:
             try {
@@ -93,7 +93,7 @@ public class RequestHandler {
             }
         case SEND:
             try {
-                return handleSend(request, node, statusListener);
+                return handleSend(request, node, genericListener);
             } catch (ClassNotFoundException e1) {
                 e1.printStackTrace();
             } catch (IOException e1) {
@@ -196,7 +196,7 @@ public class RequestHandler {
 		return false;
 	}
 
-	private static Boolean handleSend(Request request, Node node, StatusListener statusListener)
+	private static Boolean handleSend(Request request, Node node, BaseFutureListener genericListener)
 			throws ClassNotFoundException, IOException, InterruptedException, LineUnavailableException {
 		final Node n = node;
 		if (request instanceof MessageRequest) {
@@ -207,7 +207,7 @@ public class RequestHandler {
 				
 				n.getPeer().peer().sendDirect(peerAddress).object(r.getMessage()).start();
 			} else {
-				RequestListener<User> requestListener = new RequestListener<User>(node) {
+				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
@@ -254,7 +254,7 @@ public class RequestHandler {
 				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
 			} else {
 
-				RequestListener<User> requestListener = new RequestListener<User>(node) {
+				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
@@ -278,7 +278,7 @@ public class RequestHandler {
 				peerAddress = videoRequest.getReceiverAddress();
 				n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
 			} else {
-				RequestListener<User> requestListener = new RequestListener<User>(node) {
+				FutureGetListener<User> requestListener = new FutureGetListener<User>(node) {
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if (futureGet != null && futureGet.isSuccess()
@@ -305,7 +305,7 @@ public class RequestHandler {
 				peerAddress = r.getReceiverAddress();
 				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
 			} else {
-				RequestListener<User> requestListener = new RequestListener<User>(node){
+				FutureGetListener<User> requestListener = new FutureGetListener<User>(node){
 					@Override
 					public void operationComplete(FutureGet futureGet) throws Exception {
 						if(futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
@@ -323,15 +323,17 @@ public class RequestHandler {
 		if(request instanceof OnlineStatusRequest){
 		  final OnlineStatusRequest r = (OnlineStatusRequest) request;
 		  FutureDirect future = n.getPeer().peer().sendDirect(r.getReceiverAddress()).object(r).start();
-		  if(statusListener != null){
-		  future.addListener(statusListener);
+		  if(genericListener != null){
+		    // Attention, this could assign a wrong BaseFutureListener to the future object. 
+		    // TODO: Assure the listener has type FutureDirect
+		  future.addListener(genericListener);
 		  }
 		}
 		return true;
 	}
 
 	private static Object handleRetrieve(Request request, Node node,
-			RequestListener requestListener)
+			FutureGetListener requestListener)
 			throws ClassNotFoundException, IOException, InterruptedException {
 		if (request instanceof UserRequest) {
 			UserRequest r = (UserRequest) request;
@@ -352,7 +354,7 @@ public class RequestHandler {
 	}
 
 	private static void retrieveFriend(String senderName, Node node,
-			RequestListener<Friend> requestListener) throws ClassNotFoundException, IOException {
+			FutureGetListener<Friend> requestListener) throws ClassNotFoundException, IOException {
 		FutureGet futureGet =
 				node.getPeer().get(Number160.createHash(FRIEND_PREFIX + senderName)).start();
 		futureGet.addListener(requestListener);
@@ -502,7 +504,7 @@ public class RequestHandler {
 		return null;
 	}
 
-	private static void retrieveUser(User user, Node node, RequestListener<User> requestListener)
+	private static void retrieveUser(User user, Node node, FutureGetListener<User> requestListener)
 			throws ClassNotFoundException, IOException {
 		FutureGet futureGet = node.getPeer()
 				.get(Number160.createHash(USER_PREFIX + user.getUsername())).start();

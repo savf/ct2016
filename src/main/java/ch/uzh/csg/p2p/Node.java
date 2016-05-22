@@ -26,10 +26,9 @@ import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
 import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import ch.uzh.csg.p2p.model.request.StatusListener;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -40,6 +39,7 @@ import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureDirect;
+import net.tomp2p.futures.FutureDiscover;
 import net.tomp2p.p2p.PeerBuilder;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -93,7 +93,7 @@ public class Node extends Observable {
 
 	private void initiateUser(final String username, final String password)
 			throws ClassNotFoundException, LineUnavailableException, IOException {
-		RequestListener<User> userExistsListener = new RequestListener<User>(this) {
+		FutureGetListener<User> userExistsListener = new FutureGetListener<User>(this) {
 			@Override
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
@@ -117,7 +117,7 @@ public class Node extends Observable {
 
 		for (String friendName : user.getFriendStorage()) {
 			User user = new User(friendName, null, null);
-			RequestListener<User> requestListener = new RequestListener<User>(this) {
+			FutureGetListener<User> requestListener = new FutureGetListener<User>(this) {
 				@Override
 				public void operationComplete(FutureGet futureGet) throws Exception {
 					if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
@@ -158,7 +158,21 @@ public class Node extends Observable {
 
 		if (isBootstrapNode) {
 			BootstrapRequest request = new BootstrapRequest(RequestType.STORE);
-			RequestHandler.handleRequest(request, this);
+			BaseFutureListener<FutureDiscover> discoverListener = new BaseFutureListener<FutureDiscover>(){
+            @Override
+            public void operationComplete(FutureDiscover future) throws Exception {
+              // TODO Auto-generated method stub
+          
+            }   
+
+            @Override
+            public void exceptionCaught(Throwable t) throws Exception {
+              // TODO Auto-generated method stub
+          
+            }
+			  
+			};
+			RequestHandler.handleRequest(request, this, null, discoverListener);
 		}
 		peer.peer().objectDataReply(new ObjectDataReply() {
 			public Object reply(PeerAddress peerAddress, Object object) throws Exception {
@@ -273,7 +287,7 @@ public class Node extends Observable {
 	      request.setOnlineStatus(OnlineStatus.ONLINE);
 	   // send new OnlineRequest, act like this is an answer to a request, and send a positive answer so status goes online	       
 	      request.setStatus(RequestStatus.ACCEPTED);
-	      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+	      BaseFutureListener<FutureDirect> futureDirectListener = new BaseFutureListener<FutureDirect>(){
 	        @Override
 	        public void operationComplete(FutureDirect future) throws Exception {
 	          if(future != null && future.isSuccess()) {
@@ -283,8 +297,13 @@ public class Node extends Observable {
 	          f.setStatus(OnlineStatus.OFFLINE);  
 	          }
 	      }
+
+          @Override
+          public void exceptionCaught(Throwable t) throws Exception {
+            log.error(t.getMessage());
+          }
 	  };
-	      RequestHandler.handleRequest(request, this, null, statusListener);
+	      RequestHandler.handleRequest(request, this, null, futureDirectListener);
 	  }
 	}
 	
@@ -301,15 +320,20 @@ public class Node extends Observable {
       request.setOnlineStatus(OnlineStatus.OFFLINE);
       request.setStatus(RequestStatus.ABORTED);
       boolean lastInLine = (i == friendList.size());
-      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+      BaseFutureListener<FutureDirect> futureDirectListener = new BaseFutureListener<FutureDirect>(){
         @Override
         public void operationComplete(FutureDirect future) throws Exception {
           if(lastInLine){
             peer.shutdown();
           }
       }
+
+        @Override
+        public void exceptionCaught(Throwable t) throws Exception {
+          log.error(t.getMessage());
+        }
   };
-      RequestHandler.handleRequest(request, this, null, statusListener);
+      RequestHandler.handleRequest(request, this, null, futureDirectListener);
       i++;
 	    }
 	  }
@@ -325,13 +349,15 @@ public class Node extends Observable {
 	}
 
 	public void addFriend(Friend friend){
+	  if(!friendList.contains(friend)){
 		friendList.add(friend);
-		
+	  }
+	  
 		OnlineStatusRequest req = new OnlineStatusRequest(friend.getPeerAddress(), 
 	          peer.peerAddress(), user.getUsername(), friend.getName(), RequestType.SEND);
 	      req.setOnlineStatus(OnlineStatus.ONLINE);
 	      req.setStatus(RequestStatus.ACCEPTED);
-	      StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+	      BaseFutureListener<FutureDirect> futureDirectListener = new BaseFutureListener<FutureDirect>(){
 	        @Override
 	        public void operationComplete(FutureDirect future) throws Exception {
 	          if(future.isCompleted() && future.isSuccess()){
@@ -341,9 +367,14 @@ public class Node extends Observable {
 	            friend.setStatus(OnlineStatus.OFFLINE);
 	          }
 	      }
+
+          @Override
+          public void exceptionCaught(Throwable t) throws Exception {
+            log.error(t.getMessage());
+          }
 	  };
 	      try {
-	        RequestHandler.handleRequest(req, this, null, statusListener);
+	        RequestHandler.handleRequest(req, this, null, futureDirectListener);
 	      } catch (LineUnavailableException e) {
 	        e.printStackTrace();
 	      }

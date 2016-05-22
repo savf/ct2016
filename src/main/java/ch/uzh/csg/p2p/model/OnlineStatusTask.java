@@ -4,27 +4,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import ch.uzh.csg.p2p.model.request.StatusListener;
 
 public class OnlineStatusTask extends TimerTask {
   private Node node;
+  private Logger log;
   
   private OnlineStatusTask(){
+    log = LoggerFactory.getLogger("Onlinestatus Task");
   }
   
   public OnlineStatusTask(Node node){
+    this();
     setNode(node);
   }
 
@@ -48,7 +54,7 @@ public class OnlineStatusTask extends TimerTask {
            r.setReceiverName(f.getName());
            r.setType(RequestType.SEND);
            r.setStatus(RequestStatus.WAITING);
-           StatusListener<OnlineStatus> statusListener = new StatusListener<OnlineStatus>(){
+           BaseFutureListener<FutureDirect> futureDirectListener = new BaseFutureListener<FutureDirect>(){
              @Override
              public void operationComplete(FutureDirect future) throws Exception {
                if(future != null && future.isSuccess()) {
@@ -59,8 +65,13 @@ public class OnlineStatusTask extends TimerTask {
                f.setStatus(OnlineStatus.OFFLINE);  
                }
            }
+
+            @Override
+            public void exceptionCaught(Throwable t) throws Exception {
+             log.error(t.getMessage());
+            }
        };
-        RequestHandler.handleRequest(r, node, null, statusListener);
+        RequestHandler.handleRequest(r, node, null, futureDirectListener);
          }
        }
      }

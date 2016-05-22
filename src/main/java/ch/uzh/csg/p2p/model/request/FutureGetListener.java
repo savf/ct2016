@@ -4,20 +4,20 @@ import ch.uzh.csg.p2p.Node;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFutureListener;
 
-public class RequestListener<Type> implements BaseFutureListener<FutureGet>{
+public class FutureGetListener<Type> implements BaseFutureListener<FutureGet>{
 
 	private Type variableToSet;
 	protected Node node;
 	
-	public RequestListener(Type variableToSet) {
+	public FutureGetListener(Type variableToSet) {
 		this.variableToSet = variableToSet;
 	}
 	
-	public RequestListener(Node node) {
+	public FutureGetListener(Node node) {
 		this.node = node;
 	}
 	
-	public RequestListener() {
+	public FutureGetListener() {
 	}
 	
 	public void operationComplete(FutureGet futureGet) throws Exception {

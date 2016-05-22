@@ -7,7 +7,7 @@ import javax.sound.sampled.LineUnavailableException;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestListener;
+import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserRequest;
 import net.tomp2p.dht.FutureGet;
@@ -22,7 +22,7 @@ public class LoginHelper {
 
 	public static void updatePeerAddress(Node node, final String username)
 			throws ClassNotFoundException, LineUnavailableException {
-		RequestListener<User> requestListener = new RequestListener<User>(node){
+		FutureGetListener<User> requestListener = new FutureGetListener<User>(node){
 			@Override
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				User user;
@@ -42,7 +42,7 @@ public class LoginHelper {
 	}
 
 	public static void retrieveUser(String username, Node node,
-			RequestListener<User> requestListener) throws LineUnavailableException {
+			FutureGetListener<User> requestListener) throws LineUnavailableException {
 		User userToRetrieve = new User(username, "", null);
 		UserRequest requestRetrieve = new UserRequest(userToRetrieve, RequestType.RETRIEVE);
 		RequestHandler.handleRequest(requestRetrieve, node, requestListener);
