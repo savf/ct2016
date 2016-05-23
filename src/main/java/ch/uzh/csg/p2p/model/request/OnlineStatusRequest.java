@@ -4,20 +4,24 @@ import net.tomp2p.peers.PeerAddress;
 import ch.uzh.csg.p2p.model.OnlineStatus;
 
 public class OnlineStatusRequest extends Request {
+
+  private static final long serialVersionUID = -3395754439839702487L;
   private OnlineStatus onlineStatus;
   private PeerAddress senderAddress;
   private boolean changedPeerAddress = false;
-  
-  public OnlineStatusRequest(){
+
+  public OnlineStatusRequest() {
     super();
     setOnlineStatus(OnlineStatus.ONLINE);
   }
-  
-  public OnlineStatusRequest(PeerAddress receiverAddress, String senderName, String receiverName, RequestType type){
+
+  public OnlineStatusRequest(PeerAddress receiverAddress, String senderName, String receiverName,
+      RequestType type) {
     super(type, receiverAddress, receiverName, senderName);
   }
-  
-  public OnlineStatusRequest(PeerAddress receiverAddress, PeerAddress senderAddress, String senderName, String receiverName, RequestType type){
+
+  public OnlineStatusRequest(PeerAddress receiverAddress, PeerAddress senderAddress,
+      String senderName, String receiverName, RequestType type) {
     super(type, receiverAddress, receiverName, senderName);
     setSenderAddress(senderAddress);
   }

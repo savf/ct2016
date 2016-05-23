@@ -14,19 +14,19 @@ import net.tomp2p.peers.PeerAddress;
 
 public class ChatHelper {
 
-	
-	public static void sendMessage(Node node, String message, List<String> users)
-			throws LineUnavailableException {
-		String sender = node.getUser().getUsername();
-		
-		for(String chatPartner: users) {
-			Date date = new Date();
-	        PeerAddress receiverAddress = node.getFriend(chatPartner).getPeerAddress();
-			ChatMessage m = new ChatMessage(sender, chatPartner, receiverAddress, date, message);
-		  
-			MessageRequest request = new MessageRequest(m, RequestType.SEND);
-			RequestHandler.handleRequest(request, node);
-		}
-	}
-	
+
+  public static void sendMessage(Node node, String message, List<String> users)
+      throws LineUnavailableException {
+    String sender = node.getUser().getUsername();
+
+    for (String chatPartner : users) {
+      Date date = new Date();
+      PeerAddress receiverAddress = node.getFriend(chatPartner).getPeerAddress();
+      ChatMessage m = new ChatMessage(sender, chatPartner, receiverAddress, date, message);
+
+      MessageRequest request = new MessageRequest(m, RequestType.SEND);
+      RequestHandler.handleRequest(request, node);
+    }
+  }
+
 }

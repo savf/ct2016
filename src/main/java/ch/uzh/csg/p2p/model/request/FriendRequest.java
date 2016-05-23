@@ -6,16 +6,17 @@ public class FriendRequest extends Request {
 
   private static final long serialVersionUID = -2514333310601556161L;
   private PeerAddress senderPeerAddress;
-  
-  public FriendRequest(){
+
+  public FriendRequest() {
     super();
-    //setFriend(new Friend());
+    // setFriend(new Friend());
     setReceiverName("");
   }
-  
-  public FriendRequest(PeerAddress senderPeerAddress, String sendername, String receiver, RequestType type){
+
+  public FriendRequest(PeerAddress senderPeerAddress, String sendername, String receiver,
+      RequestType type) {
     super(type);
-    //setFriend(friend);
+    // setFriend(friend);
     setSenderName(sendername);
     setReceiverName(receiver);
     setSenderPeerAddress(senderPeerAddress);
@@ -29,11 +30,9 @@ public class FriendRequest extends Request {
     this.senderPeerAddress = senderPeerAddress;
   }
 
-  /*public Friend getFriend() {
-    return friend;
-  }
-
-  public void setFriend(Friend friend) {
-    this.friend = friend;
-  }*/
+  /*
+   * public Friend getFriend() { return friend; }
+   * 
+   * public void setFriend(Friend friend) { this.friend = friend; }
+   */
 }
