@@ -5,8 +5,10 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.FriendshipStatus;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class FriendlistHelper {
@@ -19,10 +21,10 @@ public class FriendlistHelper {
 	}
 
 	public boolean checkAlreadyFriend(String username) {
-	  if(node.getUser().getFriendList()==null){
+	  if(node.getFriendList()==null){
 	    return false;
 	  }
-		for (Friend f : node.getUser().getFriendList()) {
+		for (Friend f : node.getFriendList()) {
 			if ((username).equals(f.getName())) {
 				return true;
 			}
@@ -30,10 +32,17 @@ public class FriendlistHelper {
 		return false;
 	}
 
-	public void storeFriend(Friend f) {
+	public void storeFriend(Friend f, String requester) {
 		FriendRequest r =
-				new FriendRequest(node.getUser().getPeerAddress(), node.getUser().getUsername(), f.getName(), RequestType.STORE);
+				new FriendRequest(null, requester, f.getName(), RequestType.STORE);
 		r.setReceiverAddress(f.getPeerAddress());
+		r.setStatus(RequestStatus.valueOf(f.getFriendshipStatus().toString()));
 		RequestHandler.handleRequest(r, node);
+	}
+	
+	public void removeFriend(Friend f, String requester){
+	  FriendRequest req = new FriendRequest(null, requester, f.getName(), RequestType.STORE);
+	req.setStatus(RequestStatus.ABORTED);
+	RequestHandler.handleRequest(req, node);
 	}
 }

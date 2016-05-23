@@ -112,9 +112,9 @@ public class LoginWindowController implements Observer {
 				new Node(getId(), ip, LOGINNODENAME, "", false, this);
 			} else {
 				// ip null means bootstrap node, no user check needed
-			  final String ip2 = InetAddress.getLocalHost().getHostAddress();
+			  //final String ip2 = InetAddress.getLocalHost().getHostAddress();
 				MainWindow mainWindow = new MainWindow();
-				mainWindow.start(loginWindow.getStage(), id, ip2, username, password, true);
+				mainWindow.start(loginWindow.getStage(), id, ip, username, password, true);
 			}
 		}
 	}
@@ -137,7 +137,7 @@ public class LoginWindowController implements Observer {
 					throws ClassNotFoundException, IOException {
 				if (futureGet.isSuccess()) {
 					if (futureGet != null && futureGet.data() != null) {
-						if (futureGet.data().object() instanceof User) {
+						if (futureGet.data().object() instanceof UserInfo) {
 						  UserInfo user = (UserInfo) futureGet.data().object();
 							if (user.getPassword().equals(password)) {
 								shutdownNode();

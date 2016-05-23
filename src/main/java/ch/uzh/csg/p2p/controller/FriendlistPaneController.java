@@ -13,6 +13,7 @@ import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.FriendshipStatus;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
@@ -74,6 +75,13 @@ public class FriendlistPaneController {
 	}
 
 	public void sendFriendRequest(UserInfo user, Node node) {
+	    Friend friend1 = new Friend(user.getPeerAddress(), user.getUserName());
+	    friend1.setFriendshipStatus(FriendshipStatus.WAITING);
+	    friendlistHelper.storeFriend(friend1, node.getUser().getUsername());
+	    Friend friend2 = new Friend(node.getPeer().peerAddress(), node.getUser().getUsername());
+	    friend2.setFriendshipStatus(FriendshipStatus.WAITING);
+	    friendlistHelper.storeFriend(friend2, user.getUserName());
+	    
 		FriendRequest request = new FriendRequest(node.getUser().getPeerAddress(),
 				node.getUser().getUsername(), user.getUserName(), RequestType.SEND);
 		RequestHandler.handleRequest(request, node);
@@ -161,7 +169,7 @@ public class FriendlistPaneController {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				for (Friend f : node.getFriendList()) {
-					if (!friendList.contains(f)) {
+					if (!friendList.contains(f) && f.getFriendshipStatus().equals(FriendshipStatus.ACCEPTED)) {
 						friendList.add(f);
 						addUserToFriendList(f);
 					}
@@ -205,7 +213,16 @@ public class FriendlistPaneController {
 			public void run() {
 				FriendRequest request = new FriendRequest(node.getPeer().peerAddress(),
 						node.getUser().getUsername(), req.getSenderName(), RequestType.SEND);
+				request.setReceiverAddress(req.getSenderPeerAddress());
 				request.setStatus(RequestStatus.REJECTED);
+				
+				Friend myFriend = new Friend(req.getSenderPeerAddress(), req.getSenderName());
+                myFriend.setFriendshipStatus(FriendshipStatus.REJECTED);
+                friendlistHelper.removeFriend(myFriend, req.getReceiverName());
+                Friend hisFriend = new Friend(req.getReceiverAddress(), req.getReceiverName());
+                hisFriend.setFriendshipStatus(FriendshipStatus.REJECTED);
+                friendlistHelper.storeFriend(hisFriend, req.getSenderName());
+				
 				RequestHandler.handleRequest(request, node);
 			}
 		});
@@ -219,10 +236,16 @@ public class FriendlistPaneController {
 						node.getUser().getUsername(), req.getSenderName(), RequestType.SEND);
 				request.setReceiverAddress(req.getSenderPeerAddress());
 				request.setStatus(RequestStatus.ACCEPTED);
+				
+				Friend myFriend = new Friend(req.getSenderPeerAddress(), req.getSenderName());
+				myFriend.setFriendshipStatus(FriendshipStatus.ACCEPTED);
+				friendlistHelper.storeFriend(myFriend, req.getReceiverName());
+				Friend hisFriend = new Friend(req.getReceiverAddress(), req.getReceiverName());
+				hisFriend.setFriendshipStatus(FriendshipStatus.ACCEPTED);
+				friendlistHelper.storeFriend(hisFriend, req.getSenderName());
+				
+				node.addFriend(myFriend);
 				RequestHandler.handleRequest(request, node);
-				Friend friend = new Friend(req.getSenderPeerAddress(), req.getSenderName());
-				friendlistHelper.storeFriend(friend);
-				node.addFriend(friend);
 			}
 		});
 	}
@@ -230,6 +253,11 @@ public class FriendlistPaneController {
 	public void friendshipRejected(Friend f) {
 		Platform.runLater(new Runnable() {
 			public void run() {
+			  if(node.getFriend(f.getName())!= null){
+			    node.removeFriend(f);
+			  }
+			  friendlistHelper.removeFriend(f, node.getUser().getUsername());
+			  
 				mainWindowController.setRightTopPane(null);
 			}
 		});
@@ -240,7 +268,8 @@ public class FriendlistPaneController {
 		final Friend friend = f;
 		Platform.runLater(new Runnable() {
 			public void run() {
-				friendlistHelper.storeFriend(friend);
+			  friend.setFriendshipStatus(FriendshipStatus.ACCEPTED);
+				friendlistHelper.storeFriend(friend, node.getUser().getUsername());
 				node.addFriend(friend);
 			}
 		});

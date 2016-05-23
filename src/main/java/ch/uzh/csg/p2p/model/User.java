@@ -12,7 +12,7 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
-	private List<Friend> friendList;
+	//private List<Friend> friendList; this is stored in the node right now
 	private List<AudioInfo> audioMessageStorage;
 	private List<ChatMessage> chatMessageStorage;
 
@@ -28,18 +28,18 @@ public class User implements Serializable {
 	  username = new String();
 	  password = new String();
 	  peerAddress = null;
-	  setFriendList(new ArrayList<Friend>());
+	 // setFriendList(new ArrayList<Friend>());
       setAudioMessageStorage(new ArrayList<AudioInfo>());
       setChatMessageStorage(new ArrayList<ChatMessage>());
   }
 
-  public List<Friend> getFriendList() {
+  /*public List<Friend> getFriendList() {
 		return friendList;
 	}
 
 	public void setFriendList(List<Friend> friendStorage) {
 		this.friendList = friendStorage;
-	}
+	}*/
 
 	public List<AudioInfo> getAudioMessageStorage() {
 		return audioMessageStorage;
@@ -81,9 +81,9 @@ public class User implements Serializable {
 		this.peerAddress = peerAddress;
 	}
 
-	public void addFriend(Friend friend) {
+/*	public void addFriend(Friend friend) {
 		friendList.add(friend);
-	}
+	}*/
 
 	@Override
 	public String toString() {

@@ -19,9 +19,8 @@ import ch.uzh.csg.p2p.helper.VideoUtils;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
-import ch.uzh.csg.p2p.model.FriendlistInfo;
+import ch.uzh.csg.p2p.model.FriendshipStatus;
 import ch.uzh.csg.p2p.model.Message;
-import ch.uzh.csg.p2p.model.MessageStorageInfo;
 import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.UserInfo;
@@ -164,37 +163,29 @@ public class RequestHandler {
 		  // if a request is sent to an offline user, this has to be handled with sendDirect.putIfAbsent()
 		  // the sender is the one who wants to store the info
 		  final FriendRequest r = (FriendRequest) request;
-		  if(r.getStatus().equals(RequestStatus.ACCEPTED)){
-		  Friend friend = new Friend(r.getReceiverAddress(), r.getReceiverName());
-		  node.getUser().addFriend(friend);
-	  
-		  FutureRemove futureRemove =
-          node.getPeer().remove(Number160
-                              .createHash(node.getUser().getUsername())).domainKey(FRIEND_DOMAIN)
-                      .start();
-          futureRemove.addListener(new BaseFutureListener<FutureRemove>(){
-
-            @Override
-            public void operationComplete(FutureRemove future) throws Exception {
-              FuturePut future2 = node.getPeer().put(Number160.createHash(node.getUser().getUsername()))
-                  .data(new Data(friend)).domainKey(FRIEND_DOMAIN).start();
-              future2.addListener(new BaseFutureAdapter<FuturePut>() {
-                public void operationComplete(FuturePut future) throws Exception {
-                  log.info("User " + node.getUser().getUsername() + " put " + friend.getName() + 
-                      " into DHT as friend, with success: " + future.isSuccess());
-                }
-              });
-    
-            }
-
-            @Override
-            public void exceptionCaught(Throwable t) throws Exception {
-              log.error(t.getMessage()); 
-            }         
-          });
+		  if(r.getStatus().equals(RequestStatus.ABORTED)){
+		    // this case is used for removing a friend
+            // e.g. when a friend with waiting status has been rejected
+            Friend f = new Friend(r.getReceiverAddress(), r.getReceiverName());
+            node.getPeer().remove(Number160.createHash(r.getSenderName()))
+            .domainKey(FRIEND_DOMAIN).contentKey(Number160.createHash(f.getName())).start();
 		  }
 		  else{
-		    //TODO
+		    //this case is used for storing a friend into the dht, either when the friendship
+		    // has been accepted or when one of both parties is not online and has yet to answer the
+		    // request (or get the answer to his request)
+		    Friend friend = new Friend(r.getReceiverAddress(), r.getReceiverName());
+            friend.setFriendshipStatus(r.getStatus().toString());
+
+            // store Friend under locationKey username, domainKey friend_domain, contentKey friendname
+                FuturePut future = node.getPeer().put(Number160.createHash(r.getSenderName())).putIfAbsent(false)
+                    .data(Number160.createHash(friend.getName()), new Data(friend)).domainKey(FRIEND_DOMAIN).start();
+                future.addListener(new BaseFutureAdapter<FuturePut>() {
+                  public void operationComplete(FuturePut future) throws Exception {
+                    log.info("User " + node.getUser().getUsername() + " put " + friend.getName() + 
+                        " into DHT as friend, with success: " + future.isSuccess());
+                  }
+                });
 		  }
 		}
 		if (request instanceof BootstrapRequest) {
@@ -376,7 +367,7 @@ public class RequestHandler {
 	private static void retrieveFriends(String senderName, Node node,
 			FutureGetListener<Friend> requestListener) throws ClassNotFoundException, IOException {
 		FutureGet futureGet =
-				node.getPeer().get(Number160.createHash(senderName)).domainKey(FRIEND_DOMAIN).start();
+				node.getPeer().get(Number160.createHash(senderName)).domainKey(FRIEND_DOMAIN).all().start();
 		futureGet.addListener(requestListener);
 	}
 

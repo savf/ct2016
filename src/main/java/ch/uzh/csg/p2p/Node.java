@@ -16,8 +16,10 @@ import javax.sound.sampled.LineUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
 import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.FriendshipStatus;
 import ch.uzh.csg.p2p.model.Message;
 import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.OnlineStatusTask;
@@ -128,12 +130,21 @@ public class Node extends Observable {
 
       @Override
       public void operationComplete(FutureGet future) throws Exception {
-       if(!future.isEmpty() && future.isSuccess()){
+       if(future!=null && future.isSuccess()){
         Iterator<Data> i = future.dataMap().values().iterator();
         while(i.hasNext()){
         Friend f = (Friend) i.next().object();
         if(f!= null){
-        friendList.add(f);
+          if(f.getFriendshipStatus().equals(FriendshipStatus.ACCEPTED)){
+            addFriend(f);
+          }
+          else if(f.getFriendshipStatus().equals(FriendshipStatus.REJECTED) ||
+              f.getFriendshipStatus().equals(FriendshipStatus.ABORTED)){
+            getRejected(f);
+          }
+          else if(f.getFriendshipStatus().equals(FriendshipStatus.WAITING)){
+            askForFriendship(f);
+          }
         }
         }
         announceChangedToOnlineStatus();
@@ -148,8 +159,32 @@ public class Node extends Observable {
 	  };
 	  RequestHandler.handleRequest(request, this, listener);
 	}
+	
+	  protected void askForFriendship(Friend f) {
+	    FriendRequest request = new FriendRequest();
+        request.setReceiverName(user.getUsername());
+        request.setReceiverAddress(peer.peerAddress());
+        request.setSenderName(f.getName());
+        request.setSenderPeerAddress(f.getPeerAddress());
+        request.setStatus(RequestStatus.WAITING);
+        request.setType(RequestType.RECEIVE);
+        RequestHandler.handleRequest(request, this);  
+  }
 
-	protected void startOnlineStatusTask() {
+    protected void getRejected(Friend f) {
+	    FriendlistHelper helper = new FriendlistHelper(this);
+	    helper.removeFriend(f, user.getUsername());
+	    FriendRequest req = new FriendRequest();
+	    req.setReceiverName(user.getUsername());
+	    req.setReceiverAddress(peer.peerAddress());
+	    req.setSenderName(f.getName());
+	    req.setSenderPeerAddress(f.getPeerAddress());
+	    req.setStatus(RequestStatus.REJECTED);
+	    req.setType(RequestType.RECEIVE);
+	    RequestHandler.handleRequest(req, this); 
+	}
+
+  protected void startOnlineStatusTask() {
     OnlineStatusTask onlineStatusTask = new OnlineStatusTask(this);
     onlineStatusTaskTimer = new Timer();
     onlineStatusTaskTimer.scheduleAtFixedRate(onlineStatusTask, 0, TIMERDELAY);
@@ -303,11 +338,11 @@ public class Node extends Observable {
 			user.setUsername(info.getUserName());
 			user.setPassword(info.getPassword());
 			user.setPeerAddress(info.getPeerAddress());
-		} else {
-			User newUser = new User(this.user.getUsername(), this.user.getPassword(),
-					this.getPeer().peerAddress());
+		} else if(info != null){
+			User newUser = new User(info.getUserName(), info.getPassword(),
+					info.getPeerAddress());
 			this.user = newUser;
-		}
+		  }		
 	}
 
 	public List<Friend> getFriendList() {
@@ -397,7 +432,14 @@ public class Node extends Observable {
 	}
 
 	public void addFriend(Friend friend){
-	  if(!friendList.contains(friend)){
+	  boolean containsFriend = false;
+	  for(Friend f : friendList){
+	    if(f.getName().equals(friend.getName())){
+	      containsFriend = true;
+	      break;
+	    }
+	  }
+	  if(!containsFriend){
 		friendList.add(friend);
 	  }
 	  
@@ -427,5 +469,14 @@ public class Node extends Observable {
 	        e.printStackTrace();
 	      }
 	}
+
+  public void removeFriend(Friend f) {
+    for(Friend friend : friendList){
+      if (friend.getName().equals(f.getName())){
+        friendList.remove(friend);
+        break;
+      }
+    }
+  }
 
 }

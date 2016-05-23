@@ -1,5 +1,6 @@
 package ch.uzh.csg.p2p.model;
 
+import java.io.Serializable;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -9,18 +10,19 @@ import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.peers.PeerStatusListener;
 import net.tomp2p.peers.RTT;
 
-public class Friend extends Observable {
+public class Friend extends Observable implements Serializable{
 
+  private static final long serialVersionUID = 7449783766050626661L;
   private PeerAddress peerAddress;
   private String name;
   private OnlineStatus onlineStatus;
- // private FriendshipStatus friendshipStatus;
+  private FriendshipStatus friendshipStatus;
   
   public Friend(){
     setPeerAddress(null);
     setName("");
     setStatus(OnlineStatus.ONLINE);
-   // friendshipStatus = FriendshipStatus.WAITING;
+    setFriendshipStatus(FriendshipStatus.WAITING);
   }
   
   public Friend(PeerAddress peerAddress, String name){
@@ -28,7 +30,7 @@ public class Friend extends Observable {
     setName(name);
     setStatus(OnlineStatus.ONLINE);
     //onlineStatus = OnlineStatus.OFFLINE;
-  //  friendshipStatus = FriendshipStatus.WAITING;
+    setFriendshipStatus(FriendshipStatus.WAITING);
   }
   
   public String getName() {
@@ -52,6 +54,18 @@ public class Friend extends Observable {
 
   public void setPeerAddress(PeerAddress peerAddress) {
     this.peerAddress = peerAddress;
+  }
+
+  public FriendshipStatus getFriendshipStatus() {
+    return friendshipStatus;
+  }
+
+  public void setFriendshipStatus(FriendshipStatus friendshipStatus) {
+    this.friendshipStatus = friendshipStatus;
+  }
+
+  public void setFriendshipStatus(String string) {
+   setFriendshipStatus(FriendshipStatus.valueOf(string));
   }
   
 }
