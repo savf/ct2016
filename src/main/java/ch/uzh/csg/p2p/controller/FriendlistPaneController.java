@@ -1,5 +1,6 @@
 package ch.uzh.csg.p2p.controller;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,10 @@ import javax.sound.sampled.LineUnavailableException;
 
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFutureListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
@@ -44,6 +49,9 @@ public class FriendlistPaneController {
 	private List<Friend> friendList;
 	public Map<String, FriendlistItemController> friendlistItemControllerList;
 
+	private Logger log;
+	private static final long TRY_AGAIN_TIME_WINDOW = 7000;
+
 	@FXML
 	private TextField friendSearchText;
 	@FXML
@@ -54,6 +62,7 @@ public class FriendlistPaneController {
 	private Label currentChatLabel;
 
 	public FriendlistPaneController(Node node, MainWindowController mainWindowController) {
+		log = LoggerFactory.getLogger(getClass());
 		this.node = node;
 		this.mainWindowController = mainWindowController;
 		currentChatLabel = null;
@@ -90,6 +99,7 @@ public class FriendlistPaneController {
 			public void run() {
 				mainWindowController.showFriendSearchResultPane();
 				searchResultList.getChildren().clear();
+				final long time = System.currentTimeMillis();
 				BaseFutureListener<FutureGet> requestListener =
 						new BaseFutureListener<FutureGet>() {
 							@Override
@@ -99,10 +109,20 @@ public class FriendlistPaneController {
 									Object o = new UserInfo();
 									try {
 										o = futureGet.data().object();
-									} catch (Exception e) {
-										e.printStackTrace();
-									} finally {
 										showFriend(o);
+									} catch (EOFException e) {
+										e.printStackTrace();
+										long timeNow = System.currentTimeMillis();
+										if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
+											tryAgain(friendSearchText.getText(), this);
+										} else {
+											showFriend(o);
+										}
+									}
+								} else {
+									long timeNow = System.currentTimeMillis();
+									if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
+										tryAgain(friendSearchText.getText(), this);
 									}
 								}
 							}
@@ -305,6 +325,14 @@ public class FriendlistPaneController {
 	public void leaveChatHandler() throws ClassNotFoundException, IOException,
 			LineUnavailableException {
 		mainWindowController.showNotificationPane();
+	}
+
+	protected void tryAgain(String username, BaseFutureListener baseFutureListener)
+			throws LineUnavailableException, InterruptedException {
+		Thread.sleep(500);
+		log.debug("FriendlistPaneController had unsuccessfull Request, Try again...");
+		log.debug("Retrieve User " + username);
+		LoginHelper.retrieveUserInfo(username, node, baseFutureListener);
 	}
 
 }

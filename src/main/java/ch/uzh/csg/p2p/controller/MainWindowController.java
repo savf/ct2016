@@ -22,7 +22,7 @@ import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 
-public class MainWindowController {
+public class MainWindowController implements Controller {
 
 	private Logger log = LoggerFactory.getLogger(MainWindowController.class);
 
@@ -307,8 +307,8 @@ public class MainWindowController {
 
 						public void handle(ActionEvent event) {
 							try {
-								videoPaneController.acceptVideoCall(username);
 								videoRingingThread.stop();
+								videoPaneController.acceptVideoCall(username);
 							} catch (Exception e) {
 								log.error("Cannot accept video call: " + e);
 								e.printStackTrace();
@@ -318,8 +318,8 @@ public class MainWindowController {
 
 						public void handle(ActionEvent event) {
 							try {
-								videoPaneController.rejectVideoCall(username);
 								videoRingingThread.stop();
+								videoPaneController.rejectVideoCall(username);
 							} catch (Exception e) {
 								log.error("Cannot reject video call: " + e);
 							}
