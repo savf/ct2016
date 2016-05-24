@@ -25,6 +25,7 @@ import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.VideoMessage;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.FutureRemove;
 import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
@@ -111,18 +112,31 @@ public class RequestHandler {
       throws IOException, ClassNotFoundException, InterruptedException {
     if (request instanceof UserInfoRequest) {
       UserInfoRequest r = (UserInfoRequest) request;
-
+      if(r.getStatus().equals(RequestStatus.ABORTED)){
+        final UserInfo info = r.getUserInfo();
+        FutureRemove future = node.getPeer().remove(Number160.createHash(info.getUserName())).domainKey(USER_DOMAIN)
+        .contentKey(Number160.createHash(info.getUserName())).start();
+        if(genericListener!=null){
+          future.addListener(genericListener);
+        }
+      }
+      else{
       final UserInfo info = r.getUserInfo();
-      node.getPeer().put(Number160.createHash(info.getUserName())).data(new Data(info))
+      FuturePut future = node.getPeer().put(Number160.createHash(info.getUserName()))
+      .data(Number160.createHash(info.getUserName()), new Data(info))
           .domainKey(USER_DOMAIN).start();
-
+      if(genericListener!= null){
+        future.addListener(genericListener);
+      }
+      }
       return true;
     }
     if (request instanceof MessageRequest) {
       MessageRequest r = (MessageRequest) request;
       if (r.getMessage() instanceof ChatMessage) {
         ChatMessage m = (ChatMessage) r.getMessage();
-        node.getPeer().put(Number160.createHash(r.getReceiverName())).data(new Data(m))
+        node.getPeer().put(Number160.createHash(r.getReceiverName()))
+        .data(Number160.createHash(m.getSenderID()), new Data(m))
             .domainKey(MESSAGE_DOMAIN).start();
       }
 
@@ -149,7 +163,7 @@ public class RequestHandler {
 
         // store Friend under locationKey username, domainKey friend_domain, contentKey friendname
         FuturePut future =
-            node.getPeer().put(Number160.createHash(r.getSenderName())).putIfAbsent(false)
+            node.getPeer().put(Number160.createHash(r.getSenderName()))
                 .data(Number160.createHash(friend.getName()), new Data(friend))
                 .domainKey(FRIEND_DOMAIN).start();
         future.addListener(new BaseFutureAdapter<FuturePut>() {
@@ -496,12 +510,17 @@ public class RequestHandler {
   private static void retrieveUserInfo(UserInfo info, Node node, BaseFutureListener genericListener)
       throws ClassNotFoundException, IOException {
     FutureGet futureGet =
-        node.getPeer().get(Number160.createHash(info.getUserName())).domainKey(USER_DOMAIN).start();
+        node.getPeer().get(Number160.createHash(info.getUserName())).domainKey(USER_DOMAIN).contentKey(Number160.createHash(info.getUserName())).start();
     futureGet.addListener(genericListener);
   }
 
   public static void setMainWindowController(MainWindowController mWC) {
     mainWindowController = mWC;
+  }
+  
+  public static void tryAgain(Request request, Node node,BaseFutureListener listener) throws LineUnavailableException{
+    // TODO: implement new TryAgainTask, to try to handle an unseccessfull task again.
+    handleRequest(request, node, listener);
   }
 
 }

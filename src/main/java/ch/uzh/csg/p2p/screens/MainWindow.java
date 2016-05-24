@@ -9,6 +9,7 @@ import ch.uzh.csg.p2p.controller.AudioPaneController;
 import ch.uzh.csg.p2p.controller.ChatPaneController;
 import ch.uzh.csg.p2p.controller.FriendlistPaneController;
 import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.controller.NotificationPaneController;
 import ch.uzh.csg.p2p.controller.RequestPaneController;
 import ch.uzh.csg.p2p.controller.VideoPaneController;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
@@ -39,6 +40,7 @@ public class MainWindow {
   private VideoPaneController videoPaneController;
   private FriendlistPaneController friendlistPaneController;
   private RequestPaneController requestPaneController;
+  private NotificationPaneController notificationPaneController;
 
   private AnchorPane mainPane;
   private AnchorPane notificationPane;
@@ -82,6 +84,8 @@ public class MainWindow {
     mainWindowController.setFriendlistPaneController(friendlistPaneController);
     requestPaneController = new RequestPaneController(mainWindowController);
     mainWindowController.setRequestPaneController(requestPaneController);
+    notificationPaneController = new NotificationPaneController(node, mainWindowController);
+    mainWindowController.setNotificationPaneController(notificationPaneController);
     loader.setController(mainWindowController);
     mainPane = loader.load();
 
@@ -141,7 +145,7 @@ public class MainWindow {
 
   private void initializeNotificationPane() throws IOException {
     FXMLLoader loader = new FXMLLoader(getClass().getResource("NotificationPane.fxml"));
-    loader.setController(mainWindowController);
+    loader.setController(notificationPaneController);
     notificationPane = loader.load();
   }
 

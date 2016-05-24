@@ -55,6 +55,7 @@ public class MainWindowController {
   public VideoPaneController videoPaneController;
   public FriendlistPaneController friendlistPaneController;
   public RequestPaneController requestPaneController;
+  public NotificationPaneController notificationPaneController;
 
   public MainWindowController(Node node, Stage stage) {
     this.node = node;
@@ -85,6 +86,10 @@ public class MainWindowController {
 
   public void setRequestPaneController(RequestPaneController requestPaneController) {
     this.requestPaneController = requestPaneController;
+  }
+  
+  public void setNotificationPaneController(NotificationPaneController notificationPaneController){
+    this.notificationPaneController = notificationPaneController;
   }
 
   public void setLeftPane(AnchorPane anchorPane) {

@@ -55,6 +55,7 @@ import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class Node extends Observable {
 
+  protected static final int MAX_TRIES = 0;
   protected final String BOOTSTRAPNODE = "Bootstrapnode";
   private final int DEFAULTPORT = 54000;
   private final long TIMERDELAY = 10000;
@@ -65,6 +66,8 @@ public class Node extends Observable {
   private ObservableList<Friend> friendList = FXCollections.observableList(new ArrayList<Friend>());
   private Timer onlineStatusTaskTimer;
   protected PeerDHT peer;
+  
+  private ObservableList<FriendRequest> requestsWhileAway = FXCollections.observableList(new ArrayList<FriendRequest>());
 
   public Node(int nodeId, String ip, String username, String password, boolean bootstrapNode,
       Observer nodeReadyObserver) throws IOException, LineUnavailableException,
@@ -72,7 +75,7 @@ public class Node extends Observable {
     log = LoggerFactory.getLogger("Node of user " + username);
     user = new User(username, password, null);
     int id = ((Long) System.currentTimeMillis()).intValue();
-
+    
     if (nodeReadyObserver != null) {
       addObserver(nodeReadyObserver);
     }
@@ -142,7 +145,7 @@ public class Node extends Observable {
                   || f.getFriendshipStatus().equals(FriendshipStatus.ABORTED)) {
                 getRejected(f);
               } else if (f.getFriendshipStatus().equals(FriendshipStatus.WAITING)) {
-                askForFriendship(f);
+                addFriendRequestWhileAway(f);
               }
             }
           }
@@ -159,7 +162,7 @@ public class Node extends Observable {
     RequestHandler.handleRequest(request, this, listener);
   }
 
-  protected void askForFriendship(Friend f) {
+  protected void addFriendRequestWhileAway(Friend f) {
     FriendRequest request = new FriendRequest();
     request.setReceiverName(user.getUsername());
     request.setReceiverAddress(peer.peerAddress());
@@ -167,7 +170,7 @@ public class Node extends Observable {
     request.setSenderPeerAddress(f.getPeerAddress());
     request.setStatus(RequestStatus.WAITING);
     request.setType(RequestType.RECEIVE);
-    RequestHandler.handleRequest(request, this);
+    requestsWhileAway.add(request);
   }
 
   protected void getRejected(Friend f) {
@@ -197,6 +200,10 @@ public class Node extends Observable {
 
   public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
     friendList.addListener(listener);
+  }
+  
+  public void registerForFriendRequestWhileAwayUpdates(ListChangeListener<FriendRequest> listener){
+    requestsWhileAway.addListener(listener);
   }
 
   protected void createPeerAndInitiateUser(int nodeId, String username, String password,
@@ -291,8 +298,12 @@ public class Node extends Observable {
             log.info(getUser().getUsername() + " knows: " + getPeer().peerBean().peerMap().all()
                 + " unverified: " + getPeer().peerBean().peerMap().allOverflow());
             log.info("Waiting for maintenance ping");
-
+            if(future.isSuccess()){
             initiateUser(username, password);
+            }
+            else{
+              tryAgain(request, this);
+            }
           }
 
           @Override
@@ -345,6 +356,10 @@ public class Node extends Observable {
 
   public List<Friend> getFriendList() {
     return friendList;
+  }
+  
+  public List<FriendRequest> getRequestsWhileAway(){
+    return requestsWhileAway;
   }
 
   public void shutdown() {
@@ -408,8 +423,13 @@ public class Node extends Observable {
             new BaseFutureListener<FutureDirect>() {
               @Override
               public void operationComplete(FutureDirect future) throws Exception {
+                if(future.isSuccess()){
                 if (lastInLine) {
                   peer.shutdown();
+                }
+                }
+                else{
+                  tryAgain(request, this);
                 }
               }
 
@@ -422,6 +442,12 @@ public class Node extends Observable {
         i++;
       }
     }
+  }
+
+  protected void tryAgain(Request request,
+      BaseFutureListener baseFutureListener) throws LineUnavailableException, InterruptedException {
+    Thread.sleep(500);
+    RequestHandler.tryAgain(request, this, baseFutureListener); 
   }
 
   public Friend getFriend(String currentChatPartner) {
