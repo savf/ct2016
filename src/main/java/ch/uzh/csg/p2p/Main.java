@@ -6,8 +6,8 @@ import ch.uzh.csg.p2p.screens.LoginWindow;
 
 public class Main {
 
-  public static void main(String[] args) throws IOException {
-    LoginWindow loginWindow = new LoginWindow();
-    loginWindow.launch(LoginWindow.class, args);
-  }
+	public static void main(String[] args) throws IOException {
+		LoginWindow loginWindow = new LoginWindow();
+		loginWindow.launch(LoginWindow.class, args);
+	}
 }
