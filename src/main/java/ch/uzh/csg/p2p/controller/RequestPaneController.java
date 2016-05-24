@@ -23,9 +23,9 @@ public class RequestPaneController {
 	@FXML
 	private Button informPaneOkBtn;
 
-	private MainWindowController mainWindowController;
+	private Controller mainWindowController;
 
-	public RequestPaneController(MainWindowController mainWindowController) {
+	public RequestPaneController(Controller mainWindowController) {
 		this.mainWindowController = mainWindowController;
 	}
 

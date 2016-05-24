@@ -171,7 +171,6 @@ public class VideoPaneController {
 	}
 
 	public void askVideoCall(VideoRequest videoRequest) throws IOException {
-		System.out.println("askVideoCall");
 		mainWindowController.makeVideoCallDialog(videoRequest.getSenderName());
 	}
 

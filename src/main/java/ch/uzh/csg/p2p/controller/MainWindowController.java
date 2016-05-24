@@ -19,7 +19,7 @@ import javafx.stage.Stage;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
-public class MainWindowController {
+public class MainWindowController implements Controller{
 
 	private Logger log = LoggerFactory.getLogger(MainWindowController.class);
 

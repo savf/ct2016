@@ -7,8 +7,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.sound.sampled.LineUnavailableException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,16 +17,19 @@ import ch.uzh.csg.p2p.model.request.FutureGetListener;
 import ch.uzh.csg.p2p.screens.LoginWindow;
 import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.AnchorPane;
 import net.tomp2p.dht.FutureGet;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-public class LoginWindowController implements Observer {
+public class LoginWindowController implements Observer, Controller {
 
 	private final String LOGINNODENAME = "loginnode";
 	private Logger log = LoggerFactory.getLogger(getClass());
@@ -48,8 +49,12 @@ public class LoginWindowController implements Observer {
 	private TextField ipText;
 	@FXML
 	private CheckBox bootstrapCB;
+	@FXML
+	private AnchorPane modalOverlayPane;
 
 	private LoginWindow loginWindow;
+	private AnchorPane requestPane;
+	private RequestPaneController requestPaneController;
 
 	public void setLoginWindow(LoginWindow loginWindow) {
 		this.loginWindow = loginWindow;
@@ -79,7 +84,7 @@ public class LoginWindowController implements Observer {
 	public void handleBootstrapCB() throws UnknownHostException {
 		if (bootstrapCB.isSelected()) {
 			ipText.setText(
-					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());		
+					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());
 			ipText.setDisable(true);
 		} else {
 			ipText.setText("");
@@ -111,7 +116,7 @@ public class LoginWindowController implements Observer {
 				new Node(getId(), ip, LOGINNODENAME, "", false, this);
 			} else {
 				// ip null means bootstrap node, no user check needed
-			  final String ip2 = InetAddress.getLocalHost().getHostAddress();
+				final String ip2 = InetAddress.getLocalHost().getHostAddress();
 				MainWindow mainWindow = new MainWindow();
 				mainWindow.start(loginWindow.getStage(), id, ip2, username, password, true);
 			}
@@ -148,7 +153,7 @@ public class LoginWindowController implements Observer {
 											mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
 													username, password, false);
 										} catch (Exception e) {
-											e.printStackTrace();
+											loginNotPossibleExceptionHandler();
 										}
 									}
 								});
@@ -176,7 +181,7 @@ public class LoginWindowController implements Observer {
 									mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
 											username, password, false);
 								} catch (Exception e) {
-									e.printStackTrace();
+									loginNotPossibleExceptionHandler();
 								}
 							}
 						});
@@ -185,13 +190,56 @@ public class LoginWindowController implements Observer {
 			}
 		};
 
-		try {
-			LoginHelper.retrieveUser(username, node, userExistsListener);
+		 try {
+			 LoginHelper.retrieveUser(username, node, userExistsListener);
+		 } catch (Exception e) {
+			 loginNotPossibleExceptionHandler();
+		 }
+	}
 
-		} catch (LineUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void setRequestPaneController(RequestPaneController requestPaneController) {
+		this.requestPaneController = requestPaneController;
+	}
+
+	public void setRequestPane(AnchorPane requestPane) {
+		this.requestPane = requestPane;
+	}
+
+	private void loginNotPossibleExceptionHandler() {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				if (!modalOverlayPane.isVisible()) {
+					requestPaneController.makeDialog("Login not possible. Try it again!",
+						new EventHandler<ActionEvent>() {
+
+							public void handle(ActionEvent event) {}
+						}, new EventHandler<ActionEvent>() {
+
+							public void handle(ActionEvent event) {
+								System.exit(0);
+							}
+						});
+				}
+			}
+		});
+	}
+
+	@Override
+	public void showInformOverlay() {}
+
+	@Override
+	public void hideInformOverlay() {}
+
+	@Override
+	public void hideRequestOverlay() {
+		modalOverlayPane.setVisible(false);
+	}
+
+	@Override
+	public void showRequestOverlay() {
+		modalOverlayPane.setVisible(true);
+		modalOverlayPane.getChildren().clear();
+		modalOverlayPane.getChildren().add(requestPane);
 	}
 
 }
