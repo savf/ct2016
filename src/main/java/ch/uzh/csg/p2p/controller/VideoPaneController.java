@@ -2,14 +2,6 @@ package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
 
-import javafx.application.Platform;
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-
 import javax.sound.sampled.LineUnavailableException;
 
 import org.slf4j.Logger;
@@ -22,6 +14,13 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.VideoRequest;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 
 public class VideoPaneController {
 
@@ -62,8 +61,8 @@ public class VideoPaneController {
 	}
 
 	@FXML
-	public void leaveChatHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void leaveChatHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.showNotificationPane();
 
 		audioUtils.endAudio();
@@ -76,8 +75,8 @@ public class VideoPaneController {
 	}
 
 	@FXML
-	public void startVideoHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void startVideoHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.showVideoPane();
 		cameraOff = false;
 		Image image = new Image(getClass().getResourceAsStream("/camera.png"));
@@ -96,10 +95,9 @@ public class VideoPaneController {
 		videoUtils = new VideoUtils(node, node.getUser());
 
 		for (String chatPartner : mainWindowController.currentChatPartners) {
-			VideoRequest request =
-					new VideoRequest(RequestType.SEND, RequestStatus.WAITING, node.getFriend(
-							chatPartner).getPeerAddress(), chatPartner, node.getUser()
-							.getUsername());
+			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
+					node.getFriend(chatPartner).getPeerAddress(), chatPartner,
+					node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 			videoUtils.addReceiver(node.getFriend(chatPartner));
 			audioUtils.addReceiver(node.getFriend(chatPartner));
@@ -108,8 +106,8 @@ public class VideoPaneController {
 	}
 
 	@FXML
-	public void endVideoHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void endVideoHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.hideVideoPane();
 		microphoneLbl.setGraphic(null);
 		microphoneMuted = true;
@@ -120,10 +118,9 @@ public class VideoPaneController {
 		cameraOff = true;
 		videoUtils.endVideo();
 		for (String chatPartner : mainWindowController.currentChatPartners) {
-			VideoRequest request =
-					new VideoRequest(RequestType.SEND, RequestStatus.ABORTED, node.getFriend(
-							chatPartner).getPeerAddress(), chatPartner, node.getUser()
-							.getUsername());
+			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
+					node.getFriend(chatPartner).getPeerAddress(), chatPartner,
+					node.getUser().getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
 
@@ -195,8 +192,8 @@ public class VideoPaneController {
 		videoUtils.removeReceiver(node.getFriend(videoRequest.getSenderName()));
 	}
 
-	public void videoCallAborted() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void videoCallAborted()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				mainWindowController.hideVideoPane();
@@ -206,8 +203,8 @@ public class VideoPaneController {
 		videoUtils.endVideo();
 	}
 
-	public void acceptVideoCall(String username) throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void acceptVideoCall(String username)
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.addChatPartner(username);
 		if (audioUtils != null) {
 			audioUtils.endAudio();
@@ -230,11 +227,10 @@ public class VideoPaneController {
 		videoUtils = new VideoUtils(node, node.getUser());
 		audioUtils = new AudioUtils(node, node.getUser());
 
-		VideoRequest request =
-				new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED, node.getFriend(username)
-						.getPeerAddress(), username, node.getUser().getUsername());
+		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
+				node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
-		log.debug("Accept Video: Request sendet");
+		log.debug("Accept Video: Request sent");
 		audioUtils.startAudio();
 
 		for (String chatPartner : mainWindowController.currentChatPartners) {
@@ -249,11 +245,10 @@ public class VideoPaneController {
 		log.info("Accept audio call with: " + username);
 	}
 
-	public void rejectVideoCall(String username) throws ClassNotFoundException, IOException,
-			LineUnavailableException {
-		VideoRequest request =
-				new VideoRequest(RequestType.SEND, RequestStatus.REJECTED, node.getFriend(username)
-						.getPeerAddress(), username, node.getUser().getUsername());
+	public void rejectVideoCall(String username)
+			throws ClassNotFoundException, IOException, LineUnavailableException {
+		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.REJECTED,
+				node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
 
 		log.info("Rejected video call with: " + username);
