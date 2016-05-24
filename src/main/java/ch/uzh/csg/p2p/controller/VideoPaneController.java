@@ -230,6 +230,7 @@ public class VideoPaneController {
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
 				node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());
 		RequestHandler.handleRequest(request, node);
+		log.debug("Accept Video: Request sendet");
 
 		audioUtils.startAudio();
 
@@ -240,6 +241,7 @@ public class VideoPaneController {
 
 		videoUtils.setPartnerImageView(videoUser1);
 		videoUtils.startVideo(meImageView);
+		log.debug("Accept Video: Video started");
 
 		log.info("Accept audio call with: " + username);
 	}
