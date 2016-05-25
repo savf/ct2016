@@ -3,20 +3,20 @@ package ch.uzh.csg.p2p.model;
 import java.io.Serializable;
 import java.util.Date;
 
-public class AudioInfo implements Serializable {
+public class VideoInfo implements Serializable {
 
-	private static final long serialVersionUID = 7580302456484382160L;
+	private static final long serialVersionUID = 6983138628598651595L;
 	private String sendername;
 	private String receivername;
 	private Date receivedOn;
 
-	public AudioInfo() {
+	public VideoInfo() {
 		sendername = "";
 		receivername = "";
 		receivedOn = new Date();
 	}
 
-	public AudioInfo(String sendername, String receivername) {
+	public VideoInfo(String sendername, String receivername) {
 		setSendername(sendername);
 		setReceivername(receivername);
 		receivedOn = new Date();
@@ -45,4 +45,5 @@ public class AudioInfo implements Serializable {
 	public Date getReceivedOn() {
 		return receivedOn;
 	}
+
 }

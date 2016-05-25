@@ -6,6 +6,26 @@ import java.net.InetAddress;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.controller.MainWindowController;
+import ch.uzh.csg.p2p.helper.AudioHelper;
+import ch.uzh.csg.p2p.helper.EncoderUtils;
+import ch.uzh.csg.p2p.helper.FriendlistHelper;
+import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.helper.VideoHelper;
+import ch.uzh.csg.p2p.model.AudioInfo;
+import ch.uzh.csg.p2p.model.AudioMessage;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.Message;
+import ch.uzh.csg.p2p.model.OnlineStatus;
+import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
+import ch.uzh.csg.p2p.model.VideoInfo;
+import ch.uzh.csg.p2p.model.VideoMessage;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
 import net.tomp2p.dht.FutureRemove;
@@ -18,25 +38,6 @@ import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.storage.Data;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.controller.MainWindowController;
-import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.EncoderUtils;
-import ch.uzh.csg.p2p.helper.FriendlistHelper;
-import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.helper.VideoUtils;
-import ch.uzh.csg.p2p.model.AudioMessage;
-import ch.uzh.csg.p2p.model.ChatMessage;
-import ch.uzh.csg.p2p.model.Friend;
-import ch.uzh.csg.p2p.model.Message;
-import ch.uzh.csg.p2p.model.OnlineStatus;
-import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.UserInfo;
-import ch.uzh.csg.p2p.model.VideoMessage;
-
 
 public class RequestHandler {
 
@@ -48,6 +49,7 @@ public class RequestHandler {
 	private static Number160 FRIEND_DOMAIN = Number160.createHash("friend");
 	private static Number160 MESSAGE_DOMAIN = Number160.createHash("message");
 	private static Number160 AUDIO_DOMAIN = Number160.createHash("audio");
+	private static Number160 VIDEO_DOMAIN = Number160.createHash("video");
 
 	private static long TRY_AGAIN_TIME_WINDOW = 5000;
 
@@ -110,9 +112,9 @@ public class RequestHandler {
 		}
 	}
 
-	private static Boolean handleSend(Request request, Node node, BaseFutureListener genericListener)
-			throws ClassNotFoundException, IOException, InterruptedException,
-			LineUnavailableException {
+	private static Boolean handleSend(Request request, Node node,
+			BaseFutureListener genericListener) throws ClassNotFoundException, IOException,
+			InterruptedException, LineUnavailableException {
 		final Node n = node;
 		if (request instanceof MessageRequest) {
 			final MessageRequest r = (MessageRequest) request;
@@ -121,9 +123,9 @@ public class RequestHandler {
 			if (r.getMessage() != null && r.getMessage().getReceiverAddress() != null) {
 
 				OnlineStatusRequest onlineStatusRequest =
-						new OnlineStatusRequest(r.getMessage().getReceiverAddress(), n.getPeer()
-								.peerAddress(), r.getMessage().getSenderID(), r.getMessage()
-								.getReceiverID(), RequestType.SEND);
+						new OnlineStatusRequest(r.getMessage().getReceiverAddress(),
+								n.getPeer().peerAddress(), r.getMessage().getSenderID(),
+								r.getMessage().getReceiverID(), RequestType.SEND);
 				onlineStatusRequest.setStatus(RequestStatus.WAITING);
 
 				BaseFutureListener<FutureDirect> onlineStatusListener =
@@ -156,6 +158,7 @@ public class RequestHandler {
 
 				handleRequest(onlineStatusRequest, n, onlineStatusListener);
 			}
+			return true;
 		}
 		if (request instanceof BootstrapRequest) {
 			BootstrapRequest r = (BootstrapRequest) request;
@@ -169,9 +172,8 @@ public class RequestHandler {
 				public void operationComplete(FutureDiscover future) throws Exception {
 					PeerAddress master = future.peerAddress();
 					System.out.println(future.reporter());
-					FutureBootstrap futureBootstrap =
-							n.getPeer().peer().bootstrap().peerAddress(master).ports(DEFAULTPORT)
-									.start();
+					FutureBootstrap futureBootstrap = n.getPeer().peer().bootstrap()
+							.peerAddress(master).ports(DEFAULTPORT).start();
 					// Attention, the listener could be wrongly assigned to the future object
 					// TODO: assure that the genericListener is a FutureBootstrap listener
 					futureBootstrap.addListener(genericListener);
@@ -183,64 +185,88 @@ public class RequestHandler {
 				}
 
 			});
+			return true;
 		}
 		if (request instanceof AudioRequest) {
 			final AudioRequest r = (AudioRequest) request;
-			PeerAddress peerAddress = null;
-			if (r.getReceiverAddress() != null) {
-				peerAddress = r.getReceiverAddress();
-				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
-			} else {
+			final long time = System.currentTimeMillis();
 
-				BaseFutureListener<FutureGet> requestListener =
-						new BaseFutureListener<FutureGet>() {
+			if (r.getReceiverAddress() != null) {
+				OnlineStatusRequest onlineStatusRequest =
+						new OnlineStatusRequest(r.getReceiverAddress(), n.getPeer().peerAddress(),
+								r.getSenderName(), r.getReceiverName(), RequestType.SEND);
+				onlineStatusRequest.setStatus(RequestStatus.WAITING);
+
+				BaseFutureListener<FutureDirect> onlineStatusListener =
+						new BaseFutureListener<FutureDirect>() {
+
 							@Override
-							public void operationComplete(FutureGet futureGet) throws Exception {
-								if (futureGet != null && futureGet.isSuccess()
-										&& futureGet.data() != null) {
-									UserInfo user = (UserInfo) futureGet.data().object();
-									node.getPeer().peer().sendDirect(user.getPeerAddress())
-											.object(r).start();
+							public void operationComplete(FutureDirect futureDirect)
+									throws Exception {
+								if (futureDirect != null && futureDirect.isSuccess()) {
+									// Got a response, which means the recipient is online
+									n.getPeer().peer().sendDirect(r.getReceiverAddress()).object(r)
+											.start();
+								} else {
+									long timeNow = System.currentTimeMillis();
+									if (timeNow - time < (TRY_AGAIN_TIME_WINDOW)) {
+										tryAgain(onlineStatusRequest, node, this);
+									} else {
+										// The recipient really seems to be offline -> Store the
+										// message
+										r.setType(RequestType.STORE);
+										handleRequest(r, n, genericListener);
+									}
 								}
 							}
 
 							@Override
 							public void exceptionCaught(Throwable t) throws Exception {}
 						};
-				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
-			}
 
+				handleRequest(onlineStatusRequest, n, onlineStatusListener);
+			}
 			return true;
 		}
 		if (request instanceof VideoRequest) {
-			final VideoRequest videoRequest = (VideoRequest) request;
-			PeerAddress peerAddress = null;
-			if (videoRequest.getReceiverAddress() != null) {
-				peerAddress = videoRequest.getReceiverAddress();
-				n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
-			} else {
-				BaseFutureListener<FutureGet> requestListener =
-						new BaseFutureListener<FutureGet>() {
+			final VideoRequest r = (VideoRequest) request;
+			final long time = System.currentTimeMillis();
+
+			if (r.getReceiverAddress() != null) {
+				OnlineStatusRequest onlineStatusRequest =
+						new OnlineStatusRequest(r.getReceiverAddress(), n.getPeer().peerAddress(),
+								r.getSenderName(), r.getReceiverName(), RequestType.SEND);
+				onlineStatusRequest.setStatus(RequestStatus.WAITING);
+
+				BaseFutureListener<FutureDirect> onlineStatusListener =
+						new BaseFutureListener<FutureDirect>() {
+
 							@Override
-							public void operationComplete(FutureGet futureGet) throws Exception {
-								if (futureGet != null && futureGet.isSuccess()
-										&& futureGet.data() != null) {
-									UserInfo user = (UserInfo) futureGet.data().object();
-									node.getPeer().peer().sendDirect(user.getPeerAddress())
-											.object(videoRequest).start();
+							public void operationComplete(FutureDirect futureDirect)
+									throws Exception {
+								if (futureDirect != null && futureDirect.isSuccess()) {
+									// Got a response, which means the recipient is online
+									n.getPeer().peer().sendDirect(r.getReceiverAddress()).object(r)
+											.start();
+								} else {
+									long timeNow = System.currentTimeMillis();
+									if (timeNow - time < (TRY_AGAIN_TIME_WINDOW)) {
+										tryAgain(onlineStatusRequest, node, this);
+									} else {
+										// The recipient really seems to be offline -> Store the
+										// message
+										r.setType(RequestType.STORE);
+										handleRequest(r, n, genericListener);
+									}
 								}
 							}
 
 							@Override
-							public void exceptionCaught(Throwable t) throws Exception {
-
-							}
+							public void exceptionCaught(Throwable t) throws Exception {}
 						};
 
-				LoginHelper.retrieveUserInfo(videoRequest.getReceiverName(), node, requestListener);
+				handleRequest(onlineStatusRequest, n, onlineStatusListener);
 			}
-
-			n.getPeer().peer().sendDirect(peerAddress).object(videoRequest).start();
 			return true;
 		}
 
@@ -284,8 +310,8 @@ public class RequestHandler {
 		return true;
 	}
 
-	private static Message handleReceive(Request request, Node node) throws IOException,
-			LineUnavailableException, ClassNotFoundException {
+	private static Message handleReceive(Request request, Node node)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 
 		if (request instanceof MessageRequest) {
 			MessageRequest r = (MessageRequest) request;
@@ -293,19 +319,19 @@ public class RequestHandler {
 			if (message instanceof AudioMessage) {
 				AudioMessage audioMessage = (AudioMessage) message;
 				try {
-					AudioUtils
+					AudioHelper
 							.playAudio(EncoderUtils.byteArrayToByteBuffer(audioMessage.getData()));
 				} catch (LineUnavailableException e) {
 					log.error("AudioMessage could not be played: " + e);
 				}
 			} else if (message instanceof ChatMessage) {
 				ChatMessage chatMessage = (ChatMessage) message;
-				mainWindowController.chatPaneController.addReceivedMessage(
-						chatMessage.getSenderID(), chatMessage.getData());
+				mainWindowController.chatPaneController
+						.addReceivedMessage(chatMessage.getSenderID(), chatMessage.getData());
 			} else if (message instanceof VideoMessage) {
 				log.info("handleReceive VideoMessage");
 				VideoMessage videoMessage = (VideoMessage) message;
-				VideoUtils.playVideo(videoMessage.getData());
+				VideoHelper.playVideo(videoMessage.getData());
 			}
 			log.info(message.getReceiverID() + " received message: " + message.toString()
 					+ " from: " + message.getSenderID().toString());
@@ -381,8 +407,8 @@ public class RequestHandler {
 			if (r.hasChangedPeerAddress()) {
 				node.getUser().getFriend(r.getSenderName()).setPeerAddress(r.getSenderAddress());
 				FriendlistHelper helper = new FriendlistHelper(node);
-				helper.storeFriend(node.getUser().getFriend(r.getSenderName()), node.getUser()
-						.getUsername());
+				helper.storeFriend(node.getUser().getFriend(r.getSenderName()),
+						node.getUser().getUsername());
 			}
 			switch (r.getStatus()) {
 				case WAITING:
@@ -390,16 +416,14 @@ public class RequestHandler {
 					if (!r.getReceiverName().equals(node.getUser().getUsername())) {
 						// then, the peerAddress of the friend has changed and been reassigned to
 						// this node
-						req =
-								new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(),
-										r.getSenderName(), RequestType.SEND);
+						req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(),
+								r.getSenderName(), RequestType.SEND);
 						req.setOnlineStatus(OnlineStatus.ONLINE);
 						req.setStatus(RequestStatus.REJECTED);
 					} else {
 						node.getUser().getFriend(r.getSenderName()).setStatus(OnlineStatus.ONLINE);
-						req =
-								new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(),
-										r.getSenderName(), RequestType.SEND);
+						req = new OnlineStatusRequest(r.getSenderAddress(), r.getReceiverName(),
+								r.getSenderName(), RequestType.SEND);
 						req.setOnlineStatus(OnlineStatus.ONLINE);
 						req.setStatus(RequestStatus.ACCEPTED);
 					}
@@ -429,25 +453,23 @@ public class RequestHandler {
 	}
 
 	private static Boolean handleStore(Request request, Node node,
-			BaseFutureListener genericListener) throws IOException, ClassNotFoundException,
-			InterruptedException {
+			BaseFutureListener genericListener)
+			throws IOException, ClassNotFoundException, InterruptedException {
 		if (request instanceof UserInfoRequest) {
 			UserInfoRequest r = (UserInfoRequest) request;
 			if (r.getStatus().equals(RequestStatus.ABORTED)) {
 				final UserInfo info = r.getUserInfo();
-				FutureRemove future =
-						node.getPeer().remove(Number160.createHash(info.getUserName()))
-								.domainKey(USER_DOMAIN)
-								.contentKey(Number160.createHash(info.getUserName())).start();
+				FutureRemove future = node.getPeer()
+						.remove(Number160.createHash(info.getUserName())).domainKey(USER_DOMAIN)
+						.contentKey(Number160.createHash(info.getUserName())).start();
 				if (genericListener != null) {
 					future.addListener(genericListener);
 				}
 			} else {
 				final UserInfo info = r.getUserInfo();
-				FuturePut future =
-						node.getPeer().put(Number160.createHash(info.getUserName()))
-								.data(Number160.createHash(info.getUserName()), new Data(info))
-								.domainKey(USER_DOMAIN).start();
+				FuturePut future = node.getPeer().put(Number160.createHash(info.getUserName()))
+						.data(Number160.createHash(info.getUserName()), new Data(info))
+						.domainKey(USER_DOMAIN).start();
 				if (genericListener != null) {
 					future.addListener(genericListener);
 				}
@@ -458,23 +480,47 @@ public class RequestHandler {
 			MessageRequest r = (MessageRequest) request;
 			if (r.getMessage() instanceof ChatMessage) {
 				ChatMessage m = (ChatMessage) r.getMessage();
-				FuturePut future =
-						node.getPeer()
-								.put(Number160.createHash(m.getReceiverID()))
-								.data(Number160.createHash(m.getSenderID() + m.getDate().getTime()),
-										new Data(m)).domainKey(MESSAGE_DOMAIN).start();
+				FuturePut futurePut = node.getPeer().put(Number160.createHash(m.getReceiverID()))
+						.data(Number160.createHash(m.getSenderID() + m.getDate().getTime()),
+								new Data(m))
+						.domainKey(MESSAGE_DOMAIN).start();
 				if (genericListener != null) {
-					future.addListener(genericListener);
+					futurePut.addListener(genericListener);
 				}
 			}
 
 		}
+		if (request instanceof AudioRequest) {
+			AudioRequest r = (AudioRequest) request;
+			if (r.getStatus().equals(RequestStatus.WAITING)) {
+				AudioInfo audioInfo = new AudioInfo(r.getSenderName(), r.getReceiverName());
+				FuturePut futurePut =
+						node.getPeer().put(Number160.createHash(r.getReceiverName()))
+								.data(Number160.createHash(audioInfo.getSendername()
+										+ audioInfo.getReceivedOn().getTime()), new Data(audioInfo))
+								.domainKey(AUDIO_DOMAIN).start();
+				if (genericListener != null) {
+					futurePut.addListener(genericListener);
+				}
+			}
+		}
+		if (request instanceof VideoRequest) {
+			VideoRequest r = (VideoRequest) request;
+			if (r.getStatus().equals(RequestStatus.WAITING)) {
+				VideoInfo videoInfo = new VideoInfo(r.getSenderName(), r.getReceiverName());
+				FuturePut futurePut =
+						node.getPeer().put(Number160.createHash(r.getReceiverName()))
+								.data(Number160.createHash(videoInfo.getSendername()
+										+ videoInfo.getReceivedOn().getTime()), new Data(videoInfo))
+								.domainKey(VIDEO_DOMAIN).start();
+				if (genericListener != null) {
+					futurePut.addListener(genericListener);
+				}
+			}
+		}
 		if (request instanceof FriendRequest) {
 			// this store operation is only used if a User gets a new friend and wants to save it in
-			// the
-			// dht for future use
-			// if a request is sent to an offline user, this has to be handled with
-			// sendDirect.putIfAbsent()
+			// the dht for future use
 			// the sender is the one who wants to store the info
 			final FriendRequest r = (FriendRequest) request;
 			if (r.getStatus().equals(RequestStatus.ABORTED)) {
@@ -487,17 +533,15 @@ public class RequestHandler {
 			} else {
 				// this case is used for storing a friend into the dht, either when the friendship
 				// has been accepted or when one of both parties is not online and has yet to answer
-				// the
-				// request (or get the answer to his request)
+				// the request (or get the answer to his request)
 				Friend friend = new Friend(r.getReceiverAddress(), r.getReceiverName());
 				friend.setFriendshipStatus(r.getStatus().toString());
 
 				// store Friend under locationKey username, domainKey friend_domain, contentKey
 				// friendname
-				FuturePut future =
-						node.getPeer().put(Number160.createHash(r.getSenderName()))
-								.data(Number160.createHash(friend.getName()), new Data(friend))
-								.domainKey(FRIEND_DOMAIN).start();
+				FuturePut future = node.getPeer().put(Number160.createHash(r.getSenderName()))
+						.data(Number160.createHash(friend.getName()), new Data(friend))
+						.domainKey(FRIEND_DOMAIN).start();
 				future.addListener(new BaseFutureAdapter<FuturePut>() {
 					public void operationComplete(FuturePut future) throws Exception {
 						if (future.isSuccess()) {
@@ -514,9 +558,8 @@ public class RequestHandler {
 		if (request instanceof BootstrapRequest) {
 			BootstrapRequest req = (BootstrapRequest) request;
 			new User(req.getSenderName(), null, node.getPeer().peerAddress());
-			FuturePut future =
-					node.getPeer().put(Number160.createHash(BOOTSTRAPNODE))
-							.data(new Data(req.getBootstrapNodeIP())).start();
+			FuturePut future = node.getPeer().put(Number160.createHash(BOOTSTRAPNODE))
+					.data(new Data(req.getBootstrapNodeIP())).start();
 			// Attention, this listener could be assigned wrongly
 			// TODO: assure that only FuturePut listener gets assigned
 			future.addListener(genericListener);
@@ -527,33 +570,45 @@ public class RequestHandler {
 	}
 
 	private static Object handleRetrieve(Request request, Node node,
-			BaseFutureListener genericListener) throws ClassNotFoundException, IOException,
-			InterruptedException {
+			BaseFutureListener genericListener)
+			throws ClassNotFoundException, IOException, InterruptedException {
 		if (request instanceof UserInfoRequest) {
 			UserInfoRequest r = (UserInfoRequest) request;
-			FutureGet futureGet =
-					node.getPeer().get(Number160.createHash(r.getUserInfo().getUserName()))
-							.domainKey(USER_DOMAIN)
-							.contentKey(Number160.createHash(r.getUserInfo().getUserName()))
-							.start();
+			FutureGet futureGet = node.getPeer()
+					.get(Number160.createHash(r.getUserInfo().getUserName())).domainKey(USER_DOMAIN)
+					.contentKey(Number160.createHash(r.getUserInfo().getUserName())).start();
 			if (genericListener != null) {
 				futureGet.addListener(genericListener);
 			}
 		}
 		if (request instanceof MessageRequest) {
 			MessageRequest r = (MessageRequest) request;
-			FutureGet futureGet =
-					node.getPeer().get(Number160.createHash(r.getSenderName()))
-							.domainKey(MESSAGE_DOMAIN).all().start();
+			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
+					.domainKey(MESSAGE_DOMAIN).all().start();
+			if (genericListener != null) {
+				futureGet.addListener(genericListener);
+			}
+		}
+		if (request instanceof AudioRequest) {
+			AudioRequest r = (AudioRequest) request;
+			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
+					.domainKey(AUDIO_DOMAIN).all().start();
+			if (genericListener != null) {
+				futureGet.addListener(genericListener);
+			}
+		}
+		if (request instanceof VideoRequest) {
+			VideoRequest r = (VideoRequest) request;
+			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
+					.domainKey(VIDEO_DOMAIN).all().start();
 			if (genericListener != null) {
 				futureGet.addListener(genericListener);
 			}
 		}
 		if (request instanceof FriendRequest) {
 			FriendRequest r = (FriendRequest) request;
-			FutureGet futureGet =
-					node.getPeer().get(Number160.createHash(r.getSenderName()))
-							.domainKey(FRIEND_DOMAIN).all().start();
+			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
+					.domainKey(FRIEND_DOMAIN).all().start();
 			if (genericListener != null) {
 				futureGet.addListener(genericListener);
 			}
@@ -572,7 +627,8 @@ public class RequestHandler {
 	public static void tryAgain(Request request, Node node, BaseFutureListener listener)
 			throws LineUnavailableException, InterruptedException {
 		log.debug("RequestHandler had unsuccessful Request, Try again...");
-		log.debug("Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
+		log.debug(
+				"Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
 		log.debug(" Request: " + request.getClass() + " Type: " + request.getType());
 		Thread.sleep(500);
 		handleRequest(request, node, listener);

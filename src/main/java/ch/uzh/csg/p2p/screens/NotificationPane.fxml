@@ -23,7 +23,7 @@
             </Label>
             <HBox>
                <children>
-                  <Label fx:id="awayMessageCountLabel" text="0">
+                  <Label fx:id="missedMessageCountLabel" text="0">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -41,10 +41,10 @@
                   </Label>
                </children>
             </HBox>
-            <VBox fx:id="awayMessageVBox" />
+            <VBox fx:id="missedMessageVBox" />
             <HBox>
                <children>
-                  <Label fx:id="awayCallCountLabel" text="0">
+                  <Label fx:id="missedAudioCallCountLabel" text="0">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -62,10 +62,10 @@
                   </Label>
                </children>
             </HBox>
-            <VBox fx:id="awayMissedAudioCallVBox" />
+            <VBox fx:id="missedAudioCallVBox" />
             <HBox>
                <children>
-                  <Label fx:id="awayCallCountLabel1" text="0">
+                  <Label fx:id="missedVideoCallCountLabel" text="0">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -81,12 +81,12 @@
                         <Font size="18.0" />
                      </font>
                   </Label>
-                  <VBox fx:id="awayMissedVideoCallVBox1" />
                </children>
             </HBox>
+            <VBox fx:id="missedVideoCallVBox" />
             <HBox>
                <children>
-                  <Label fx:id="awayFriendRequestCountLabel" text="0">
+                  <Label fx:id="missedFriendRequestCountLabel" text="0">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -104,7 +104,7 @@
                   </Label>
                </children>
             </HBox>
-            <VBox fx:id="awayFriendRequestVBox" />
+            <VBox fx:id="missedFriendRequestVBox" />
          </children>
       </VBox>
    </children>

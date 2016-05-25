@@ -11,6 +11,31 @@ import java.util.Timer;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.uzh.csg.p2p.helper.FriendlistHelper;
+import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.AudioInfo;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.Friend;
+import ch.uzh.csg.p2p.model.FriendshipStatus;
+import ch.uzh.csg.p2p.model.Message;
+import ch.uzh.csg.p2p.model.OnlineStatus;
+import ch.uzh.csg.p2p.model.OnlineStatusTask;
+import ch.uzh.csg.p2p.model.User;
+import ch.uzh.csg.p2p.model.UserInfo;
+import ch.uzh.csg.p2p.model.VideoInfo;
+import ch.uzh.csg.p2p.model.request.AudioRequest;
+import ch.uzh.csg.p2p.model.request.BootstrapRequest;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
+import ch.uzh.csg.p2p.model.request.MessageRequest;
+import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
+import ch.uzh.csg.p2p.model.request.Request;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.model.request.RequestStatus;
+import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.VideoRequest;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.FuturePut;
@@ -25,28 +50,6 @@ import net.tomp2p.peers.PeerAddress;
 import net.tomp2p.replication.IndirectReplication;
 import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.uzh.csg.p2p.helper.FriendlistHelper;
-import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.model.ChatMessage;
-import ch.uzh.csg.p2p.model.Friend;
-import ch.uzh.csg.p2p.model.FriendshipStatus;
-import ch.uzh.csg.p2p.model.Message;
-import ch.uzh.csg.p2p.model.OnlineStatus;
-import ch.uzh.csg.p2p.model.OnlineStatusTask;
-import ch.uzh.csg.p2p.model.User;
-import ch.uzh.csg.p2p.model.UserInfo;
-import ch.uzh.csg.p2p.model.request.BootstrapRequest;
-import ch.uzh.csg.p2p.model.request.FriendRequest;
-import ch.uzh.csg.p2p.model.request.MessageRequest;
-import ch.uzh.csg.p2p.model.request.OnlineStatusRequest;
-import ch.uzh.csg.p2p.model.request.Request;
-import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.model.request.RequestStatus;
-import ch.uzh.csg.p2p.model.request.RequestType;
 
 public class Node extends Observable {
 
@@ -63,8 +66,8 @@ public class Node extends Observable {
 	protected PeerDHT peer;
 
 	public Node(int nodeId, String ip, String username, String password, boolean bootstrapNode,
-			Observer nodeReadyObserver) throws IOException, LineUnavailableException,
-			ClassNotFoundException {
+			Observer nodeReadyObserver)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
 		int id = ((Long) System.currentTimeMillis()).intValue();
@@ -89,8 +92,8 @@ public class Node extends Observable {
 		startOnlineStatusTask();
 	}
 
-	public void loadStoredDataFromDHT() throws UnsupportedEncodingException,
-			LineUnavailableException {
+	public void loadStoredDataFromDHT()
+			throws UnsupportedEncodingException, LineUnavailableException {
 		loadFriendlistFromDHTAndAnnounceOnlineStatus();
 	}
 
@@ -112,12 +115,6 @@ public class Node extends Observable {
 								ChatMessage chatMessage = (ChatMessage) iterator.next().object();
 								user.addChatMessage(chatMessage);
 							}
-						} else {
-							/*
-							 * long timeNow = System.currentTimeMillis(); if (timeNow - time <
-							 * TRY_AGAIN_TIME_WINDOW) { RequestHandler.handleRequest(messageRequest,
-							 * node, this); }
-							 */
 						}
 					}
 
@@ -126,6 +123,60 @@ public class Node extends Observable {
 
 				};
 		RequestHandler.handleRequest(messageRequest, this, messageRetrieveListener);
+	}
+
+	private void loadAudioCallsFromDHT() throws LineUnavailableException {
+		final long time = System.currentTimeMillis();
+		final Node node = this;
+		AudioRequest audioRequest = new AudioRequest();
+		audioRequest.setType(RequestType.RETRIEVE);
+		audioRequest.setSenderName(user.getUsername());
+
+		BaseFutureListener<FutureGet> audioRetrieveListener = new BaseFutureListener<FutureGet>() {
+
+			@Override
+			public void operationComplete(FutureGet futureGet) throws Exception {
+				if (futureGet != null && futureGet.isSuccess()) {
+					Iterator<Data> iterator = futureGet.dataMap().values().iterator();
+					while (iterator.hasNext()) {
+						AudioInfo audioInfo = (AudioInfo) iterator.next().object();
+						user.addAudioInfo(audioInfo);
+					}
+				}
+			}
+
+			@Override
+			public void exceptionCaught(Throwable t) throws Exception {}
+
+		};
+		RequestHandler.handleRequest(audioRequest, this, audioRetrieveListener);
+	}
+
+	private void loadVideoCallsFromDHT() throws LineUnavailableException {
+		final long time = System.currentTimeMillis();
+		final Node node = this;
+		VideoRequest videoRequest = new VideoRequest();
+		videoRequest.setType(RequestType.RETRIEVE);
+		videoRequest.setSenderName(user.getUsername());
+
+		BaseFutureListener<FutureGet> videoRetrieveListener = new BaseFutureListener<FutureGet>() {
+
+			@Override
+			public void operationComplete(FutureGet futureGet) throws Exception {
+				if (futureGet != null && futureGet.isSuccess()) {
+					Iterator<Data> iterator = futureGet.dataMap().values().iterator();
+					while (iterator.hasNext()) {
+						VideoInfo videoInfo = (VideoInfo) iterator.next().object();
+						user.addVideoInfo(videoInfo);
+					}
+				}
+			}
+
+			@Override
+			public void exceptionCaught(Throwable t) throws Exception {}
+
+		};
+		RequestHandler.handleRequest(videoRequest, this, videoRetrieveListener);
 	}
 
 	private void initiateUser(final String username, final String password)
@@ -161,8 +212,8 @@ public class Node extends Observable {
 	}
 
 	protected void tryAgainRetrieveUserInfo(String username, Node node,
-			BaseFutureListener<FutureGet> baseFutureListener) throws LineUnavailableException,
-			InterruptedException {
+			BaseFutureListener<FutureGet> baseFutureListener)
+			throws LineUnavailableException, InterruptedException {
 		// TODO Auto-generated method stub
 		Thread.sleep(500);
 		log.debug("Node had unsuccessful UserRetrieve Request, Try again...");
@@ -198,6 +249,8 @@ public class Node extends Observable {
 					announceChangedToOnlineStatus();
 					// Load missed messages and calls after initiating the friend list
 					loadMessagesFromDHT();
+					loadAudioCallsFromDHT();
+					loadVideoCallsFromDHT();
 				} else {
 					long timeNow = System.currentTimeMillis();
 					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
@@ -253,12 +306,12 @@ public class Node extends Observable {
 	}
 
 	protected void createPeerAndInitiateUser(int nodeId, String username, String password,
-			boolean bootstrapNode, String ip) throws IOException, ClassNotFoundException,
-			LineUnavailableException {
+			boolean bootstrapNode, String ip)
+			throws IOException, ClassNotFoundException, LineUnavailableException {
 		Bindings b = new Bindings().listenAny();
-		peer =
-				new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(getPort())
-						.bindings(b).start()).start();
+		peer = new PeerBuilderDHT(
+				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
+						.start();
 
 		if (bootstrapNode) {
 			// Bootstrapnode
@@ -307,8 +360,8 @@ public class Node extends Observable {
 		}
 	}
 
-	protected Object handleReceivedData(PeerAddress peerAddress, Object object) throws IOException,
-			LineUnavailableException, ClassNotFoundException {
+	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
+			throws IOException, LineUnavailableException, ClassNotFoundException {
 
 		log.info("Received message: " + object.toString() + " from: " + peerAddress.toString());
 
@@ -416,9 +469,8 @@ public class Node extends Observable {
 
 	public void announceChangedToOnlineStatus() throws LineUnavailableException {
 		for (Friend f : user.getFriendList()) {
-			OnlineStatusRequest request =
-					new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
-							user.getUsername(), f.getName(), RequestType.SEND);
+			OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
+					peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
 			request.setChangedPeerAddress(true);
 			request.setOnlineStatus(OnlineStatus.ONLINE);
 			// send new OnlineRequest, act like this is an answer to a request, and send a positive
@@ -457,9 +509,8 @@ public class Node extends Observable {
 		} else {
 			int i = 1;
 			for (Friend f : user.getFriendList()) {
-				OnlineStatusRequest request =
-						new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
-								user.getUsername(), f.getName(), RequestType.SEND);
+				OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
+						peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
 				// act like we received an OnlineStatusRequest and answer with Aborted so Status
 				// goes to
 				// offline
@@ -498,7 +549,8 @@ public class Node extends Observable {
 			throws LineUnavailableException, InterruptedException {
 		Thread.sleep(500);
 		log.debug("Node had unsuccessful Request, Try again...");
-		log.debug("Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
+		log.debug(
+				"Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
 		log.debug(" Request: " + request.getClass() + " Type: " + request.getType());
 		RequestHandler.tryAgain(request, this, baseFutureListener);
 	}

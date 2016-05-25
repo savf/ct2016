@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import ch.uzh.csg.p2p.model.request.FriendRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import net.tomp2p.peers.PeerAddress;
-import ch.uzh.csg.p2p.model.request.FriendRequest;
 
 public class User implements Serializable {
 	private static final long serialVersionUID = 1057801283816805651L;
@@ -17,11 +17,12 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
-	private ObservableList<Friend> friendList = FXCollections
-			.observableList(new ArrayList<Friend>());
+	private ObservableList<Friend> friendList =
+			FXCollections.observableList(new ArrayList<Friend>());
 	private ObservableList<FriendRequest> friendRequestStorage;
 	private ObservableList<ChatMessage> chatMessageStorage;
 	private ObservableList<AudioInfo> audioInfoStorage;
+	private ObservableList<VideoInfo> videoInfoStorage;
 
 	public User(String username, String password, PeerAddress peerAddress) {
 		this();
@@ -39,6 +40,7 @@ public class User implements Serializable {
 		setFriendRequestStorage(FXCollections.observableList(new ArrayList<FriendRequest>()));
 		chatMessageStorage = FXCollections.observableList(new ArrayList<ChatMessage>());
 		audioInfoStorage = FXCollections.observableList(new ArrayList<AudioInfo>());
+		videoInfoStorage = FXCollections.observableList(new ArrayList<VideoInfo>());
 	}
 
 	public void registerForAudioInfoUpdates(ListChangeListener<AudioInfo> listener) {
@@ -51,6 +53,18 @@ public class User implements Serializable {
 
 	public void addAudioInfo(AudioInfo audioInfo) {
 		audioInfoStorage.add(audioInfo);
+	}
+
+	public void registerForVideoInfoUpdates(ListChangeListener<VideoInfo> listener) {
+		videoInfoStorage.addListener(listener);
+	}
+
+	public List<VideoInfo> getVideoInfoStorage() {
+		return videoInfoStorage;
+	}
+
+	public void addVideoInfo(VideoInfo videoInfo) {
+		videoInfoStorage.add(videoInfo);
 	}
 
 	public void registerForChatMessageUpdates(ListChangeListener<ChatMessage> listener) {
@@ -74,6 +88,24 @@ public class User implements Serializable {
 		}
 	}
 
+	public void removeAudioCallsFromUser(String username) {
+		for (Iterator<AudioInfo> iterator = audioInfoStorage.iterator(); iterator.hasNext();) {
+			AudioInfo audioInfo = iterator.next();
+			if (audioInfo.getSendername().equals(username)) {
+				iterator.remove();
+			}
+		}
+	}
+
+	public void removeVideoCallsFromUser(String username) {
+		for (Iterator<VideoInfo> iterator = videoInfoStorage.iterator(); iterator.hasNext();) {
+			VideoInfo videoInfo = iterator.next();
+			if (videoInfo.getSendername().equals(username)) {
+				iterator.remove();
+			}
+		}
+	}
+
 	public ObservableList<FriendRequest> getFriendRequestStorage() {
 		return friendRequestStorage;
 	}
@@ -82,12 +114,14 @@ public class User implements Serializable {
 		this.friendRequestStorage = friendRequestStorage;
 	}
 
-	public void registerForFriendRequestWhileAwayUpdates(ListChangeListener<FriendRequest> listener) {
+	public void registerForFriendRequestWhileAwayUpdates(
+			ListChangeListener<FriendRequest> listener) {
 		friendRequestStorage.addListener(listener);
 	}
 
 	public void addFriendRequest(FriendRequest request) {
-		for (Iterator<FriendRequest> iterator = friendRequestStorage.iterator(); iterator.hasNext();) {
+		for (Iterator<FriendRequest> iterator = friendRequestStorage.iterator(); iterator
+				.hasNext();) {
 			FriendRequest friendRequest = iterator.next();
 			if (!friendRequest.getSenderName().equals(request.getSenderName())) {
 				friendRequestStorage.add(request);
@@ -96,7 +130,8 @@ public class User implements Serializable {
 	}
 
 	public void removeFriendRequest(FriendRequest request) {
-		for (Iterator<FriendRequest> iterator = friendRequestStorage.iterator(); iterator.hasNext();) {
+		for (Iterator<FriendRequest> iterator = friendRequestStorage.iterator(); iterator
+				.hasNext();) {
 			FriendRequest friendRequest = iterator.next();
 			if (!friendRequest.getSenderName().equals(request.getSenderName())) {
 				iterator.remove();
