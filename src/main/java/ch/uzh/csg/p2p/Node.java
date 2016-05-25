@@ -4,16 +4,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Timer;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 
 import javax.sound.sampled.LineUnavailableException;
 
@@ -65,8 +59,6 @@ public class Node extends Observable {
 
 	private Logger log;
 	private User user;
-	private ObservableList<Friend> friendList = FXCollections
-			.observableList(new ArrayList<Friend>());
 	private Timer onlineStatusTaskTimer;
 	protected PeerDHT peer;
 
@@ -194,7 +186,7 @@ public class Node extends Observable {
 						Friend f = (Friend) i.next().object();
 						if (f != null) {
 							if (f.getFriendshipStatus().equals(FriendshipStatus.ACCEPTED)) {
-								addFriend(f);
+								user.addFriend(f);
 							} else if (f.getFriendshipStatus().equals(FriendshipStatus.REJECTED)
 									|| f.getFriendshipStatus().equals(FriendshipStatus.ABORTED)) {
 								getRejected(f);
@@ -258,10 +250,6 @@ public class Node extends Observable {
 		if (onlineStatusTaskTimer != null) {
 			onlineStatusTaskTimer.cancel();
 		}
-	}
-
-	public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
-		friendList.addListener(listener);
 	}
 
 	protected void createPeerAndInitiateUser(int nodeId, String username, String password,
@@ -413,10 +401,6 @@ public class Node extends Observable {
 		}
 	}
 
-	public List<Friend> getFriendList() {
-		return friendList;
-	}
-
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
 		running = false;
@@ -431,7 +415,7 @@ public class Node extends Observable {
 	}
 
 	public void announceChangedToOnlineStatus() throws LineUnavailableException {
-		for (Friend f : friendList) {
+		for (Friend f : user.getFriendList()) {
 			OnlineStatusRequest request =
 					new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
 							user.getUsername(), f.getName(), RequestType.SEND);
@@ -468,11 +452,11 @@ public class Node extends Observable {
 	}
 
 	private void announceChangedToOfflineStatus() throws LineUnavailableException {
-		if (friendList.isEmpty()) {
+		if (user.getFriendList().isEmpty()) {
 			peer.shutdown();
 		} else {
 			int i = 1;
-			for (Friend f : friendList) {
+			for (Friend f : user.getFriendList()) {
 				OnlineStatusRequest request =
 						new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
 								user.getUsername(), f.getName(), RequestType.SEND);
@@ -481,7 +465,7 @@ public class Node extends Observable {
 				// offline
 				request.setOnlineStatus(OnlineStatus.OFFLINE);
 				request.setStatus(RequestStatus.ABORTED);
-				boolean lastInLine = (i == friendList.size());
+				final boolean lastInLine = (i == user.getFriendList().size());
 				final long time = System.currentTimeMillis();
 				BaseFutureListener<FutureDirect> futureDirectListener =
 						new BaseFutureListener<FutureDirect>() {
@@ -517,55 +501,6 @@ public class Node extends Observable {
 		log.debug("Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
 		log.debug(" Request: " + request.getClass() + " Type: " + request.getType());
 		RequestHandler.tryAgain(request, this, baseFutureListener);
-	}
-
-	public Friend getFriend(String currentChatPartner) {
-		for (Friend f : friendList) {
-			if (f.getName().equals(currentChatPartner)) {
-				return f;
-			}
-		}
-		return null;
-	}
-
-	public void addFriend(Friend friend) {
-		boolean containsFriend = false;
-		for (Friend f : friendList) {
-			if (f.getName().equals(friend.getName())) {
-				f.setFriendshipStatus(FriendshipStatus.ACCEPTED);
-				friend = f;
-				containsFriend = true;
-				break;
-			}
-		}
-		if (!containsFriend) {
-			friendList.add(friend);
-		}
-
-		/*
-		 * OnlineStatusRequest req = new OnlineStatusRequest(friend.getPeerAddress(),
-		 * peer.peerAddress(), user.getUsername(), friend.getName(), RequestType.SEND);
-		 * req.setOnlineStatus(OnlineStatus.ONLINE); req.setStatus(RequestStatus.ACCEPTED);
-		 * BaseFutureListener<FutureDirect> futureDirectListener = new
-		 * BaseFutureListener<FutureDirect>() {
-		 * 
-		 * @Override public void operationComplete(FutureDirect future) throws Exception { if
-		 * (future.isCompleted() && future.isSuccess()) { friend.setStatus(OnlineStatus.ONLINE); }
-		 * else { friend.setStatus(OnlineStatus.OFFLINE); } }
-		 * 
-		 * @Override public void exceptionCaught(Throwable t) throws Exception {
-		 * log.error(t.getMessage()); } }; try { RequestHandler.handleRequest(req, this,
-		 * futureDirectListener); } catch (LineUnavailableException e) { e.printStackTrace(); }
-		 */
-	}
-
-	public void removeFriend(Friend f) {
-		for (Friend friend : friendList) {
-			if (friend.getName().equals(f.getName())) {
-				friendList.remove(friend);
-				break;
-			}
-		}
 	}
 
 }

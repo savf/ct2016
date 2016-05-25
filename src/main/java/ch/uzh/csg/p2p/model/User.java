@@ -17,6 +17,8 @@ public class User implements Serializable {
 	String username;
 	String password;
 	PeerAddress peerAddress;
+	private ObservableList<Friend> friendList = FXCollections
+			.observableList(new ArrayList<Friend>());
 	private ObservableList<FriendRequest> friendRequestStorage;
 	private ObservableList<ChatMessage> chatMessageStorage;
 	private ObservableList<AudioInfo> audioInfoStorage;
@@ -33,6 +35,7 @@ public class User implements Serializable {
 		username = new String();
 		password = new String();
 		peerAddress = null;
+		friendList = FXCollections.observableList(new ArrayList<Friend>());
 		setFriendRequestStorage(FXCollections.observableList(new ArrayList<FriendRequest>()));
 		chatMessageStorage = FXCollections.observableList(new ArrayList<ChatMessage>());
 		audioInfoStorage = FXCollections.observableList(new ArrayList<AudioInfo>());
@@ -97,6 +100,51 @@ public class User implements Serializable {
 			FriendRequest friendRequest = iterator.next();
 			if (!friendRequest.getSenderName().equals(request.getSenderName())) {
 				iterator.remove();
+			}
+		}
+	}
+
+	public ObservableList<Friend> getFriendList() {
+		return friendList;
+	}
+
+	public void setFriendList(ObservableList<Friend> friendList) {
+		this.friendList = friendList;
+	}
+
+	public void registerForFriendListUpdates(ListChangeListener<Friend> listener) {
+		friendList.addListener(listener);
+	}
+
+	public Friend getFriend(String currentChatPartner) {
+		for (Friend f : friendList) {
+			if (f.getName().equals(currentChatPartner)) {
+				return f;
+			}
+		}
+		return null;
+	}
+
+	public void addFriend(Friend friend) {
+		boolean containsFriend = false;
+		for (Friend f : friendList) {
+			if (f.getName().equals(friend.getName())) {
+				f.setFriendshipStatus(FriendshipStatus.ACCEPTED);
+				friend = f;
+				containsFriend = true;
+				break;
+			}
+		}
+		if (!containsFriend) {
+			friendList.add(friend);
+		}
+	}
+
+	public void removeFriend(Friend f) {
+		for (Friend friend : friendList) {
+			if (friend.getName().equals(f.getName())) {
+				friendList.remove(friend);
+				break;
 			}
 		}
 	}

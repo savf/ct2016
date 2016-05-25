@@ -74,7 +74,7 @@ public class FriendlistPaneController {
 				initializeFriendlist(node);
 			}
 		};
-		node.registerForFriendListUpdates(listChangeListener);
+		node.getUser().registerForFriendListUpdates(listChangeListener);
 	}
 
 	public void sendFriendRequest(UserInfo user, Node node) {
@@ -210,7 +210,7 @@ public class FriendlistPaneController {
 	public void initializeFriendlist(final Node node) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				for (Friend f : node.getFriendList()) {
+				for (Friend f : node.getUser().getFriendList()) {
 					if (!friendList.contains(f)
 							&& f.getFriendshipStatus().equals(FriendshipStatus.ACCEPTED)) {
 						friendList.add(f);
@@ -289,7 +289,7 @@ public class FriendlistPaneController {
 				hisFriend.setFriendshipStatus(FriendshipStatus.ACCEPTED);
 				friendlistHelper.storeFriend(hisFriend, req.getSenderName());
 
-				node.addFriend(myFriend);
+				node.getUser().addFriend(myFriend);
 				RequestHandler.handleRequest(request, node);
 			}
 		});
@@ -298,8 +298,8 @@ public class FriendlistPaneController {
 	public void friendshipRejected(Friend f) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				if (node.getFriend(f.getName()) != null) {
-					node.removeFriend(f);
+				if (node.getUser().getFriend(f.getName()) != null) {
+					node.getUser().removeFriend(f);
 				}
 				friendlistHelper.removeFriend(f, node.getUser().getUsername());
 
@@ -315,7 +315,7 @@ public class FriendlistPaneController {
 			public void run() {
 				friend.setFriendshipStatus(FriendshipStatus.ACCEPTED);
 				friendlistHelper.storeFriend(friend, node.getUser().getUsername());
-				node.addFriend(friend);
+				node.getUser().addFriend(friend);
 			}
 		});
 		mainWindowController.friendshipAccepted(f.getName());

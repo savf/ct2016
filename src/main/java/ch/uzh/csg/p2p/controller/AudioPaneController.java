@@ -66,8 +66,8 @@ public class AudioPaneController {
 		for (String chatPartner : mainWindowController.currentChatPartners) {
 			addChatPartner(chatPartner, " ringing...");
 			AudioRequest request =
-					new AudioRequest(RequestType.SEND, RequestStatus.WAITING, node.getFriend(
-							chatPartner).getPeerAddress(), chatPartner, node.getUser()
+					new AudioRequest(RequestType.SEND, RequestStatus.WAITING, node.getUser()
+							.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser()
 							.getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
@@ -90,8 +90,8 @@ public class AudioPaneController {
 		endAudio();
 		for (String chatPartner : mainWindowController.currentChatPartners) {
 			AudioRequest request =
-					new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, node.getFriend(
-							chatPartner).getPeerAddress(), chatPartner, node.getUser()
+					new AudioRequest(RequestType.SEND, RequestStatus.ABORTED, node.getUser()
+							.getFriend(chatPartner).getPeerAddress(), chatPartner, node.getUser()
 							.getUsername());
 			RequestHandler.handleRequest(request, node);
 		}
@@ -152,8 +152,9 @@ public class AudioPaneController {
 		audioUtils.endAudio();
 
 		AudioRequest request =
-				new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, node.getFriend(username)
-						.getPeerAddress(), username, node.getUser().getUsername());
+				new AudioRequest(RequestType.SEND, RequestStatus.ACCEPTED, node.getUser()
+						.getFriend(username).getPeerAddress(), username, node.getUser()
+						.getUsername());
 		RequestHandler.handleRequest(request, node);
 
 		addChatPartner(username, "");
@@ -176,8 +177,9 @@ public class AudioPaneController {
 	public void rejectAudioCall(String username) throws ClassNotFoundException, IOException,
 			LineUnavailableException {
 		AudioRequest request =
-				new AudioRequest(RequestType.SEND, RequestStatus.REJECTED, node.getFriend(username)
-						.getPeerAddress(), username, node.getUser().getUsername());
+				new AudioRequest(RequestType.SEND, RequestStatus.REJECTED, node.getUser()
+						.getFriend(username).getPeerAddress(), username, node.getUser()
+						.getUsername());
 		RequestHandler.handleRequest(request, node);
 		log.info("Rejected audio call with: " + username);
 	}
@@ -191,7 +193,7 @@ public class AudioPaneController {
 			}
 		});
 
-		audioUtils.removeReceiver(node.getFriend(audioRequest.getSenderName()));
+		audioUtils.removeReceiver(node.getUser().getFriend(audioRequest.getSenderName()));
 	}
 
 	private void markRejectedChatPartner(String chatPartner) {
@@ -230,7 +232,7 @@ public class AudioPaneController {
 		audioUserLabel.setText(username + labelPostfix);
 		audioUserLabel.getStyleClass().add("audioUser");
 		audioUsersMap.put(username, audioUserLabel);
-		audioUtils.addReceiver(node.getFriend(username));
+		audioUtils.addReceiver(node.getUser().getFriend(username));
 	}
 
 }

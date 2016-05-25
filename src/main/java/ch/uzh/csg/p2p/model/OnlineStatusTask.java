@@ -43,7 +43,7 @@ public class OnlineStatusTask extends TimerTask {
 			r.setOnlineStatus(OnlineStatus.ONLINE);
 			r.setSenderName(node.getUser().getUsername());
 			r.setSenderAddress(node.getPeer().peerAddress());
-			List<Friend> list = node.getFriendList();
+			List<Friend> list = node.getUser().getFriendList();
 			synchronized (list) {
 				for (Friend f : list) {
 					// only send OnlineStatusRequest when Friend was last online, since when they go
