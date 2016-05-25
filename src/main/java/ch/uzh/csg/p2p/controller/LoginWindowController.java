@@ -6,9 +6,12 @@ import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.sound.sampled.LineUnavailableException;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,11 +111,20 @@ public class LoginWindowController implements Observer, Controller {
 		username = usernameText.getText();
 		this.nodeIP = ip;
 		this.nodeId = id;
+		Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
+		Matcher m = p.matcher(username);
+		boolean usernameIsCorrectEMailAddress = m.matches();
 
 		if (username.equals("") || password.equals("")) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Username or password empty");
 			String s = "Username or password cannot be empty.";
+			alert.setContentText(s);
+			alert.showAndWait();
+		} else if (!usernameIsCorrectEMailAddress) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Incorrect email format");
+			String s = "The username has to be a valid email address.";
 			alert.setContentText(s);
 			alert.showAndWait();
 		} else {
@@ -130,9 +142,8 @@ public class LoginWindowController implements Observer, Controller {
 	}
 
 	private String getPassword() throws NoSuchAlgorithmException {
-		// TODO: Add hash function
 		if (!passwordText.getText().equals("")) {
-			return passwordText.getText();
+			return DigestUtils.shaHex(passwordText.getText() + LoginHelper.PASSWORD_SALT);
 		} else {
 			return "";
 		}

@@ -4,15 +4,17 @@ import java.io.IOException;
 
 import javax.sound.sampled.LineUnavailableException;
 
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.futures.BaseFutureListener;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.UserInfo;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.UserInfoRequest;
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.futures.BaseFutureListener;
 
 public class LoginHelper {
+
+	public static final String PASSWORD_SALT = "quack!";
 
 	public static void saveUsernamePassword(Node node, String username, String password)
 			throws IOException, LineUnavailableException {

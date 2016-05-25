@@ -4,23 +4,20 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Stage;
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
 
 public class MainWindowController implements Controller {
 
@@ -89,7 +86,8 @@ public class MainWindowController implements Controller {
 		this.requestPaneController = requestPaneController;
 	}
 
-	public void setNotificationPaneController(NotificationPaneController notificationPaneController) {
+	public void setNotificationPaneController(
+			NotificationPaneController notificationPaneController) {
 		this.notificationPaneController = notificationPaneController;
 	}
 
@@ -223,28 +221,29 @@ public class MainWindowController implements Controller {
 	public void makeAudioCallDialog(final String username) {
 		Platform.runLater(new Runnable() {
 			public void run() {
-				requestPaneController.makeDialog("Do you want to start an audio call with "
-						+ username + "?", new EventHandler<ActionEvent>() {
+				requestPaneController.makeDialog(
+						"Do you want to start an audio call with " + username + "?",
+						new EventHandler<ActionEvent>() {
 
-					public void handle(ActionEvent event) {
-						try {
-							audioPaneController.acceptAudioCall(username);
-						} catch (Exception e) {
-							log.error("Cannot accept audio call: " + e);
-						}
-						audioRingingThread.stop();
-					}
-				}, new EventHandler<ActionEvent>() {
+							public void handle(ActionEvent event) {
+								try {
+									audioPaneController.acceptAudioCall(username);
+								} catch (Exception e) {
+									log.error("Cannot accept audio call: " + e);
+								}
+								audioRingingThread.stop();
+							}
+						}, new EventHandler<ActionEvent>() {
 
-					public void handle(ActionEvent event) {
-						try {
-							audioPaneController.rejectAudioCall(username);
-						} catch (Exception e) {
-							log.error("Cannot reject audio call: " + e);
-						}
-						audioRingingThread.stop();
-					}
-				});
+							public void handle(ActionEvent event) {
+								try {
+									audioPaneController.rejectAudioCall(username);
+								} catch (Exception e) {
+									log.error("Cannot reject audio call: " + e);
+								}
+								audioRingingThread.stop();
+							}
+						});
 			}
 		});
 
@@ -302,29 +301,30 @@ public class MainWindowController implements Controller {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				if (!modalOverlayPane.isVisible()) {
-					requestPaneController.makeDialog("Do you want to start a video call with "
-							+ username + "?", new EventHandler<ActionEvent>() {
+					requestPaneController.makeDialog(
+							"Do you want to start a video call with " + username + "?",
+							new EventHandler<ActionEvent>() {
 
-						public void handle(ActionEvent event) {
-							try {
-								videoRingingThread.stop();
-								videoPaneController.acceptVideoCall(username);
-							} catch (Exception e) {
-								log.error("Cannot accept video call: " + e);
-								e.printStackTrace();
-							}
-						}
-					}, new EventHandler<ActionEvent>() {
+								public void handle(ActionEvent event) {
+									try {
+										videoRingingThread.stop();
+										videoPaneController.acceptVideoCall(username);
+									} catch (Exception e) {
+										log.error("Cannot accept video call: " + e);
+										e.printStackTrace();
+									}
+								}
+							}, new EventHandler<ActionEvent>() {
 
-						public void handle(ActionEvent event) {
-							try {
-								videoRingingThread.stop();
-								videoPaneController.rejectVideoCall(username);
-							} catch (Exception e) {
-								log.error("Cannot reject video call: " + e);
-							}
-						}
-					});
+								public void handle(ActionEvent event) {
+									try {
+										videoRingingThread.stop();
+										videoPaneController.rejectVideoCall(username);
+									} catch (Exception e) {
+										log.error("Cannot reject video call: " + e);
+									}
+								}
+							});
 
 					InputStream inputStream =
 							getClass().getClassLoader().getResourceAsStream("ring.mp3");
@@ -357,16 +357,6 @@ public class MainWindowController implements Controller {
 
 	public void showFriendSearchResultPane() {
 		setRightTopPane(friendsearchResultPane);
-	}
-
-	public void alertWidthHeight() {
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.setTitle("Width and height of stage");
-		String s =
-				"The current width is: " + stage.getWidth() + " and the height is: "
-						+ stage.getHeight();
-		alert.setContentText(s);
-		alert.showAndWait();
 	}
 
 	public void showChatPane() {

@@ -7,23 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-
 import javax.sound.sampled.LineUnavailableException;
-
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.futures.BaseFutureListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +23,20 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.screens.MainWindow;
+import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.futures.BaseFutureListener;
 
 public class FriendlistPaneController {
 
@@ -85,16 +83,15 @@ public class FriendlistPaneController {
 		friend2.setFriendshipStatus(FriendshipStatus.WAITING);
 		friendlistHelper.storeFriend(friend2, user.getUserName());
 
-		FriendRequest request =
-				new FriendRequest(node.getUser().getPeerAddress(), node.getUser().getUsername(),
-						user.getUserName(), RequestType.SEND);
+		FriendRequest request = new FriendRequest(node.getUser().getPeerAddress(),
+				node.getUser().getUsername(), user.getUserName(), RequestType.SEND);
 		request.setReceiverAddress(user.getPeerAddress());
 		RequestHandler.handleRequest(request, node);
 	}
 
 	@FXML
-	public void searchFriendHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void searchFriendHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		Platform.runLater(new Runnable() {
 			public void run() {
 				mainWindowController.showFriendSearchResultPane();
@@ -134,9 +131,8 @@ public class FriendlistPaneController {
 
 				if (!friendSearchText.getText().equals("")) {
 					if (friendSearchText.getText().equals(node.getUser().getUsername())) {
-						UserInfo userInfo =
-								new UserInfo(node.getPeer().peerAddress(), node.getUser()
-										.getUsername(), null);
+						UserInfo userInfo = new UserInfo(node.getPeer().peerAddress(),
+								node.getUser().getUsername(), null);
 						showFriend(userInfo);
 					} else {
 						try {
@@ -146,8 +142,6 @@ public class FriendlistPaneController {
 							e.printStackTrace();
 						}
 					}
-				} else {
-					mainWindowController.alertWidthHeight();
 				}
 			}
 		});
@@ -254,9 +248,8 @@ public class FriendlistPaneController {
 		final FriendRequest req = r;
 		Platform.runLater(new Runnable() {
 			public void run() {
-				FriendRequest request =
-						new FriendRequest(node.getPeer().peerAddress(), node.getUser()
-								.getUsername(), req.getSenderName(), RequestType.SEND);
+				FriendRequest request = new FriendRequest(node.getPeer().peerAddress(),
+						node.getUser().getUsername(), req.getSenderName(), RequestType.SEND);
 				request.setReceiverAddress(req.getSenderPeerAddress());
 				request.setStatus(RequestStatus.REJECTED);
 
@@ -276,9 +269,8 @@ public class FriendlistPaneController {
 		final FriendRequest req = r;
 		Platform.runLater(new Runnable() {
 			public void run() {
-				FriendRequest request =
-						new FriendRequest(node.getPeer().peerAddress(), node.getUser()
-								.getUsername(), req.getSenderName(), RequestType.SEND);
+				FriendRequest request = new FriendRequest(node.getPeer().peerAddress(),
+						node.getUser().getUsername(), req.getSenderName(), RequestType.SEND);
 				request.setReceiverAddress(req.getSenderPeerAddress());
 				request.setStatus(RequestStatus.ACCEPTED);
 
@@ -322,8 +314,8 @@ public class FriendlistPaneController {
 	}
 
 	@FXML
-	public void leaveChatHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void leaveChatHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.showNotificationPane();
 	}
 
