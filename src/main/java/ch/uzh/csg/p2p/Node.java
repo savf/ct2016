@@ -215,6 +215,9 @@ public class Node extends Observable {
 			public void operationComplete(FutureGet futureGet) throws Exception {
 				if (futureGet != null && futureGet.isSuccess() && futureGet.data() != null) {
 					// user already exist --> only update address
+					UserInfo newUser =
+							new UserInfo(node.getPeer().peerAddress(), username, password);
+					node.setUserInfo(newUser);
 					LoginHelper.updatePeerAddress(node, username);
 				} else {
 					long timeNow = System.currentTimeMillis();
@@ -529,6 +532,7 @@ public class Node extends Observable {
 			// answer
 			// so status goes online
 			request.setStatus(RequestStatus.ACCEPTED);
+			request.setReceiverAddress(f.getPeerAddress());
 			final long time = System.currentTimeMillis();
 			BaseFutureListener<FutureDirect> futureDirectListener =
 					new BaseFutureListener<FutureDirect>() {
@@ -569,6 +573,7 @@ public class Node extends Observable {
 				// offline
 				request.setOnlineStatus(OnlineStatus.OFFLINE);
 				request.setStatus(RequestStatus.ABORTED);
+				request.setReceiverAddress(f.getPeerAddress());
 				final boolean lastInLine = (i == user.getFriendList().size());
 				final long time = System.currentTimeMillis();
 				BaseFutureListener<FutureDirect> futureDirectListener =

@@ -21,7 +21,7 @@ import ch.uzh.csg.p2p.model.request.RequestType;
 public class OnlineStatusTask extends TimerTask {
 	private Node node;
 	private Logger log;
-	private final long TRY_AGAIN_TIME_WINDOW = 2000;
+	private final long TRY_AGAIN_TIME_WINDOW = 1000;
 
 	private OnlineStatusTask() {
 		log = LoggerFactory.getLogger("Onlinestatus Task");

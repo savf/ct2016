@@ -129,7 +129,7 @@ public class RequestHandler {
 								.getReceiverID(), RequestType.SEND);
 				onlineStatusRequest.setStatus(RequestStatus.WAITING);
 
-				final PeerAddress receiver = r.getReceiverAddress();
+				final PeerAddress receiver = r.getMessage().getReceiverAddress();
 				final Message m = r.getMessage();
 
 				BaseFutureListener<FutureDirect> onlineStatusListener =
