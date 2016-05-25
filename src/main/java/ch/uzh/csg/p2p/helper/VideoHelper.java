@@ -35,8 +35,8 @@ import ch.uzh.csg.p2p.model.request.VideoRequest;
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamLockException;
 
-public class VideoUtils {
-	private static Logger log = LoggerFactory.getLogger(VideoUtils.class);
+public class VideoHelper {
+	private static Logger log = LoggerFactory.getLogger(VideoHelper.class);
 
 	private boolean running;
 	private boolean mute;
@@ -50,14 +50,14 @@ public class VideoUtils {
 	private static ImageView partnerImageView;
 	private static boolean isPlaying = false;
 
-	public VideoUtils(Node node, User sender, Friend receiver) {
+	public VideoHelper(Node node, User sender, Friend receiver) {
 		this.node = node;
 		this.sender = sender;
 		receiverList = new ArrayList<Friend>();
 		receiverList.add(receiver);
 	}
 
-	public VideoUtils(Node node, User sender) {
+	public VideoHelper(Node node, User sender) {
 		this.node = node;
 		this.sender = sender;
 		receiverList = new ArrayList<Friend>();

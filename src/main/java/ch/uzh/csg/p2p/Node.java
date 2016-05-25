@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.AudioInfo;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
 import ch.uzh.csg.p2p.model.FriendshipStatus;
@@ -26,6 +27,7 @@ import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.OnlineStatusTask;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.UserInfo;
+import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
@@ -121,12 +123,6 @@ public class Node extends Observable {
 								ChatMessage chatMessage = (ChatMessage) iterator.next().object();
 								user.addChatMessage(chatMessage);
 							}
-						} else {
-							/*
-							 * long timeNow = System.currentTimeMillis(); if (timeNow - time <
-							 * TRY_AGAIN_TIME_WINDOW) { RequestHandler.handleRequest(messageRequest,
-							 * node, this); }
-							 */
 						}
 					}
 
@@ -135,6 +131,33 @@ public class Node extends Observable {
 
 				};
 		RequestHandler.handleRequest(messageRequest, this, messageRetrieveListener);
+	}
+
+	private void loadAudioCallsFromDHT() throws LineUnavailableException {
+		final long time = System.currentTimeMillis();
+		final Node node = this;
+		AudioRequest audioRequest = new AudioRequest();
+		audioRequest.setType(RequestType.RETRIEVE);
+		audioRequest.setSenderName(user.getUsername());
+
+		BaseFutureListener<FutureGet> audioRetrieveListener = new BaseFutureListener<FutureGet>() {
+
+			@Override
+			public void operationComplete(FutureGet futureGet) throws Exception {
+				if (futureGet != null && futureGet.isSuccess()) {
+					Iterator<Data> iterator = futureGet.dataMap().values().iterator();
+					while (iterator.hasNext()) {
+						AudioInfo audioInfo = (AudioInfo) iterator.next().object();
+						user.addAudioInfo(audioInfo);
+					}
+				}
+			}
+
+			@Override
+			public void exceptionCaught(Throwable t) throws Exception {}
+
+		};
+		RequestHandler.handleRequest(audioRequest, this, audioRetrieveListener);
 	}
 
 	private void initiateUser(final String username, final String password)
@@ -207,6 +230,7 @@ public class Node extends Observable {
 					announceChangedToOnlineStatus();
 					// Load missed messages and calls after initiating the friend list
 					loadMessagesFromDHT();
+					loadAudioCallsFromDHT();
 				} else {
 					long timeNow = System.currentTimeMillis();
 					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {

@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.helper.AudioUtils;
-import ch.uzh.csg.p2p.helper.VideoUtils;
+import ch.uzh.csg.p2p.helper.AudioHelper;
+import ch.uzh.csg.p2p.helper.VideoHelper;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
@@ -30,8 +30,8 @@ public class VideoPaneController {
 	private MainWindowController mainWindowController;
 	private Boolean cameraOff;
 	private Boolean microphoneMuted;
-	private AudioUtils audioUtils;
-	private VideoUtils videoUtils;
+	private AudioHelper audioUtils;
+	private VideoHelper videoUtils;
 
 	@FXML
 	public HBox btnWrapperVideo;
@@ -56,8 +56,8 @@ public class VideoPaneController {
 	public VideoPaneController(Node node, MainWindowController mainWindowController) {
 		this.node = node;
 		this.mainWindowController = mainWindowController;
-		this.audioUtils = new AudioUtils(node, node.getUser());
-		this.videoUtils = new VideoUtils(node, node.getUser());
+		this.audioUtils = new AudioHelper(node, node.getUser());
+		this.videoUtils = new VideoHelper(node, node.getUser());
 	}
 
 	@FXML
@@ -89,10 +89,10 @@ public class VideoPaneController {
 		hideMyselfBtn.setText("Hide myself");
 
 		if (audioUtils == null) {
-			audioUtils = new AudioUtils(node, node.getUser());
+			audioUtils = new AudioHelper(node, node.getUser());
 		}
 
-		videoUtils = new VideoUtils(node, node.getUser());
+		videoUtils = new VideoHelper(node, node.getUser());
 
 		for (String chatPartner : mainWindowController.currentChatPartners) {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
@@ -225,8 +225,8 @@ public class VideoPaneController {
 		mainWindowController.chatPaneController.startChatSessionWith(username);
 		mainWindowController.showVideoAndChatPanes();
 
-		videoUtils = new VideoUtils(node, node.getUser());
-		audioUtils = new AudioUtils(node, node.getUser());
+		videoUtils = new VideoHelper(node, node.getUser());
+		audioUtils = new AudioHelper(node, node.getUser());
 
 		VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ACCEPTED,
 				node.getFriend(username).getPeerAddress(), username, node.getUser().getUsername());

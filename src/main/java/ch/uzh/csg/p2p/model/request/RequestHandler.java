@@ -11,11 +11,12 @@ import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.controller.MainWindowController;
-import ch.uzh.csg.p2p.helper.AudioUtils;
+import ch.uzh.csg.p2p.helper.AudioHelper;
 import ch.uzh.csg.p2p.helper.EncoderUtils;
 import ch.uzh.csg.p2p.helper.FriendlistHelper;
 import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.helper.VideoUtils;
+import ch.uzh.csg.p2p.helper.VideoHelper;
+import ch.uzh.csg.p2p.model.AudioInfo;
 import ch.uzh.csg.p2p.model.AudioMessage;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.Friend;
@@ -155,6 +156,7 @@ public class RequestHandler {
 
 				handleRequest(onlineStatusRequest, n, onlineStatusListener);
 			}
+			return true;
 		}
 		if (request instanceof BootstrapRequest) {
 			BootstrapRequest r = (BootstrapRequest) request;
@@ -181,33 +183,47 @@ public class RequestHandler {
 				}
 
 			});
+			return true;
 		}
 		if (request instanceof AudioRequest) {
 			final AudioRequest r = (AudioRequest) request;
-			PeerAddress peerAddress = null;
-			if (r.getReceiverAddress() != null) {
-				peerAddress = r.getReceiverAddress();
-				n.getPeer().peer().sendDirect(peerAddress).object(r).start();
-			} else {
+			final long time = System.currentTimeMillis();
 
-				BaseFutureListener<FutureGet> requestListener =
-						new BaseFutureListener<FutureGet>() {
+			if (r.getReceiverAddress() != null) {
+				OnlineStatusRequest onlineStatusRequest =
+						new OnlineStatusRequest(r.getReceiverAddress(), n.getPeer().peerAddress(),
+								r.getSenderName(), r.getReceiverName(), RequestType.SEND);
+				onlineStatusRequest.setStatus(RequestStatus.WAITING);
+
+				BaseFutureListener<FutureDirect> onlineStatusListener =
+						new BaseFutureListener<FutureDirect>() {
+
 							@Override
-							public void operationComplete(FutureGet futureGet) throws Exception {
-								if (futureGet != null && futureGet.isSuccess()
-										&& futureGet.data() != null) {
-									UserInfo user = (UserInfo) futureGet.data().object();
-									node.getPeer().peer().sendDirect(user.getPeerAddress())
-											.object(r).start();
+							public void operationComplete(FutureDirect futureDirect)
+									throws Exception {
+								if (futureDirect != null && futureDirect.isSuccess()) {
+									// Got a response, which means the recipient is online
+									n.getPeer().peer().sendDirect(r.getReceiverAddress()).object(r)
+											.start();
+								} else {
+									long timeNow = System.currentTimeMillis();
+									if (timeNow - time < (TRY_AGAIN_TIME_WINDOW)) {
+										tryAgain(onlineStatusRequest, node, this);
+									} else {
+										// The recipient really seems to be offline -> Store the
+										// message
+										r.setType(RequestType.STORE);
+										handleRequest(r, n, genericListener);
+									}
 								}
 							}
 
 							@Override
 							public void exceptionCaught(Throwable t) throws Exception {}
 						};
-				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
-			}
 
+				handleRequest(onlineStatusRequest, n, onlineStatusListener);
+			}
 			return true;
 		}
 		if (request instanceof VideoRequest) {
@@ -291,7 +307,7 @@ public class RequestHandler {
 			if (message instanceof AudioMessage) {
 				AudioMessage audioMessage = (AudioMessage) message;
 				try {
-					AudioUtils
+					AudioHelper
 							.playAudio(EncoderUtils.byteArrayToByteBuffer(audioMessage.getData()));
 				} catch (LineUnavailableException e) {
 					log.error("AudioMessage could not be played: " + e);
@@ -303,7 +319,7 @@ public class RequestHandler {
 			} else if (message instanceof VideoMessage) {
 				log.info("handleReceive VideoMessage");
 				VideoMessage videoMessage = (VideoMessage) message;
-				VideoUtils.playVideo(videoMessage.getData());
+				VideoHelper.playVideo(videoMessage.getData());
 			}
 			log.info(message.getReceiverID() + " received message: " + message.toString()
 					+ " from: " + message.getSenderID().toString());
@@ -451,22 +467,33 @@ public class RequestHandler {
 			MessageRequest r = (MessageRequest) request;
 			if (r.getMessage() instanceof ChatMessage) {
 				ChatMessage m = (ChatMessage) r.getMessage();
-				FuturePut future = node.getPeer().put(Number160.createHash(m.getReceiverID()))
+				FuturePut futurePut = node.getPeer().put(Number160.createHash(m.getReceiverID()))
 						.data(Number160.createHash(m.getSenderID() + m.getDate().getTime()),
 								new Data(m))
 						.domainKey(MESSAGE_DOMAIN).start();
 				if (genericListener != null) {
-					future.addListener(genericListener);
+					futurePut.addListener(genericListener);
 				}
 			}
 
 		}
+		if (request instanceof AudioRequest) {
+			AudioRequest r = (AudioRequest) request;
+			if (r.getStatus().equals(RequestStatus.WAITING)) {
+				AudioInfo audioInfo = new AudioInfo(r.getSenderName(), r.getReceiverName());
+				FuturePut futurePut =
+						node.getPeer().put(Number160.createHash(r.getReceiverName()))
+								.data(Number160.createHash(audioInfo.getSendername()
+										+ audioInfo.getReceivedOn().getTime()), new Data(audioInfo))
+								.domainKey(AUDIO_DOMAIN).start();
+				if (genericListener != null) {
+					futurePut.addListener(genericListener);
+				}
+			}
+		}
 		if (request instanceof FriendRequest) {
 			// this store operation is only used if a User gets a new friend and wants to save it in
-			// the
-			// dht for future use
-			// if a request is sent to an offline user, this has to be handled with
-			// sendDirect.putIfAbsent()
+			// the dht for future use
 			// the sender is the one who wants to store the info
 			final FriendRequest r = (FriendRequest) request;
 			if (r.getStatus().equals(RequestStatus.ABORTED)) {
@@ -479,8 +506,7 @@ public class RequestHandler {
 			} else {
 				// this case is used for storing a friend into the dht, either when the friendship
 				// has been accepted or when one of both parties is not online and has yet to answer
-				// the
-				// request (or get the answer to his request)
+				// the request (or get the answer to his request)
 				Friend friend = new Friend(r.getReceiverAddress(), r.getReceiverName());
 				friend.setFriendshipStatus(r.getStatus().toString());
 
@@ -532,6 +558,14 @@ public class RequestHandler {
 			MessageRequest r = (MessageRequest) request;
 			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
 					.domainKey(MESSAGE_DOMAIN).all().start();
+			if (genericListener != null) {
+				futureGet.addListener(genericListener);
+			}
+		}
+		if (request instanceof AudioRequest) {
+			AudioRequest r = (AudioRequest) request;
+			FutureGet futureGet = node.getPeer().get(Number160.createHash(r.getSenderName()))
+					.domainKey(AUDIO_DOMAIN).all().start();
 			if (genericListener != null) {
 				futureGet.addListener(genericListener);
 			}
