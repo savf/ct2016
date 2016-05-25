@@ -8,15 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.helper.ChatHelper;
-import ch.uzh.csg.p2p.model.ChatMessage;
-import ch.uzh.csg.p2p.model.request.FriendRequest;
-import ch.uzh.csg.p2p.model.request.RequestHandler;
-import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
@@ -26,6 +17,16 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.helper.ChatHelper;
+import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.request.FriendRequest;
+import ch.uzh.csg.p2p.model.request.RequestHandler;
+import ch.uzh.csg.p2p.screens.MainWindow;
 
 public class NotificationPaneController {
 
@@ -60,10 +61,10 @@ public class NotificationPaneController {
 		missedFriendRequestsFrom = new HashSet<String>();
 		friendRequestListener = new ListChangeListener<FriendRequest>() {
 			public void onChanged(ListChangeListener.Change change) {
-				startFriendRequestWhileAway(node.getRequestsWhileAway());
+				startFriendRequestWhileAway(node.getUser().getFriendRequestStorage());
 			}
 		};
-		node.registerForFriendRequestWhileAwayUpdates(friendRequestListener);
+		node.getUser().registerForFriendRequestWhileAwayUpdates(friendRequestListener);
 
 		chatMessageListener = new ListChangeListener<ChatMessage>() {
 
@@ -86,10 +87,9 @@ public class NotificationPaneController {
 						if (!missedFriendRequestsFrom.contains(r.getSenderName())) {
 							missedFriendRequestsFrom.add(r.getSenderName());
 
-
-
-							FXMLLoader loader = new FXMLLoader(
-									MainWindow.class.getResource("MissedMessageItem.fxml"));
+							FXMLLoader loader =
+									new FXMLLoader(MainWindow.class
+											.getResource("MissedMessageItem.fxml"));
 							MissedItemController missedItemController = new MissedItemController();
 							loader.setController(missedItemController);
 
@@ -100,8 +100,8 @@ public class NotificationPaneController {
 									missedFriendRequestsFrom.remove(r.getSenderName());
 									RequestHandler.handleRequest(r, node);
 									missedItemController.removeMyself();
-									awayFriendRequestCountLabel.setText(
-											Integer.toString(missedFriendRequestsFrom.size()));
+									awayFriendRequestCountLabel.setText(Integer.toString(Integer
+											.parseInt(awayFriendRequestCountLabel.getText()) - 1));
 								}
 
 							};
@@ -132,8 +132,8 @@ public class NotificationPaneController {
 					for (ChatMessage m : list) {
 						if (!missedChatMessages.containsKey(m)) {
 							try {
-								mainWindowController.chatPaneController
-										.addReceivedMessage(m.getSenderID(), m.getData());
+								mainWindowController.chatPaneController.addReceivedMessage(
+										m.getSenderID(), m.getData());
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}
@@ -142,25 +142,26 @@ public class NotificationPaneController {
 
 								@Override
 								public void handle(MouseEvent event) {
-									awayMessageCountLabel.setText(Integer.toString(
-											Integer.parseInt(awayMessageCountLabel.getText()) - 1));
-									mainWindowController.chatPaneController
-											.startChatSessionWith(m.getSenderID());
+									awayMessageCountLabel.setText(Integer.toString(Integer
+											.parseInt(awayMessageCountLabel.getText()) - 1));
+									mainWindowController.chatPaneController.startChatSessionWith(m
+											.getSenderID());
 									mainWindowController.showChatPane();
 									removeChatMessagesFrom(m.getSenderID());
 								}
 
 							};
 
-							FXMLLoader loader = new FXMLLoader(
-									MainWindow.class.getResource("MissedMessageItem.fxml"));
+							FXMLLoader loader =
+									new FXMLLoader(MainWindow.class
+											.getResource("MissedMessageItem.fxml"));
 							MissedItemController missedItemController = new MissedItemController();
 							loader.setController(missedItemController);
 							missedChatMessages.put(m, missedItemController);
 							try {
 								AnchorPane missedMessageItem = (AnchorPane) loader.load();
-								missedItemController
-										.setMessage(m.getSenderID() + ": " + m.getData());
+								missedItemController.setMessage(m.getSenderID() + ": "
+										+ m.getData());
 								missedItemController.setDateTime(m.getDate());
 								missedItemController.setClickHandler(clickHandler);
 								awayMessageVBox.getChildren().add(missedMessageItem);
@@ -182,8 +183,8 @@ public class NotificationPaneController {
 			if (entry.getKey().getSenderID().equals(sender)) {
 				entry.getValue().removeMyself();
 				iterator.remove();
-				ChatHelper.removeStoredMessageFrom(sender, entry.getKey().getReceiverID(),
-						entry.getKey().getDate(), node);
+				ChatHelper.removeStoredMessageFrom(sender, entry.getKey().getReceiverID(), entry
+						.getKey().getDate(), node);
 			}
 		}
 		node.getUser().removeMessagesFromUser(sender);

@@ -11,7 +11,26 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Timer;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+
 import javax.sound.sampled.LineUnavailableException;
+
+import net.tomp2p.connection.Bindings;
+import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
+import net.tomp2p.dht.PeerBuilderDHT;
+import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.futures.BaseFutureListener;
+import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDirect;
+import net.tomp2p.p2p.PeerBuilder;
+import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.replication.IndirectReplication;
+import net.tomp2p.rpc.ObjectDataReply;
+import net.tomp2p.storage.Data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,23 +53,6 @@ import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import net.tomp2p.connection.Bindings;
-import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.FuturePut;
-import net.tomp2p.dht.PeerBuilderDHT;
-import net.tomp2p.dht.PeerDHT;
-import net.tomp2p.futures.BaseFutureListener;
-import net.tomp2p.futures.FutureBootstrap;
-import net.tomp2p.futures.FutureDirect;
-import net.tomp2p.p2p.PeerBuilder;
-import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.replication.IndirectReplication;
-import net.tomp2p.rpc.ObjectDataReply;
-import net.tomp2p.storage.Data;
 
 public class Node extends Observable {
 
@@ -63,17 +65,14 @@ public class Node extends Observable {
 
 	private Logger log;
 	private User user;
-	private ObservableList<Friend> friendList =
-			FXCollections.observableList(new ArrayList<Friend>());
+	private ObservableList<Friend> friendList = FXCollections
+			.observableList(new ArrayList<Friend>());
 	private Timer onlineStatusTaskTimer;
 	protected PeerDHT peer;
 
-	private ObservableList<FriendRequest> requestsWhileAway =
-			FXCollections.observableList(new ArrayList<FriendRequest>());
-
 	public Node(int nodeId, String ip, String username, String password, boolean bootstrapNode,
-			Observer nodeReadyObserver)
-			throws IOException, LineUnavailableException, ClassNotFoundException {
+			Observer nodeReadyObserver) throws IOException, LineUnavailableException,
+			ClassNotFoundException {
 		log = LoggerFactory.getLogger("Node of user " + username);
 		user = new User(username, password, null);
 		int id = ((Long) System.currentTimeMillis()).intValue();
@@ -98,8 +97,8 @@ public class Node extends Observable {
 		startOnlineStatusTask();
 	}
 
-	public void loadStoredDataFromDHT()
-			throws UnsupportedEncodingException, LineUnavailableException {
+	public void loadStoredDataFromDHT() throws UnsupportedEncodingException,
+			LineUnavailableException {
 		loadFriendlistFromDHTAndAnnounceOnlineStatus();
 	}
 
@@ -170,8 +169,8 @@ public class Node extends Observable {
 	}
 
 	protected void tryAgainRetrieveUserInfo(String username, Node node,
-			BaseFutureListener<FutureGet> baseFutureListener)
-			throws LineUnavailableException, InterruptedException {
+			BaseFutureListener<FutureGet> baseFutureListener) throws LineUnavailableException,
+			InterruptedException {
 		// TODO Auto-generated method stub
 		Thread.sleep(500);
 		log.debug("Node had unsuccessful UserRetrieve Request, Try again...");
@@ -232,7 +231,7 @@ public class Node extends Observable {
 		request.setSenderPeerAddress(f.getPeerAddress());
 		request.setStatus(RequestStatus.WAITING);
 		request.setType(RequestType.RECEIVE);
-		requestsWhileAway.add(request);
+		user.addFriendRequest(request);
 	}
 
 	protected void getRejected(Friend f) {
@@ -265,18 +264,13 @@ public class Node extends Observable {
 		friendList.addListener(listener);
 	}
 
-	public void registerForFriendRequestWhileAwayUpdates(
-			ListChangeListener<FriendRequest> listener) {
-		requestsWhileAway.addListener(listener);
-	}
-
 	protected void createPeerAndInitiateUser(int nodeId, String username, String password,
-			boolean bootstrapNode, String ip)
-			throws IOException, ClassNotFoundException, LineUnavailableException {
+			boolean bootstrapNode, String ip) throws IOException, ClassNotFoundException,
+			LineUnavailableException {
 		Bindings b = new Bindings().listenAny();
-		peer = new PeerBuilderDHT(
-				new PeerBuilder(new Number160(nodeId)).ports(getPort()).bindings(b).start())
-						.start();
+		peer =
+				new PeerBuilderDHT(new PeerBuilder(new Number160(nodeId)).ports(getPort())
+						.bindings(b).start()).start();
 
 		if (bootstrapNode) {
 			// Bootstrapnode
@@ -325,8 +319,8 @@ public class Node extends Observable {
 		}
 	}
 
-	protected Object handleReceivedData(PeerAddress peerAddress, Object object)
-			throws IOException, LineUnavailableException, ClassNotFoundException {
+	protected Object handleReceivedData(PeerAddress peerAddress, Object object) throws IOException,
+			LineUnavailableException, ClassNotFoundException {
 
 		log.info("Received message: " + object.toString() + " from: " + peerAddress.toString());
 
@@ -423,10 +417,6 @@ public class Node extends Observable {
 		return friendList;
 	}
 
-	public List<FriendRequest> getRequestsWhileAway() {
-		return requestsWhileAway;
-	}
-
 	public void shutdown() {
 		log.info("Shutting down gracefully.");
 		running = false;
@@ -442,8 +432,9 @@ public class Node extends Observable {
 
 	public void announceChangedToOnlineStatus() throws LineUnavailableException {
 		for (Friend f : friendList) {
-			OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
-					peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
+			OnlineStatusRequest request =
+					new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
+							user.getUsername(), f.getName(), RequestType.SEND);
 			request.setChangedPeerAddress(true);
 			request.setOnlineStatus(OnlineStatus.ONLINE);
 			// send new OnlineRequest, act like this is an answer to a request, and send a positive
@@ -482,8 +473,9 @@ public class Node extends Observable {
 		} else {
 			int i = 1;
 			for (Friend f : friendList) {
-				OnlineStatusRequest request = new OnlineStatusRequest(f.getPeerAddress(),
-						peer.peerAddress(), user.getUsername(), f.getName(), RequestType.SEND);
+				OnlineStatusRequest request =
+						new OnlineStatusRequest(f.getPeerAddress(), peer.peerAddress(),
+								user.getUsername(), f.getName(), RequestType.SEND);
 				// act like we received an OnlineStatusRequest and answer with Aborted so Status
 				// goes to
 				// offline
@@ -522,8 +514,7 @@ public class Node extends Observable {
 			throws LineUnavailableException, InterruptedException {
 		Thread.sleep(500);
 		log.debug("Node had unsuccessful Request, Try again...");
-		log.debug(
-				"Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
+		log.debug("Sender: " + request.getSenderName() + ", Receiver: " + request.getReceiverName());
 		log.debug(" Request: " + request.getClass() + " Type: " + request.getType());
 		RequestHandler.tryAgain(request, this, baseFutureListener);
 	}
