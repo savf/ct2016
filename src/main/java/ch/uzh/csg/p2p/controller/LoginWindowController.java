@@ -7,6 +7,16 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.sound.sampled.LineUnavailableException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.helper.LoginHelper;
+import ch.uzh.csg.p2p.model.UserInfo;
+import ch.uzh.csg.p2p.screens.LoginWindow;
+import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -18,20 +28,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
-
-import javax.sound.sampled.LineUnavailableException;
-
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.futures.BaseFutureListener;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.helper.LoginHelper;
-import ch.uzh.csg.p2p.model.UserInfo;
-import ch.uzh.csg.p2p.screens.LoginWindow;
-import ch.uzh.csg.p2p.screens.MainWindow;
 
 public class LoginWindowController implements Observer, Controller {
 
@@ -90,8 +88,8 @@ public class LoginWindowController implements Observer, Controller {
 	@FXML
 	public void handleBootstrapCB() throws UnknownHostException {
 		if (bootstrapCB.isSelected()) {
-			ipText.setText("The local IP address is: "
-					+ InetAddress.getLocalHost().getHostAddress());
+			ipText.setText(
+					"The local IP address is: " + InetAddress.getLocalHost().getHostAddress());
 			ipText.setDisable(true);
 		} else {
 			ipText.setText("");
@@ -158,8 +156,8 @@ public class LoginWindowController implements Observer, Controller {
 									public void run() {
 										try {
 											MainWindow mainWindow = new MainWindow();
-											mainWindow.start(loginWindow.getStage(), nodeId,
-													nodeIP, username, password, false);
+											mainWindow.start(loginWindow.getStage(), nodeId, nodeIP,
+													username, password, false);
 										} catch (Exception e) {
 											loginNotPossibleExceptionHandler();
 										}
@@ -193,11 +191,6 @@ public class LoginWindowController implements Observer, Controller {
 							}
 						});
 					}
-				} else {
-					long timeNow = System.currentTimeMillis();
-					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
-						tryAgain(username, node, this);
-					}
 				}
 			}
 
@@ -211,7 +204,8 @@ public class LoginWindowController implements Observer, Controller {
 		}
 	}
 
-	protected void tryAgain(String name, Node node, BaseFutureListener<FutureGet> baseFutureListener)
+	protected void tryAgain(String name, Node node,
+			BaseFutureListener<FutureGet> baseFutureListener)
 			throws LineUnavailableException, InterruptedException {
 		Thread.sleep(500);
 		log.debug("LoginWindowController had unsuccessfull Request, Try again...");

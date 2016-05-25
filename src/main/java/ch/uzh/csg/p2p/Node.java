@@ -100,9 +100,7 @@ public class Node extends Observable {
 
 	public void loadStoredDataFromDHT()
 			throws UnsupportedEncodingException, LineUnavailableException {
-		// TODO load messages, calls, friendrequests...
 		loadFriendlistFromDHTAndAnnounceOnlineStatus();
-		loadMessagesFromDHT();
 	}
 
 	private void loadMessagesFromDHT() throws LineUnavailableException {
@@ -112,28 +110,30 @@ public class Node extends Observable {
 		messageRequest.setType(RequestType.RETRIEVE);
 		messageRequest.setSenderName(user.getUsername());
 
-		BaseFutureListener<FutureGet> messageRetrieveListener = new BaseFutureListener<FutureGet>() {
+		BaseFutureListener<FutureGet> messageRetrieveListener =
+				new BaseFutureListener<FutureGet>() {
 
-			@Override
-			public void operationComplete(FutureGet futureGet) throws Exception {
-				if (futureGet != null && futureGet.isSuccess()) {
-					Iterator<Data> iterator = futureGet.dataMap().values().iterator();
-					while (iterator.hasNext()) {
-						ChatMessage chatMessage = (ChatMessage) iterator.next().object();
-						user.addChatMessage(chatMessage);
+					@Override
+					public void operationComplete(FutureGet futureGet) throws Exception {
+						if (futureGet != null && futureGet.isSuccess()) {
+							Iterator<Data> iterator = futureGet.dataMap().values().iterator();
+							while (iterator.hasNext()) {
+								ChatMessage chatMessage = (ChatMessage) iterator.next().object();
+								user.addChatMessage(chatMessage);
+							}
+						} else {
+							/*
+							 * long timeNow = System.currentTimeMillis(); if (timeNow - time <
+							 * TRY_AGAIN_TIME_WINDOW) { RequestHandler.handleRequest(messageRequest,
+							 * node, this); }
+							 */
+						}
 					}
-				} else {
-					long timeNow = System.currentTimeMillis();
-					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
-						RequestHandler.handleRequest(messageRequest, node, this);
-					}
-				}
-			}
 
-			@Override
-			public void exceptionCaught(Throwable t) throws Exception {}
+					@Override
+					public void exceptionCaught(Throwable t) throws Exception {}
 
-		};
+				};
 		RequestHandler.handleRequest(messageRequest, this, messageRetrieveListener);
 	}
 
@@ -205,6 +205,8 @@ public class Node extends Observable {
 						}
 					}
 					announceChangedToOnlineStatus();
+					// Load missed messages and calls after initiating the friend list
+					loadMessagesFromDHT();
 				} else {
 					long timeNow = System.currentTimeMillis();
 					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {

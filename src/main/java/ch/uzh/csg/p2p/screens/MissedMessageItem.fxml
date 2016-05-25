@@ -4,13 +4,13 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane fx:id="missedItemAnchorPane" onMouseClicked="#handleClickItem" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane fx:id="missedItemAnchorPane" styleClass="missedItem" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label fx:id="messageLabel" maxWidth="300.0" text="Sender: message" />
+            <Label fx:id="messageLabel" maxWidth="300.0" />
             <Region minWidth="20.0" HBox.hgrow="ALWAYS" />
-            <Label fx:id="dateTimeLabel" minWidth="115.0" text="Date, Time" />
+            <Label fx:id="dateTimeLabel" minWidth="115.0" />
          </children>
       </HBox>
    </children>

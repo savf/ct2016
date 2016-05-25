@@ -4,10 +4,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.function.Function;
 
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 
@@ -22,17 +23,13 @@ public class MissedItemController {
 	@FXML
 	Label dateTimeLabel;
 
-	private Function<String, Void> externalHandler;
-	private String senderName;
+	public MissedItemController() {}
 
-	public MissedItemController(String senderName, Function<String, Void> externalHandler) {
-		this.senderName = senderName;
-		this.externalHandler = externalHandler;
+	public void setClickHandler(EventHandler<MouseEvent> clickHandler) {
+		missedItemAnchorPane.setOnMouseClicked(clickHandler);
 	}
 
-	@FXML
-	public void handleClickItem() {
-		externalHandler.apply(senderName);
+	public void removeMyself() {
 		VBox parent = (VBox) missedItemAnchorPane.getParent();
 		parent.getChildren().remove(missedItemAnchorPane);
 	}

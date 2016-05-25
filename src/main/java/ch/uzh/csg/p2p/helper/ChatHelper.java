@@ -10,23 +10,32 @@ import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.request.MessageRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import net.tomp2p.dht.FutureRemove;
+import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 
 public class ChatHelper {
 
 
-  public static void sendMessage(Node node, String message, List<String> users)
-      throws LineUnavailableException {
-    String sender = node.getUser().getUsername();
+	public static void sendMessage(Node node, String message, List<String> users)
+			throws LineUnavailableException {
+		String sender = node.getUser().getUsername();
 
-    for (String chatPartner : users) {
-      Date date = new Date();
-      PeerAddress receiverAddress = node.getFriend(chatPartner).getPeerAddress();
-      ChatMessage m = new ChatMessage(sender, chatPartner, receiverAddress, date, message);
+		for (String chatPartner : users) {
+			Date date = new Date();
+			PeerAddress receiverAddress = node.getFriend(chatPartner).getPeerAddress();
+			ChatMessage m = new ChatMessage(sender, chatPartner, receiverAddress, date, message);
 
-      MessageRequest request = new MessageRequest(m, RequestType.SEND);
-      RequestHandler.handleRequest(request, node);
-    }
-  }
+			MessageRequest request = new MessageRequest(m, RequestType.SEND);
+			RequestHandler.handleRequest(request, node);
+		}
+	}
+
+	public static void removeStoredMessageFrom(String sender, String recipient, Date date,
+			Node node) {
+		FutureRemove futureRemove = node.getPeer().remove(Number160.createHash(recipient))
+				.domainKey(Number160.createHash("message"))
+				.contentKey(Number160.createHash(sender + date.getTime())).start();
+	}
 
 }

@@ -1,13 +1,18 @@
 package ch.uzh.csg.p2p.controller;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.helper.ChatHelper;
 import ch.uzh.csg.p2p.model.ChatMessage;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
@@ -28,8 +33,11 @@ public class NotificationPaneController {
 	private Node node;
 	private MainWindowController mainWindowController;
 	private int friendRequestCounter = 0;
+	private Set<String> missedFriendRequestsFrom;
 	private ListChangeListener<FriendRequest> friendRequestListener;
 	private ListChangeListener<ChatMessage> chatMessageListener;
+	private HashMap<ChatMessage, MissedItemController> missedChatMessages =
+			new HashMap<ChatMessage, MissedItemController>();
 
 	@FXML
 	private Label awayMessageCountLabel;
@@ -46,14 +54,10 @@ public class NotificationPaneController {
 	@FXML
 	private VBox awayFriendRequestVBox;
 
-	private NotificationPaneController() {
-		setNode(null);
-		setMainWindowController(null);
-	}
-
 	public NotificationPaneController(Node node, MainWindowController mainWindowController) {
 		setNode(node);
 		setMainWindowController(mainWindowController);
+		missedFriendRequestsFrom = new HashSet<String>();
 		friendRequestListener = new ListChangeListener<FriendRequest>() {
 			public void onChanged(ListChangeListener.Change change) {
 				startFriendRequestWhileAway(node.getRequestsWhileAway());
@@ -77,24 +81,41 @@ public class NotificationPaneController {
 		if (list != null && !list.isEmpty()) {
 			Platform.runLater(new Runnable() {
 				public void run() {
-					friendRequestCounter = list.size();
-					awayFriendRequestCountLabel.setText(Integer.toString(friendRequestCounter));
+					awayFriendRequestCountLabel.setText(Integer.toString(list.size()));
 					for (FriendRequest r : list) {
-						Label label = new Label(r.getSenderName());
-						label.getStyleClass().add("label");
-						label.setOnMouseClicked(new EventHandler<MouseEvent>() {
+						if (!missedFriendRequestsFrom.contains(r.getSenderName())) {
+							missedFriendRequestsFrom.add(r.getSenderName());
 
-							@Override
-							public void handle(MouseEvent arg0) {
-								friendRequestCounter--;
-								RequestHandler.handleRequest(r, node);
-								awayFriendRequestVBox.getChildren().remove(label);
-								awayFriendRequestCountLabel
-										.setText(Integer.toString(friendRequestCounter));
+
+
+							FXMLLoader loader = new FXMLLoader(
+									MainWindow.class.getResource("MissedMessageItem.fxml"));
+							MissedItemController missedItemController = new MissedItemController();
+							loader.setController(missedItemController);
+
+							EventHandler<MouseEvent> clickHandler = new EventHandler<MouseEvent>() {
+
+								@Override
+								public void handle(MouseEvent event) {
+									missedFriendRequestsFrom.remove(r.getSenderName());
+									RequestHandler.handleRequest(r, node);
+									missedItemController.removeMyself();
+									awayFriendRequestCountLabel.setText(
+											Integer.toString(missedFriendRequestsFrom.size()));
+								}
+
+							};
+
+							try {
+								AnchorPane missedMessageItem = (AnchorPane) loader.load();
+								missedItemController.setMessage(r.getSenderName());
+								missedItemController.setClickHandler(clickHandler);
+								awayFriendRequestVBox.getChildren().add(missedMessageItem);
+							} catch (IOException e) {
+								e.printStackTrace();
 							}
+						}
 
-						});
-						awayFriendRequestVBox.getChildren().add(label);
 					}
 				}
 			});
@@ -109,45 +130,64 @@ public class NotificationPaneController {
 				public void run() {
 					awayMessageCountLabel.setText(Integer.toString(list.size()));
 					for (ChatMessage m : list) {
-						try {
-							mainWindowController.chatPaneController
-									.addReceivedMessage(m.getSenderID(), m.getData());
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-
-						Function<String, Void> externalHandler = new Function<String, Void>() {
-
-							@Override
-							public Void apply(String sender) {
-								awayMessageCountLabel.setText(Integer.toString(
-										Integer.parseInt(awayMessageCountLabel.getText()) - 1));
-								node.getUser().removeMessagesFromUser(sender);
+						if (!missedChatMessages.containsKey(m)) {
+							try {
 								mainWindowController.chatPaneController
-										.startChatSessionWith(sender);
-								return null;
+										.addReceivedMessage(m.getSenderID(), m.getData());
+							} catch (IOException e1) {
+								e1.printStackTrace();
 							}
 
-						};
+							EventHandler<MouseEvent> clickHandler = new EventHandler<MouseEvent>() {
 
-						FXMLLoader loader = new FXMLLoader(
-								MainWindow.class.getResource("MissedMessageItem.fxml"));
-						MissedItemController missedItemController =
-								new MissedItemController(m.getSenderID(), externalHandler);
-						loader.setController(missedItemController);
-						missedItemController.setMessage(m.getData());
-						missedItemController.setDateTime(m.getDate());
-						try {
-							AnchorPane missedMessageItem = (AnchorPane) loader.load();
-							awayMessageVBox.getChildren().add(missedMessageItem);
-						} catch (IOException e) {
-							e.printStackTrace();
+								@Override
+								public void handle(MouseEvent event) {
+									awayMessageCountLabel.setText(Integer.toString(
+											Integer.parseInt(awayMessageCountLabel.getText()) - 1));
+									mainWindowController.chatPaneController
+											.startChatSessionWith(m.getSenderID());
+									mainWindowController.showChatPane();
+									removeChatMessagesFrom(m.getSenderID());
+								}
+
+							};
+
+							FXMLLoader loader = new FXMLLoader(
+									MainWindow.class.getResource("MissedMessageItem.fxml"));
+							MissedItemController missedItemController = new MissedItemController();
+							loader.setController(missedItemController);
+							missedChatMessages.put(m, missedItemController);
+							try {
+								AnchorPane missedMessageItem = (AnchorPane) loader.load();
+								missedItemController
+										.setMessage(m.getSenderID() + ": " + m.getData());
+								missedItemController.setDateTime(m.getDate());
+								missedItemController.setClickHandler(clickHandler);
+								awayMessageVBox.getChildren().add(missedMessageItem);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
 
 			});
 		}
+	}
+
+	private void removeChatMessagesFrom(String sender) {
+		for (Iterator<Map.Entry<ChatMessage, MissedItemController>> iterator =
+				missedChatMessages.entrySet().iterator(); iterator.hasNext();) {
+			Map.Entry<ChatMessage, MissedItemController> entry = iterator.next();
+			if (entry.getKey().getSenderID().equals(sender)) {
+				entry.getValue().removeMyself();
+				iterator.remove();
+				ChatHelper.removeStoredMessageFrom(sender, entry.getKey().getReceiverID(),
+						entry.getKey().getDate(), node);
+			}
+		}
+		node.getUser().removeMessagesFromUser(sender);
+
 	}
 
 	public Node getNode() {

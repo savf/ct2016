@@ -222,6 +222,7 @@ public class VideoPaneController {
 		microphoneLbl.setGraphic(new ImageView(imageMicrophone));
 		muteMicrophoneBtn.setText("Mute microphone");
 
+		mainWindowController.chatPaneController.startChatSessionWith(username);
 		mainWindowController.showVideoAndChatPanes();
 
 		videoUtils = new VideoUtils(node, node.getUser());

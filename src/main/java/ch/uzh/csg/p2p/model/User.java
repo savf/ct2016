@@ -2,6 +2,7 @@ package ch.uzh.csg.p2p.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javafx.collections.FXCollections;
@@ -59,13 +60,12 @@ public class User implements Serializable {
 	}
 
 	public void removeMessagesFromUser(String username) {
-		List<ChatMessage> filteredList = chatMessageStorage;
-		for (ChatMessage chatMessage : filteredList) {
+		for (Iterator<ChatMessage> iterator = chatMessageStorage.iterator(); iterator.hasNext();) {
+			ChatMessage chatMessage = iterator.next();
 			if (chatMessage.getSenderID().equals(username)) {
-				filteredList.remove(chatMessage);
+				iterator.remove();
 			}
 		}
-		chatMessageStorage = (ObservableList<ChatMessage>) filteredList;
 	}
 
 	public String getUsername() {

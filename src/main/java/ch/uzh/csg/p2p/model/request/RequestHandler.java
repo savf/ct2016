@@ -119,6 +119,12 @@ public class RequestHandler {
 
 			if (r.getMessage() != null && r.getMessage().getReceiverAddress() != null) {
 
+				OnlineStatusRequest onlineStatusRequest =
+						new OnlineStatusRequest(r.getMessage().getReceiverAddress(),
+								n.getPeer().peerAddress(), r.getMessage().getSenderID(),
+								r.getMessage().getReceiverID(), RequestType.SEND);
+				onlineStatusRequest.setStatus(RequestStatus.WAITING);
+
 				BaseFutureListener<FutureDirect> onlineStatusListener =
 						new BaseFutureListener<FutureDirect>() {
 
@@ -133,7 +139,7 @@ public class RequestHandler {
 								} else {
 									long timeNow = System.currentTimeMillis();
 									if (timeNow - time < (TRY_AGAIN_TIME_WINDOW)) {
-										tryAgain(r, node, this);
+										tryAgain(onlineStatusRequest, node, this);
 									} else {
 										// The recipient really seems to be offline -> Store the
 										// message
@@ -147,85 +153,9 @@ public class RequestHandler {
 							public void exceptionCaught(Throwable t) throws Exception {}
 						};
 
-				OnlineStatusRequest onlineStatusRequest =
-						new OnlineStatusRequest(r.getMessage().getReceiverAddress(),
-								n.getPeer().peerAddress(), r.getMessage().getSenderID(),
-								r.getMessage().getReceiverID(), RequestType.SEND);
-				onlineStatusRequest.setStatus(RequestStatus.WAITING);
 				handleRequest(onlineStatusRequest, n, onlineStatusListener);
-			} else {
-				BaseFutureListener<FutureGet> requestListener =
-						new BaseFutureListener<FutureGet>() {
-							@Override
-							public void operationComplete(FutureGet futureGet) throws Exception {
-								if (futureGet != null && futureGet.isSuccess()) {
-									if (futureGet.data() != null) {
-										final UserInfo userInfo =
-												(UserInfo) futureGet.data().object();
-										BaseFutureListener<FutureDirect> onlineStatusListener =
-												new BaseFutureListener<FutureDirect>() {
-
-													@Override
-													public void operationComplete(
-															FutureDirect futureDirect)
-															throws Exception {
-														if (futureDirect != null
-																&& futureDirect.isSuccess()) {
-															// Got a response, which means the
-															// recipient is online
-															n.getPeer().peer()
-																	.sendDirect(
-																			userInfo.getPeerAddress())
-																	.object(r.getMessage()).start();
-														} else {
-															long timeNow =
-																	System.currentTimeMillis();
-															if (timeNow
-																	- time < (TRY_AGAIN_TIME_WINDOW)) {
-																tryAgain(r, node, this);
-															} else {
-																// The recipient really seems to be
-																// offline -> Store the
-																// message
-																r.setType(RequestType.STORE);
-																handleRequest(r, n);
-															}
-														}
-													}
-
-													@Override
-													public void exceptionCaught(Throwable t)
-															throws Exception {}
-												};
-										OnlineStatusRequest onlineStatusRequest =
-												new OnlineStatusRequest(userInfo.getPeerAddress(),
-														n.getPeer().peerAddress(),
-														r.getMessage().getSenderID(),
-														r.getMessage().getReceiverID(),
-														RequestType.SEND);
-										onlineStatusRequest.setStatus(RequestStatus.WAITING);
-										handleRequest(onlineStatusRequest, n, onlineStatusListener);
-									} else {
-										log.error(
-												"FutureGet for user {} was successful, but data is null!",
-												r.getMessage().getReceiverID());
-									}
-								} else {
-									long timeNow = System.currentTimeMillis();
-									if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {
-										tryAgain(r, node, this);
-									}
-								}
-							}
-
-							@Override
-							public void exceptionCaught(Throwable t) throws Exception {}
-						};
-				LoginHelper.retrieveUserInfo(r.getReceiverName(), node, requestListener);
 			}
-
 		}
-
 		if (request instanceof BootstrapRequest) {
 			BootstrapRequest r = (BootstrapRequest) request;
 
@@ -522,7 +452,8 @@ public class RequestHandler {
 			if (r.getMessage() instanceof ChatMessage) {
 				ChatMessage m = (ChatMessage) r.getMessage();
 				FuturePut future = node.getPeer().put(Number160.createHash(m.getReceiverID()))
-						.data(Number160.createHash(m.getSenderID()), new Data(m))
+						.data(Number160.createHash(m.getSenderID() + m.getDate().getTime()),
+								new Data(m))
 						.domainKey(MESSAGE_DOMAIN).start();
 				if (genericListener != null) {
 					future.addListener(genericListener);
