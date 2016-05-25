@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane minHeight="300.0" minWidth="500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane minHeight="300.0" minWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
          <children>
@@ -55,14 +55,35 @@
                         <Insets right="4.0" />
                      </padding>
                   </Label>
-                  <Label text="missed calls:">
+                  <Label text="missed audio calls:">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Label>
                </children>
             </HBox>
-            <VBox fx:id="awayMissedCallVBox" />
+            <VBox fx:id="awayMissedAudioCallVBox" />
+            <HBox>
+               <children>
+                  <Label fx:id="awayCallCountLabel1" text="0">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets right="4.0" />
+                     </padding>
+                  </Label>
+                  <Label text="missed video calls:">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+                  <VBox fx:id="awayMissedVideoCallVBox1" />
+               </children>
+            </HBox>
             <HBox>
                <children>
                   <Label fx:id="awayFriendRequestCountLabel" text="0">

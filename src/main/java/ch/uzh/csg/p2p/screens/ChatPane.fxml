@@ -55,7 +55,7 @@
                         <Insets bottom="10.0" />
                      </VBox.margin>
                   </HBox>
-                  <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" hbarPolicy="NEVER" minHeight="300.0" pannable="true" styleClass="messageScrollPane" vbarPolicy="ALWAYS" vvalue="1.0" VBox.vgrow="ALWAYS">
+                  <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" styleClass="messageScrollPane" vbarPolicy="ALWAYS" vvalue="1.0" VBox.vgrow="ALWAYS">
                      <content>
                         <VBox fx:id="messagesVBox" alignment="TOP_RIGHT" styleClass="messageScrollPane" />
                      </content>

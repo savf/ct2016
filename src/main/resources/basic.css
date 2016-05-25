@@ -67,6 +67,13 @@
 	-fx-background-radius: 6;
 }
 
+.missedItem {
+	-fx-border-width: 0 0 2 0;
+	-fx-border-color: #ace7f9;
+	-fx-border-insets: 0 5 0 0;
+	-fx-font-size: 14;
+}
+
 #onlineStatus {
 	-fx-padding: 10;
 }

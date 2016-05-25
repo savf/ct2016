@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.sound.sampled.LineUnavailableException;
+
+import ch.uzh.csg.p2p.Node;
+import ch.uzh.csg.p2p.helper.ChatHelper;
+import ch.uzh.csg.p2p.screens.MainWindow;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -18,12 +23,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
-import javax.sound.sampled.LineUnavailableException;
-
-import ch.uzh.csg.p2p.Node;
-import ch.uzh.csg.p2p.helper.ChatHelper;
-import ch.uzh.csg.p2p.screens.MainWindow;
 
 public class ChatPaneController {
 
@@ -61,8 +60,8 @@ public class ChatPaneController {
 	}
 
 	@FXML
-	public void leaveChatHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void leaveChatHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.showNotificationPane();
 
 		chatPartnerLbl.setText("Nobody");
@@ -77,14 +76,14 @@ public class ChatPaneController {
 	}
 
 	@FXML
-	public void startAudioHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void startAudioHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.audioPaneController.startAudioHandler();
 	}
 
 	@FXML
-	public void startVideoHandler() throws ClassNotFoundException, IOException,
-			LineUnavailableException {
+	public void startVideoHandler()
+			throws ClassNotFoundException, IOException, LineUnavailableException {
 		mainWindowController.videoPaneController.startVideoHandler();
 	}
 
@@ -154,8 +153,8 @@ public class ChatPaneController {
 				if (fromMe || mainWindowController.currentChatPartners.contains(sender)) {
 					messagesVBox.getChildren().add(chatBubble);
 				} else {
-					mainWindowController.friendlistPaneController.friendlistItemControllerList.get(
-							sender).newUnreadMessage();
+					mainWindowController.friendlistPaneController.friendlistItemControllerList
+							.get(sender).newUnreadMessage();
 				}
 			}
 		});
