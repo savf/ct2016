@@ -81,9 +81,9 @@
                         <Font size="18.0" />
                      </font>
                   </Label>
-                  <VBox fx:id="missedVideoCallVBox1" />
                </children>
             </HBox>
+            <VBox fx:id="missedVideoCallVBox" />
             <HBox>
                <children>
                   <Label fx:id="missedFriendRequestCountLabel" text="0">

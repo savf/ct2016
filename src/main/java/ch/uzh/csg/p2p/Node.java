@@ -27,6 +27,7 @@ import ch.uzh.csg.p2p.model.OnlineStatus;
 import ch.uzh.csg.p2p.model.OnlineStatusTask;
 import ch.uzh.csg.p2p.model.User;
 import ch.uzh.csg.p2p.model.UserInfo;
+import ch.uzh.csg.p2p.model.VideoInfo;
 import ch.uzh.csg.p2p.model.request.AudioRequest;
 import ch.uzh.csg.p2p.model.request.BootstrapRequest;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
@@ -36,6 +37,7 @@ import ch.uzh.csg.p2p.model.request.Request;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
+import ch.uzh.csg.p2p.model.request.VideoRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -160,6 +162,33 @@ public class Node extends Observable {
 		RequestHandler.handleRequest(audioRequest, this, audioRetrieveListener);
 	}
 
+	private void loadVideoCallsFromDHT() throws LineUnavailableException {
+		final long time = System.currentTimeMillis();
+		final Node node = this;
+		VideoRequest videoRequest = new VideoRequest();
+		videoRequest.setType(RequestType.RETRIEVE);
+		videoRequest.setSenderName(user.getUsername());
+
+		BaseFutureListener<FutureGet> videoRetrieveListener = new BaseFutureListener<FutureGet>() {
+
+			@Override
+			public void operationComplete(FutureGet futureGet) throws Exception {
+				if (futureGet != null && futureGet.isSuccess()) {
+					Iterator<Data> iterator = futureGet.dataMap().values().iterator();
+					while (iterator.hasNext()) {
+						VideoInfo videoInfo = (VideoInfo) iterator.next().object();
+						user.addVideoInfo(videoInfo);
+					}
+				}
+			}
+
+			@Override
+			public void exceptionCaught(Throwable t) throws Exception {}
+
+		};
+		RequestHandler.handleRequest(videoRequest, this, videoRetrieveListener);
+	}
+
 	private void initiateUser(final String username, final String password)
 			throws ClassNotFoundException, LineUnavailableException, IOException {
 		Node node = this;
@@ -231,6 +260,7 @@ public class Node extends Observable {
 					// Load missed messages and calls after initiating the friend list
 					loadMessagesFromDHT();
 					loadAudioCallsFromDHT();
+					loadVideoCallsFromDHT();
 				} else {
 					long timeNow = System.currentTimeMillis();
 					if (timeNow - time < TRY_AGAIN_TIME_WINDOW) {

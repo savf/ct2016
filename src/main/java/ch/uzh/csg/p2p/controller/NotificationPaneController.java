@@ -16,8 +16,10 @@ import org.slf4j.LoggerFactory;
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.helper.AudioHelper;
 import ch.uzh.csg.p2p.helper.ChatHelper;
+import ch.uzh.csg.p2p.helper.VideoHelper;
 import ch.uzh.csg.p2p.model.AudioInfo;
 import ch.uzh.csg.p2p.model.ChatMessage;
+import ch.uzh.csg.p2p.model.VideoInfo;
 import ch.uzh.csg.p2p.model.request.FriendRequest;
 import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.screens.MainWindow;
@@ -41,10 +43,13 @@ public class NotificationPaneController {
 	private ListChangeListener<FriendRequest> friendRequestListener;
 	private ListChangeListener<ChatMessage> chatMessageListener;
 	private ListChangeListener<AudioInfo> audioInfoListener;
+	private ListChangeListener<VideoInfo> videoInfoListener;
 	private HashMap<ChatMessage, MissedItemController> missedChatMessages =
 			new HashMap<ChatMessage, MissedItemController>();
 	private HashMap<AudioInfo, MissedItemController> missedAudioInfos =
 			new HashMap<AudioInfo, MissedItemController>();
+	private HashMap<VideoInfo, MissedItemController> missedVideoInfos =
+			new HashMap<VideoInfo, MissedItemController>();
 
 	@FXML
 	private Label missedMessageCountLabel;
@@ -55,6 +60,11 @@ public class NotificationPaneController {
 	private Label missedAudioCallCountLabel;
 	@FXML
 	private VBox missedAudioCallVBox;
+
+	@FXML
+	private Label missedVideoCallCountLabel;
+	@FXML
+	private VBox missedVideoCallVBox;
 
 	@FXML
 	private Label missedFriendRequestCountLabel;
@@ -94,6 +104,18 @@ public class NotificationPaneController {
 
 		};
 		node.getUser().registerForAudioInfoUpdates(audioInfoListener);
+
+		videoInfoListener = new ListChangeListener<VideoInfo>() {
+
+			@Override
+			public void onChanged(
+					javafx.collections.ListChangeListener.Change<? extends VideoInfo> c) {
+				showMissedVideoCalls(node.getUser().getVideoInfoStorage());
+
+			}
+
+		};
+		node.getUser().registerForVideoInfoUpdates(videoInfoListener);
 	}
 
 	private void startFriendRequestWhileAway(List<FriendRequest> list) {
@@ -274,7 +296,75 @@ public class NotificationPaneController {
 						entry.getKey().getReceivedOn(), node);
 			}
 		}
-		node.getUser().removeMessagesFromUser(sender);
+		node.getUser().removeAudioCallsFromUser(sender);
+
+	}
+
+	private void showMissedVideoCalls(List<VideoInfo> list) {
+		if (list != null && !list.isEmpty()) {
+			Platform.runLater(new Runnable() {
+
+				@Override
+				public void run() {
+					missedVideoCallCountLabel.setText(Integer.toString(list.size()));
+					for (VideoInfo videoInfo : list) {
+						if (!missedVideoInfos.containsKey(videoInfo)) {
+							EventHandler<MouseEvent> clickHandler = new EventHandler<MouseEvent>() {
+
+								@Override
+								public void handle(MouseEvent event) {
+									missedVideoCallCountLabel.setText(Integer.toString(
+											Integer.parseInt(missedVideoCallCountLabel.getText())
+													- 1));
+									mainWindowController.chatPaneController
+											.startChatSessionWith(videoInfo.getSendername());
+									mainWindowController.showChatPane();
+									try {
+										mainWindowController.videoPaneController
+												.startVideoHandler();
+									} catch (ClassNotFoundException | IOException
+											| LineUnavailableException e) {
+										e.printStackTrace();
+									}
+									removeVideoCallFrom(videoInfo.getSendername());
+								}
+
+							};
+
+							FXMLLoader loader = new FXMLLoader(
+									MainWindow.class.getResource("MissedMessageItem.fxml"));
+							MissedItemController missedItemController = new MissedItemController();
+							loader.setController(missedItemController);
+							missedVideoInfos.put(videoInfo, missedItemController);
+							try {
+								AnchorPane missedVideoCallItem = (AnchorPane) loader.load();
+								missedItemController.setMessage(videoInfo.getSendername());
+								missedItemController.setDateTime(videoInfo.getReceivedOn());
+								missedItemController.setClickHandler(clickHandler);
+								missedVideoCallVBox.getChildren().add(missedVideoCallItem);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+
+			});
+		}
+	}
+
+	private void removeVideoCallFrom(String sender) {
+		for (Iterator<Map.Entry<VideoInfo, MissedItemController>> iterator =
+				missedVideoInfos.entrySet().iterator(); iterator.hasNext();) {
+			Map.Entry<VideoInfo, MissedItemController> entry = iterator.next();
+			if (entry.getKey().getSendername().equals(sender)) {
+				entry.getValue().removeMyself();
+				iterator.remove();
+				VideoHelper.removeStoredVideoInfoFrom(sender, entry.getKey().getReceivername(),
+						entry.getKey().getReceivedOn(), node);
+			}
+		}
+		node.getUser().removeVideoCallsFromUser(sender);
 
 	}
 

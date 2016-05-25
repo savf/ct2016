@@ -18,6 +18,7 @@ public class User implements Serializable {
 	PeerAddress peerAddress;
 	private ObservableList<ChatMessage> chatMessageStorage;
 	private ObservableList<AudioInfo> audioInfoStorage;
+	private ObservableList<VideoInfo> videoInfoStorage;
 
 	public User(String username, String password, PeerAddress peerAddress) {
 		this();
@@ -33,6 +34,7 @@ public class User implements Serializable {
 		peerAddress = null;
 		chatMessageStorage = FXCollections.observableList(new ArrayList<ChatMessage>());
 		audioInfoStorage = FXCollections.observableList(new ArrayList<AudioInfo>());
+		videoInfoStorage = FXCollections.observableList(new ArrayList<VideoInfo>());
 	}
 
 	public void registerForAudioInfoUpdates(ListChangeListener<AudioInfo> listener) {
@@ -45,6 +47,18 @@ public class User implements Serializable {
 
 	public void addAudioInfo(AudioInfo audioInfo) {
 		audioInfoStorage.add(audioInfo);
+	}
+
+	public void registerForVideoInfoUpdates(ListChangeListener<VideoInfo> listener) {
+		videoInfoStorage.addListener(listener);
+	}
+
+	public List<VideoInfo> getVideoInfoStorage() {
+		return videoInfoStorage;
+	}
+
+	public void addVideoInfo(VideoInfo videoInfo) {
+		videoInfoStorage.add(videoInfo);
 	}
 
 	public void registerForChatMessageUpdates(ListChangeListener<ChatMessage> listener) {
@@ -63,6 +77,24 @@ public class User implements Serializable {
 		for (Iterator<ChatMessage> iterator = chatMessageStorage.iterator(); iterator.hasNext();) {
 			ChatMessage chatMessage = iterator.next();
 			if (chatMessage.getSenderID().equals(username)) {
+				iterator.remove();
+			}
+		}
+	}
+
+	public void removeAudioCallsFromUser(String username) {
+		for (Iterator<AudioInfo> iterator = audioInfoStorage.iterator(); iterator.hasNext();) {
+			AudioInfo audioInfo = iterator.next();
+			if (audioInfo.getSendername().equals(username)) {
+				iterator.remove();
+			}
+		}
+	}
+
+	public void removeVideoCallsFromUser(String username) {
+		for (Iterator<VideoInfo> iterator = videoInfoStorage.iterator(); iterator.hasNext();) {
+			VideoInfo videoInfo = iterator.next();
+			if (videoInfo.getSendername().equals(username)) {
 				iterator.remove();
 			}
 		}

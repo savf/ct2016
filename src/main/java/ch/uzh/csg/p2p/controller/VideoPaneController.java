@@ -21,6 +21,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import net.tomp2p.dht.FuturePut;
+import net.tomp2p.futures.BaseFutureAdapter;
 
 public class VideoPaneController {
 
@@ -98,7 +100,25 @@ public class VideoPaneController {
 			VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.WAITING,
 					node.getFriend(chatPartner).getPeerAddress(), chatPartner,
 					node.getUser().getUsername());
-			RequestHandler.handleRequest(request, node);
+			RequestHandler.handleRequest(request, node, new BaseFutureAdapter<FuturePut>() {
+
+				@Override
+				public void operationComplete(FuturePut futurePut) throws Exception {
+					if (futurePut.isSuccess()) {
+						Platform.runLater(new Runnable() {
+
+							@Override
+							public void run() {
+								Image offline =
+										new Image(getClass().getResourceAsStream("/offline.png"));
+								videoUser1.setImage(offline);
+							}
+
+						});
+					}
+				}
+
+			});
 			videoUtils.addReceiver(node.getFriend(chatPartner));
 			audioUtils.addReceiver(node.getFriend(chatPartner));
 		}

@@ -9,19 +9,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
-
 import javax.imageio.ImageIO;
 import javax.sound.sampled.LineUnavailableException;
 
-import net.tomp2p.audiovideowrapper.H264Wrapper;
-import net.tomp2p.audiovideowrapper.VideoData;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamLockException;
 
 import ch.uzh.csg.p2p.Node;
 import ch.uzh.csg.p2p.model.Friend;
@@ -31,9 +26,14 @@ import ch.uzh.csg.p2p.model.request.RequestHandler;
 import ch.uzh.csg.p2p.model.request.RequestStatus;
 import ch.uzh.csg.p2p.model.request.RequestType;
 import ch.uzh.csg.p2p.model.request.VideoRequest;
-
-import com.github.sarxos.webcam.Webcam;
-import com.github.sarxos.webcam.WebcamLockException;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import net.tomp2p.audiovideowrapper.H264Wrapper;
+import net.tomp2p.audiovideowrapper.VideoData;
+import net.tomp2p.dht.FutureRemove;
+import net.tomp2p.peers.Number160;
 
 public class VideoHelper {
 	private static Logger log = LoggerFactory.getLogger(VideoHelper.class);
@@ -81,9 +81,8 @@ public class VideoHelper {
 				log.debug(IMG != null ? IMG.getImage() + "" : "");
 				if (IMG != null && IMG.getImage() != null) {
 					javafx.scene.image.Image image = IMG.getImage();
-					BufferedImage bImage =
-							new BufferedImage((int) image.getWidth(), (int) image.getHeight(),
-									BufferedImage.TYPE_INT_ARGB);
+					BufferedImage bImage = new BufferedImage((int) image.getWidth(),
+							(int) image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 					SwingFXUtils.fromFXImage(IMG.getImage(), bImage);
 					ByteArrayOutputStream s = new ByteArrayOutputStream();
 					ImageIO.write(bImage, "png", s);
@@ -105,9 +104,8 @@ public class VideoHelper {
 		if (!mute) {
 			Date date = new Date();
 			for (Friend receiver : receiverList) {
-				VideoMessage videoMessage =
-						new VideoMessage(sender.getUsername(), receiver.getName(),
-								receiver.getPeerAddress(), date, byteBufferList);
+				VideoMessage videoMessage = new VideoMessage(sender.getUsername(),
+						receiver.getName(), receiver.getPeerAddress(), date, byteBufferList);
 				node.getPeer().peer().sendDirect(receiver.getPeerAddress()).object(videoMessage)
 						.start();
 			}
@@ -155,9 +153,8 @@ public class VideoHelper {
 		if (running) {
 			running = false;
 			for (Friend receiver : receiverList) {
-				VideoRequest request =
-						new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
-								receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
+				VideoRequest request = new VideoRequest(RequestType.SEND, RequestStatus.ABORTED,
+						receiver.getPeerAddress(), receiver.getName(), sender.getUsername());
 				RequestHandler.handleRequest(request, node);
 			}
 		}
@@ -185,5 +182,12 @@ public class VideoHelper {
 
 	public void setPartnerImageView(ImageView partnerImageView) {
 		this.partnerImageView = partnerImageView;
+	}
+
+	public static void removeStoredVideoInfoFrom(String sender, String recipient, Date date,
+			Node node) {
+		FutureRemove futureRemove = node.getPeer().remove(Number160.createHash(recipient))
+				.domainKey(Number160.createHash("video"))
+				.contentKey(Number160.createHash(sender + date.getTime())).start();
 	}
 }
