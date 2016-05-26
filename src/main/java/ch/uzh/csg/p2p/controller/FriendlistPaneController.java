@@ -83,7 +83,7 @@ public class FriendlistPaneController {
 		friend2.setFriendshipStatus(FriendshipStatus.WAITING);
 		friendlistHelper.storeFriend(friend2, user.getUserName());
 
-		FriendRequest request = new FriendRequest(node.getUser().getPeerAddress(),
+		FriendRequest request = new FriendRequest(node.getPeer().peerAddress(),
 				node.getUser().getUsername(), user.getUserName(), RequestType.SEND);
 		request.setReceiverAddress(user.getPeerAddress());
 		RequestHandler.handleRequest(request, node);
